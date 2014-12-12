@@ -72,6 +72,13 @@ import org.apache.spark.util.random.{BernoulliSampler, PoissonSampler, SamplingU
  * reading data from a new storage system) by overriding these functions. Please refer to the
  * [[http://www.cs.berkeley.edu/~matei/papers/2012/nsdi_spark.pdf Spark paper]] for more details
  * on RDD internals.
+ *
+ * RDD都会有5个特征：
+ * 1、有一个分片列表。就是能被切分，和hadoop一样的，能够切分的数据才能并行计算。（数据可分片）
+ * 2、有一个函数计算每一个分片，这里指的是下面会提到的compute函数。 （分片可计算）
+ * 3、对其他的RDD的依赖列表，依赖还具体分为宽依赖和窄依赖，但并不是所有的RDD都有依赖。（分片可溯源 -- lineage）
+ * 4、可选：key-value型的RDD是根据哈希来分区的，类似于mapreduce当中的Paritioner接口，控制key分到哪个reduce。(数据分片接口)
+ * 5、可选：每一个分片的优先计算位置（preferred locations），比如HDFS的block的所在位置应该是优先计算的位置 (数据本地性)
  */
 abstract class RDD[T: ClassTag](
     @transient private var sc: SparkContext,
@@ -90,6 +97,7 @@ abstract class RDD[T: ClassTag](
   /**
    * :: DeveloperApi ::
    * Implemented by subclasses to compute a given partition.
+   * 由子类实现，对一个分片进行计算，得出一个可遍历的结果
    */
   @DeveloperApi
   def compute(split: Partition, context: TaskContext): Iterator[T]
@@ -97,21 +105,26 @@ abstract class RDD[T: ClassTag](
   /**
    * Implemented by subclasses to return the set of partitions in this RDD. This method will only
    * be called once, so it is safe to implement a time-consuming computation in it.
+   * 该方法有子类实现，返回当前RDD的分片集合
+   * 只计算一次
    */
   protected def getPartitions: Array[Partition]
 
   /**
    * Implemented by subclasses to return how this RDD depends on parent RDDs. This method will only
    * be called once, so it is safe to implement a time-consuming computation in it.
+   * 只计算一次，计算RDD对父RDD的依赖
    */
   protected def getDependencies: Seq[Dependency[_]] = deps
 
   /**
    * Optionally overridden by subclasses to specify placement preferences.
-   */
+   * 可选的，指定优先位置，输入参数是split分片，输出结果是一组优先的节点位置  */
   protected def getPreferredLocations(split: Partition): Seq[String] = Nil
 
-  /** Optionally overridden by subclasses to specify how they are partitioned. */
+  /** Optionally overridden by subclasses to specify how they are partitioned.
+    * 可选的，分区的方法，类似于mapreduce当中的Paritioner接口，控制key分到哪个reduce */
+
   @transient val partitioner: Option[Partitioner] = None
 
   // =======================================================================
@@ -140,11 +153,12 @@ abstract class RDD[T: ClassTag](
    */
   def persist(newLevel: StorageLevel): this.type = {
     // TODO: Handle changes of StorageLevel
+    // StorageLevel不能随意更改，仅仅运行没有物化的RDD进行该操作
     if (storageLevel != StorageLevel.NONE && newLevel != storageLevel) {
       throw new UnsupportedOperationException(
         "Cannot change storage level of an RDD after it was already assigned a level")
     }
-    sc.persistRDD(this)
+    sc.persistRDD(this)    // RDD的缓存由SparkContext执行
     // Register the RDD with the ContextCleaner for automatic GC-based cleanup
     sc.cleaner.foreach(_.registerRDDForCleanup(this))
     storageLevel = newLevel
@@ -771,6 +785,7 @@ abstract class RDD[T: ClassTag](
    * Return an array that contains all of the elements in this RDD.
    */
   def collect(): Array[T] = {
+    // 注意results是一个Array[Array[T]]类型
     val results = sc.runJob(this, (iter: Iterator[T]) => iter.toArray)
     Array.concat(results: _*)
   }

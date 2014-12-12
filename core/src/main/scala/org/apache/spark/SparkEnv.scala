@@ -48,6 +48,11 @@ import org.apache.spark.util.{AkkaUtils, Utils}
  *
  * NOTE: This is not intended for external use. This is exposed for Shark and may be made private
  *       in a future release.
+ *
+ * 持有所有的运行时环境对象，并为Spark运行时实例（可能是Master或者Worker）服务
+ * 这些环境对象包括： 序列化对象， Akka调度系统， Block管理器，map输出跟踪器等
+ * 目前的代码实现是Spark通过线程变量查询一个SparkEnv的实例，这些线程需要有对SparkEnv对象的写入的权限。
+ * 访问当前环境对象，你可以使用SparkEnv.get(当然需要先创建一个SparkContext实例)进行读操作或者SparkEnv.set进行写操作
  */
 @DeveloperApi
 class SparkEnv (

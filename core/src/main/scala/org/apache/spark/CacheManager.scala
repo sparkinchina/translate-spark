@@ -26,6 +26,8 @@ import org.apache.spark.storage._
 /**
  * Spark class responsible for passing RDDs partition contents to the BlockManager and making
  * sure a node doesn't load two copies of an RDD at once.
+ *
+ * 将RDD分片的内容传输给BlockManager，并确保RDD在一个节点上的数据不会被加载两次
  */
 private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
 
@@ -44,12 +46,15 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
     blockManager.get(key) match {
       case Some(blockResult) =>
         // Partition is already materialized, so just return its values
+        // Partition已经被被物化了，直接从blockManager中取出数据返回就可以了
         context.taskMetrics.inputMetrics = Some(blockResult.inputMetrics)
         new InterruptibleIterator(context, blockResult.data.asInstanceOf[Iterator[T]])
 
       case None =>
         // Acquire a lock for loading this partition
         // If another thread already holds the lock, wait for it to finish return its results
+        // 加载一个分片，获取一个锁来同步数据的加载
+        // 如果有人在加载该分片，等到其loading完成后，就可以直接到去blockManager里面取
         val storedValues = acquireLockForPartition[T](key)
         if (storedValues.isDefined) {
           return new InterruptibleIterator[T](context, storedValues.get)

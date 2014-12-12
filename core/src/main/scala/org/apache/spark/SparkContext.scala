@@ -330,7 +330,7 @@ class SparkContext(config: SparkConf) extends Logging {
 
   // start TaskScheduler after taskScheduler sets DAGScheduler reference in DAGScheduler's
   // constructor
-  taskScheduler.start()
+  taskScheduler.start()  // 至此，两大调度器已经完成启动(dagSchedule有stop方法，但没有start方法，感觉不适应）
 
   private[spark] val cleaner: Option[ContextCleaner] = {
     if (conf.getBoolean("spark.cleaner.referenceTracking", true)) {
@@ -939,6 +939,7 @@ class SparkContext(config: SparkConf) extends Logging {
 
   /**
    * Register an RDD to be persisted in memory and/or disk storage
+   * 注册一个需要物化的RDD (物化动作延迟执行)
    */
   private[spark] def persistRDD(rdd: RDD[_]) {
     persistentRdds(rdd.id) = rdd
@@ -946,6 +947,7 @@ class SparkContext(config: SparkConf) extends Logging {
 
   /**
    * Unpersist an RDD from memory and/or disk storage
+   * 删除一个物化的RDD，恢复为非物化状态(立即执行)
    */
   private[spark] def unpersistRDD(rddId: Int, blocking: Boolean = true) {
     env.blockManager.master.removeRdd(rddId, blocking)
