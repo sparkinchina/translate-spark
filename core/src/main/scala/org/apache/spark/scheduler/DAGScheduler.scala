@@ -55,6 +55,20 @@ import org.apache.spark.storage.BlockManagerMessages.BlockManagerHeartbeat
  * not caused by shuffle file loss are handled by the TaskScheduler, which will retry each task
  * a small number of times before cancelling the whole stage.
  *
+ * DAGScheduler是一个面向Stage的高级调度器（逻辑调度器）。对于每一个Job，DAGScheduler会计算出一张基于Stage的DAG图，
+ * 跟踪所有的RDD，物化Stage的输出结果，并需找一个最小化调度来运行该Job。DAGScheduler随后会将这些Stage转换为TaskSet，
+ * 并提交为底层的TaskSceduler，后者在Cluster上执行这些task
+ *
+ * 除了生成DAG图，DAGScheduler还要为每个将要执行的task确定最优位置（本地性），并将这些信息一并提交给TaskSchedule。
+ * 在容错方面，DAGScheduler还负责因shuffle文件丢失造成的错误，这种情况下，原有的stage可能需要重新提交。对于stage
+ * 内部的错误（不是因shuffle文件丢失造成的），由TaskScheduler来处理，TaskScheduler可能会重试几次后取消整个stage
+ *
+ **   基本概念
+ **   Task任务 ：单个分区数据集上的最小处理流程单
+ **   TaskSet任务集：一组关联的，但是互相之间没有Shuffle依赖关系的任务所组成的任务集
+ **   Stage调度阶段：一个任务集所对应的调度阶段
+ **   Job作业：一次RDD Action生成的一个或多个Stage所组成的一次计算作业
+ **   DAGScheduler内部维护了各种 task / stage / job之间的映射关系表
  */
 private[spark]
 class DAGScheduler(
@@ -232,6 +246,9 @@ class DAGScheduler(
    * of a shuffle map stage in newOrUsedStage.  The stage will be associated with the provided
    * jobId. Production of shuffle map stages should always use newOrUsedStage, not newStage
    * directly.
+   * 创建一个Stage -- NewStage可以用来创建一个ResultStage，或者是在newOrUsedStage方法中用来创建一个
+   * ShuffleMapStage. 不能用newStage直接创建一个ShuffleMapStage（应该使用newOrUsedStage）
+   *
    */
   private def newStage(
       rdd: RDD[_],
@@ -283,9 +300,10 @@ class DAGScheduler(
   /**
    * Get or create the list of parent stages for a given RDD. The stages will be assigned the
    * provided jobId if they haven't already been created with a lower jobId.
+   * 创建或者获取一个RDD的 parent stage列表，并为JobId赋值（如果JobId为空）
    */
   private def getParentStages(rdd: RDD[_], jobId: Int): List[Stage] = {
-    val parents = new HashSet[Stage]
+    val parents = new HashSet[Stage]  // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
     val visited = new HashSet[RDD[_]]
     // We are manually maintaining a stack here to prevent StackOverflowError
     // caused by recursively visiting
@@ -295,6 +313,8 @@ class DAGScheduler(
         visited += r
         // Kind of ugly: need to register RDDs with the cache here since
         // we can't do it in its constructor because # of partitions is unknown
+        // 只有依赖类型为ShuffleDependency的，才有资格成为parent stage
+        // 并通过getShuffleMapStage计算出来
         for (dep <- r.dependencies) {
           dep match {
             case shufDep: ShuffleDependency[_, _, _] =>
@@ -357,6 +377,9 @@ class DAGScheduler(
     parents
   }
 
+  /** 查询MissingParentStages
+   * 以ShuffleDependency为划分依据，
+   */
   private def getMissingParentStages(stage: Stage): List[Stage] = {
     val missing = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
@@ -372,7 +395,7 @@ class DAGScheduler(
               case shufDep: ShuffleDependency[_, _, _] =>
                 val mapStage = getShuffleMapStage(shufDep, stage.jobId)
                 if (!mapStage.isAvailable) {
-                  missing += mapStage
+                  missing += mapStage // 仅仅查找到最近邻的ShuffleMapStage
                 }
               case narrowDep: NarrowDependency[_] =>
                 waitingForVisit.push(narrowDep.rdd)
@@ -467,6 +490,8 @@ class DAGScheduler(
   /**
    * Submit a job to the job scheduler and get a JobWaiter object back. The JobWaiter object
    * can be used to block until the the job finishes executing or can be used to cancel the job.
+   * 向job scheduler提交Job，并返回一个JobWaiter对象，该对象可以用来Block并等待Job完成或者取消该Job
+   * 这是DAG调度器提供的一个异步Job提交接口
    */
   def submitJob[T, U](
       rdd: RDD[T],
@@ -478,6 +503,7 @@ class DAGScheduler(
       properties: Properties = null): JobWaiter[U] =
   {
     // Check to make sure we are not launching a task on a partition that does not exist.
+    // 参数有效性验证，确保partitions有效存在
     val maxPartitions = rdd.partitions.length
     partitions.find(p => p >= maxPartitions || p < 0).foreach { p =>
       throw new IllegalArgumentException(
@@ -492,12 +518,18 @@ class DAGScheduler(
 
     assert(partitions.size > 0)
     val func2 = func.asInstanceOf[(TaskContext, Iterator[_]) => _]
+    // jobwaiter是记录作业成功与失败的数据结构，一个作业的Task数量是和分片的数量一致的，
+    // Task成功之后调用resultHandler保存结果。
     val waiter = new JobWaiter(this, jobId, partitions.size, resultHandler)
     eventProcessActor ! JobSubmitted(
       jobId, rdd, func2, partitions.toArray, allowLocal, callSite, waiter, properties)
     waiter
   }
 
+  /**
+   * 向job scheduler提交Job，并等待Job执行结果
+   * 这是DAG调度器提供的一个同步Job提交接口
+   */
   def runJob[T, U: ClassTag](
       rdd: RDD[T],
       func: (TaskContext, Iterator[T]) => U,
@@ -592,6 +624,8 @@ class DAGScheduler(
   /**
    * Check for waiting or failed stages which are now eligible for resubmission.
    * Ordinarily run on every iteration of the event loop.
+   * 检查等待或失败的Stages，并重新提交合格的Stage
+   * 通常DAGScheduler完成一次的事件循环以后，也会触发一次从等待和失败列表中扫描并提交就绪Stage的调用过程
    */
   private def submitWaitingStages() {
     // TODO: We might want to run this less often, when we are sure that something has become
@@ -710,6 +744,15 @@ class DAGScheduler(
     submitWaitingStages()
   }
 
+  /** 当某个操作触发计算，向DAGScheduler提交作业时，DAGScheduler需要从RDD依赖链最末端的RDD出发，
+    * 遍历整个RDD依赖链，划分Stage任务阶段，并决定各个Stage之间的依赖关系。
+    * Stage的划分是以ShuffleDependency为依据的，也就是说当某个RDD的运算需要将数据进行Shuffle时，
+    * 这个包含了Shuffle依赖关系的RDD将被用来作为输入信息，构建一个新的Stage，由此为依据划分Stage，
+    * 可以确保有依赖关系的数据能够按照正确的顺序得到处理和运算
+    *
+    * handleJobSubmitted将finalRDD包装为ActiveJob（用于跟踪），并作为finalStage
+    * 为生成DAG图准备数据
+    */
   private[scheduler] def handleJobSubmitted(jobId: Int,
       finalRDD: RDD[_],
       func: (TaskContext, Iterator[_]) => _,
@@ -730,6 +773,7 @@ class DAGScheduler(
         listener.jobFailed(e)
         return
     }
+    // finalStage被包装为ActiveJob
     if (finalStage != null) {
       val job = new ActiveJob(jobId, finalStage, func, partitions, callSite, listener, properties)
       clearCacheLocs()
@@ -753,10 +797,12 @@ class DAGScheduler(
         submitStage(finalStage)
       }
     }
-    submitWaitingStages()
+    submitWaitingStages()   //检查waitingStages，并提交可用的Stage
   }
 
-  /** Submits stage, but first recursively submits any missing parents. */
+  /** Submits stage, but first recursively submits any missing parents.
+    * 提交Stage，首先递归提交其parent Stage
+    */
   private def submitStage(stage: Stage) {
     val jobId = activeJobForStage(stage)
     if (jobId.isDefined) {
@@ -766,7 +812,7 @@ class DAGScheduler(
         logDebug("missing: " + missing)
         if (missing == Nil) {
           logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
-          submitMissingTasks(stage, jobId.get)
+          submitMissingTasks(stage, jobId.get)  // 没有父stage，执行这stage的tasks
         } else {
           for (parent <- missing) {
             submitStage(parent)
@@ -779,7 +825,8 @@ class DAGScheduler(
     }
   }
 
-  /** Called when stage's parents are available and we can now do its task. */
+  /** Called when stage's parents are available and we can now do its task.
+    * MissingTask (这个名字太费解了) 就是提交一个满足运行提交的Stage */
   private def submitMissingTasks(stage: Stage, jobId: Int) {
     logDebug("submitMissingTasks(" + stage + ")")
     // Get our pending tasks and remember them in our pendingTasks entry
@@ -816,6 +863,7 @@ class DAGScheduler(
     // task gets a different copy of the RDD. This provides stronger isolation between tasks that
     // might modify state of objects referenced in their closures. This is necessary in Hadoop
     // where the JobConf/Configuration object is not thread-safe.
+    // 将task执行所用到的数据打包并序列化，各个task在实现执行前再反序列化
     var taskBinary: Broadcast[Array[Byte]] = null
     try {
       // For ShuffleMapTask, serialize and broadcast (rdd, shuffleDep).
@@ -895,6 +943,8 @@ class DAGScheduler(
   /**
    * Responds to a task finishing. This is called inside the event loop so it assumes that it can
    * modify the scheduler's internal state. Use taskEnded() to post a task end event from outside.
+   * task完成事件的响应。Event循环中内部调用，用来更新Scheduler的内部状态。 外部通过taskEnded()方法可以发布
+   * 一个task结束事件
    */
   private[scheduler] def handleTaskCompletion(event: CompletionEvent) {
     val task = event.task
@@ -1202,7 +1252,7 @@ class DAGScheduler(
             .format(job.jobId, stageId))
       } else if (jobsForStage.get.size == 1) {
         if (!stageIdToStage.contains(stageId)) {
-          logError(s"Missing Stage for stage with id $stageId")
+          logError("Missing Stage for stage with id $stageId")
         } else {
           // This is the only job that uses this stage, so fail the stage if it is running.
           val stage = stageIdToStage(stageId)

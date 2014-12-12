@@ -32,6 +32,15 @@ import org.apache.spark.util.CallSite
  * architecture where any thread can post an event (e.g. a task finishing or a new job being
  * submitted) but there is a single "logic" thread that reads these events and takes decisions.
  * This greatly simplifies synchronization.
+ * DAGScheduler使用Event队列架构，任何线程都可以提交一个Event，但只有一个线程可以读取和处理这些Events，从而极大的简化了同步处理
+ * DAGScheduler的事件循环逻辑基于Akka Actor的消息传递机制来构建，在DAGScheduler的Start函数中创建了一个eventProcessActor
+ * 用来处理各种DAGSchedulerEvent，这些事件包括作业的提交，任务状态的变化，监控等等
+ * 主要的DAGSchedulerEvent如下：
+ **   JobSubmitted JobCancelled JobGroupCancelled
+ **   StageCancelled
+ **   BeginEvent CompletionEvent TaskSetFailed GettingResultEvent
+ **   ExecutorAdded ExecutorLost
+ **   ResubmitFailedStages AllJobsCancelled
  */
 private[scheduler] sealed trait DAGSchedulerEvent
 

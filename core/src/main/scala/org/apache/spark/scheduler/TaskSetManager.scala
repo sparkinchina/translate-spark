@@ -341,15 +341,19 @@ private[spark] class TaskSetManager(
    * Dequeue a pending task for a given node and return its index and locality level.
    * Only search for tasks matching the given locality constraint.
    *
+   * 根据节点和本地性查找可用于执行的task
+   * 本地性并不是Spark的唯一标准，根据等待的时间越的长短，本地性可能
+   * 从PROCESS_LOCAL一直让步到ANY，或者推测执行
    * @return An option containing (task index within the task set, locality, is speculative?)
    */
   private def findTask(execId: String, host: String, maxLocality: TaskLocality.Value)
     : Option[(Int, TaskLocality.Value, Boolean)] =
   {
+    // 同一个Executor，通过execId来查找相应的等待的task
     for (index <- findTaskFromList(execId, getPendingTasksForExecutor(execId))) {
       return Some((index, TaskLocality.PROCESS_LOCAL, false))
     }
-
+    // 通过主机名找到相应的Task,不过比之前的多了一步判断
     if (TaskLocality.isAllowed(maxLocality, TaskLocality.NODE_LOCAL)) {
       for (index <- findTaskFromList(execId, getPendingTasksForHost(host))) {
         return Some((index, TaskLocality.NODE_LOCAL, false))
@@ -362,7 +366,7 @@ private[spark] class TaskSetManager(
         return Some((index, TaskLocality.PROCESS_LOCAL, false))
       }
     }
-
+    // 通过Rack的名称查找Task
     if (TaskLocality.isAllowed(maxLocality, TaskLocality.RACK_LOCAL)) {
       for {
         rack <- sched.getRackForHost(host)
@@ -371,7 +375,7 @@ private[spark] class TaskSetManager(
         return Some((index, TaskLocality.RACK_LOCAL, false))
       }
     }
-
+    // 查找那些preferredLocations为空的，不指定在哪里执行的Task来执行
     if (TaskLocality.isAllowed(maxLocality, TaskLocality.ANY)) {
       for (index <- findTaskFromList(execId, allPendingTasks)) {
         return Some((index, TaskLocality.ANY, false))
@@ -379,6 +383,7 @@ private[spark] class TaskSetManager(
     }
 
     // find a speculative task if all others tasks have been scheduled
+    // 最后没办法了，拖的时间太长了，只能启动推测执行了
     findSpeculativeTask(execId, host, maxLocality).map {
       case (taskIndex, allowedLocality) => (taskIndex, allowedLocality, true)}
   }

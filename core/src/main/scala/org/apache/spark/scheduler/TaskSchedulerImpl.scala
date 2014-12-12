@@ -214,6 +214,14 @@ private[spark] class TaskSchedulerImpl(
    * Called by cluster manager to offer resources on slaves. We respond by asking our active task
    * sets for tasks in order of priority. We fill each node with tasks in a round-robin manner so
    * that tasks are balanced across the cluster.
+   * 提供Worker节点上的可用资源（由Cluster Manager调用),
+   * resourceOffers主要做了3件事：
+   * 1、从Workers里面随机抽出一些来执行任务。
+   * 2、通过TaskSetManager找出和Worker在一起的Task，最后编译打包成TaskDescription返回。
+   * 3、将Worker-->Array[TaskDescription]的映射关系返回。
+   * 我们继续看TaskSetManager的resourceOffer，看看它是怎么找到和host再起的Task，并且包装成TaskDescription。
+   * 通过查看代码，我发现之前我解释的和它具体实现的差别比较大，它所谓的本地性是根据当前的等待时间来确定的任务本地性的级别。
+   * 它的本地性主要是包括四类：PROCESS_LOCAL, NODE_LOCAL, RACK_LOCAL, ANY。
    */
   def resourceOffers(offers: Seq[WorkerOffer]): Seq[Seq[TaskDescription]] = synchronized {
     SparkEnv.set(sc.env)
@@ -234,6 +242,7 @@ private[spark] class TaskSchedulerImpl(
     }
 
     // Randomly shuffle offers to avoid always placing tasks on the same set of workers.
+    // 从worker当中随机选出一些来，防止任务都堆在一个worker节点上
     val shuffledOffers = Random.shuffle(offers)
     // Build a list of tasks to assign to each worker.
     val tasks = shuffledOffers.map(o => new ArrayBuffer[TaskDescription](o.cores))
@@ -250,6 +259,7 @@ private[spark] class TaskSchedulerImpl(
     // Take each TaskSet in our scheduling order, and then offer it each node in increasing order
     // of locality levels so that it gets a chance to launch local tasks on all of them.
     // NOTE: the preferredLocality order: PROCESS_LOCAL, NODE_LOCAL, NO_PREF, RACK_LOCAL, ANY
+    // 随机遍历抽出来的worker，通过TaskSetManager的resourceOffer，把本地性最高的Task分给Worker
     var launchedTask = false
     for (taskSet <- sortedTaskSets; maxLocality <- taskSet.myLocalityLevels) {
       do {

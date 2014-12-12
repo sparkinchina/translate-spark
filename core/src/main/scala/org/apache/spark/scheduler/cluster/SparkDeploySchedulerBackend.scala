@@ -23,6 +23,13 @@ import org.apache.spark.deploy.client.{AppClient, AppClientListener}
 import org.apache.spark.scheduler.{ExecutorExited, ExecutorLossReason, SlaveLost, TaskSchedulerImpl}
 import org.apache.spark.util.Utils
 
+/**
+ *  该类主要是完成部署的支持工作，包括：
+ *  1. app的注册
+ *  2. DriverActor的启动
+ *  3. Deloy Event的侦听
+ *
+ */
 private[spark] class SparkDeploySchedulerBackend(
     scheduler: TaskSchedulerImpl,
     sc: SparkContext,
@@ -39,7 +46,7 @@ private[spark] class SparkDeploySchedulerBackend(
   val totalExpectedCores = maxCores.getOrElse(0)
 
   override def start() {
-    super.start()
+    super.start()   //创建并启动DriverActor
 
     // The endpoint for executors to talk to us
     val driverUrl = "akka.tcp://%s@%s:%s/user/%s".format(
@@ -69,7 +76,7 @@ private[spark] class SparkDeploySchedulerBackend(
       appUIAddress, eventLogDir)
 
     client = new AppClient(sc.env.actorSystem, masters, appDesc, this, conf)
-    client.start()
+    client.start()   // 注册当前App
   }
 
   override def stop() {

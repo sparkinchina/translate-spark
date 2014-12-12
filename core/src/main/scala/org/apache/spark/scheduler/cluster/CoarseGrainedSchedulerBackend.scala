@@ -40,6 +40,12 @@ import org.apache.spark.ui.JettyUtils
  * each new task. Executors may be launched in a variety of ways, such as Mesos tasks for the
  * coarse-grained Mesos mode or standalone processes for Spark's standalone deploy mode
  * (spark.deploy.*).
+ *
+ * 调度器后台，等待Exexutor接入（通过Akka)。
+ * 该后台会在Spark Job运行期间一直持有每一个Exexutor，而不是task一
+ * 结束后就放弃Exexutor、新的task则再启动一个Exexutor这种低效的方式。
+ *
+ * 该类通过内部类DriverActor实现了对资源的调度，并通过SchedulerBackend接口为外界服务
  */
 private[spark]
 class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, actorSystem: ActorSystem)
