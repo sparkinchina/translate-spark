@@ -31,6 +31,7 @@ import org.apache.spark.util.{ActorLogReceive, AkkaUtils, Utils}
 
 /**
  * Proxy that relays messages to the driver.
+ * 职能： 提交Driver。 该类已经被 deprecated
  */
 private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
   extends Actor with ActorLogReceive with Logging {
@@ -39,8 +40,10 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
   val timeout = AkkaUtils.askTimeout(conf)
 
   override def preStart() = {
+    // 这里需要把master的地址转换成akka的地址，然后通过这个akka地址获得指定的actor
+    // 它的格式是"akka.tcp://%s@%s:%s/user/%s".format(systemName, host, port, actorName)
     masterActor = context.actorSelection(Master.toAkkaUrl(driverArgs.master))
-
+    // 把自身设置成远程生命周期的事件
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
 
     println(s"Sending ${driverArgs.cmd} command to ${driverArgs.master}")
@@ -76,7 +79,7 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
           driverArgs.cores,
           driverArgs.supervise,
           command)
-
+        // 向master发送提交Driver的请求，把driverDescription传过去
         masterActor ! RequestSubmitDriver(driverDescription)
 
       case "kill" =>

@@ -23,6 +23,9 @@ package org.apache.spark.deploy.client
  * removed (either due to failure or due to revocation).
  *
  * Users of this API should *not* block inside the callback methods.
+ *
+ * 当部署事件反生时，部署客户程序应回调该接口。 目前支持四种事件：与Cluster的连接及断开，Exexutor的增加及删除
+ * 回调函数实现内部不应该采用阻塞的方式实现
  */
 private[spark] trait AppClientListener {
   def connected(appId: String): Unit

@@ -31,6 +31,19 @@ import org.apache.spark.util.Utils
  *
  * This program handles setting up the classpath with relevant Spark dependencies and provides
  * a layer over the different cluster managers and deploy modes that Spark supports.
+ *
+ * 启动Spark应用的主要入口。
+ *
+ * 该程序处理设置classpath及spark相关的依赖，并且为各种cluster manager提供了
+ * 一个统一的管理和部署层
+ *
+ * # Run on a Spark standalone cluster 一个部署的示例如下：
+ * ./bin/spark-submit \
+ * --class org.apache.spark.examples.SparkPi \
+ * --master spark://207.184.161.138:7077 \
+ * --executor-memory 20G \
+ * --total-executor-cores 100 \
+ * /path/to/examples.jar \
  */
 object SparkSubmit {
 
@@ -249,6 +262,7 @@ object SparkSubmit {
     }
 
     // In standalone-cluster mode, use Client as a wrapper around the user class
+    // standalone-cluster 模式的部署类是 org.apache.spark.deploy.Client
     if (clusterManager == STANDALONE && deployMode == CLUSTER) {
       childMainClass = "org.apache.spark.deploy.Client"
       if (args.supervise) {

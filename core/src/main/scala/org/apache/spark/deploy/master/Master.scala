@@ -44,6 +44,22 @@ import org.apache.spark.scheduler.{EventLoggingListener, ReplayListenerBus}
 import org.apache.spark.ui.SparkUI
 import org.apache.spark.util.{ActorLogReceive, AkkaUtils, SignalLogger, Utils}
 
+/**
+ * 一个信奉无为而治的资源大管家，其职责主要包括两个方面：
+ * Cluster资源的管理和Cluster的通讯管理
+ *
+ *   资源管理
+ ***     Worker资源 RegisterWorker  WorkDirCleanup
+ ***     Driver资源 RequestSubmitDriver RequestKillDriver
+ ***     App资源  RegisteredApplication
+ ***     Executor资源 LaunchExecutor KillExecutor
+ *
+ *  通讯管理
+ ***     Master  MasterChangeAcknowledged  RequestMasterState  RevokedLeadership  ElectedLeader  CompleteRecovery
+ ***     Worker  Heartbeat CheckForWorkerTimeOut
+ ***     Driver  LaunchDriver DriverStateChanged RequestDriverStatus
+ ***     Executor LaunchExecutor ExecutorStateChanged KillExecutor
+ */
 private[spark] class Master(
     host: String,
     port: Int,
@@ -230,6 +246,7 @@ private[spark] class Master(
         // TODO: It might be good to instead have the submission client poll the master to determine
         //       the current status of the driver. For now it's simply "fire and forget".
 
+        // driver app提交成功，并把driver.id返回给Client，Client可以用来取消Driver的执行
         sender ! SubmitDriverResponse(true, Some(driver.id),
           s"Driver successfully submitted as ${driver.id}")
       }
@@ -481,11 +498,15 @@ private[spark] class Master(
   /**
    * Schedule the currently available resources among waiting apps. This method will be called
    * every time a new app joins or resource availability changes.
+   *
+   * 调度器的调度策略是这样的，先调度Driver程序，然后再调度App，
+   * 调度App的方式是从各个worker的里面和App进行匹配，看需要分配多少个cpu。
    */
   private def schedule() {
     if (state != RecoveryState.ALIVE) { return }
 
     // First schedule drivers, they take strict precedence over applications
+    // 首先调度Driver程序，Driver的调度优先级严格高于App
     val shuffledWorkers = Random.shuffle(workers) // Randomization helps balance drivers
     for (worker <- shuffledWorkers if worker.state == WorkerState.ALIVE) {
       for (driver <- List(waitingDrivers: _*)) { // iterate over a copy of waitingDrivers
@@ -498,6 +519,8 @@ private[spark] class Master(
 
     // Right now this is a very simple FIFO scheduler. We keep trying to fit in the first app
     // in the queue, then the second app, etc.
+    // 这里对App的调度,按照先进先出，资源平摊的原则，（也就是分摊到尽可能多的节点上）
+    // spreadOutApps是由spark.deploy.spreadOut参数来决定的，默认是true
     if (spreadOutApps) {
       // Try to spread out each app among all the nodes, until it has all its cores
       for (app <- waitingApps if app.coresLeft > 0) {
@@ -525,6 +548,7 @@ private[spark] class Master(
       }
     } else {
       // Pack each app into as few nodes as possible until we've assigned all its cores
+      // 这种方式和上面的方式的区别是，这种方式尽可能用少量的节点来完成这个任务
       for (worker <- workers if worker.coresFree > 0 && worker.state == WorkerState.ALIVE) {
         for (app <- waitingApps if app.coresLeft > 0) {
           if (canUse(app, worker)) {
@@ -540,6 +564,10 @@ private[spark] class Master(
     }
   }
 
+  /**
+   * 除了给worker发送LaunchExecutor指令外，还
+   * 需要给driver发送ExecutorAdded的消息，你的任务我已经安排人了。
+   */
   def launchExecutor(worker: WorkerInfo, exec: ExecutorInfo) {
     logInfo("Launching executor " + exec.fullId + " on worker " + worker.id)
     worker.addExecutor(exec)
