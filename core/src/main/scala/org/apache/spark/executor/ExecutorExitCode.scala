@@ -24,6 +24,8 @@ package org.apache.spark.executor
  * with "natural" exit statuses that may be caused by the JVM or user code. In particular,
  * exit codes 128+ arise on some Unix-likes as a result of signals, and it appears that the
  * OpenJDK JVM may use exit code 1 in some of its own "last chance" code.
+ * 这里列出的退出代码，是Executor在失败是向Master提供退出信息的，假设集群管理框架能够捕获的这些退出代码(
+ * 可能没有log 文件).
  */
 private[spark]
 object ExecutorExitCode {

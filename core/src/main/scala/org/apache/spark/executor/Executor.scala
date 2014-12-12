@@ -34,6 +34,8 @@ import org.apache.spark.util.{AkkaUtils, Utils}
 
 /**
  * Spark executor used with Mesos, YARN, and the standalone scheduler.
+ *
+ * Executor的职责：向Driver发送心跳，2. updateDependencies   3. launchTask/killTask
  */
 private[spark] class Executor(
     executorId: String,
@@ -312,6 +314,7 @@ private[spark] class Executor(
   /**
    * Download any missing dependencies if we receive a new set of files and JARs from the
    * SparkContext. Also adds any new JARs we fetched to the class loader.
+   * 下载依赖的Jar包，并将依赖添加到类加载器
    */
   private def updateDependencies(newFiles: HashMap[String, Long], newJars: HashMap[String, Long]) {
     synchronized {

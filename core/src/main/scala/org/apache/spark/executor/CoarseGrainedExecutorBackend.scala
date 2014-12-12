@@ -33,6 +33,13 @@ import org.apache.spark.scheduler.TaskDescription
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages._
 import org.apache.spark.util.{ActorLogReceive, AkkaUtils, SignalLogger, Utils}
 
+/**
+ * Executor后台，负责与Driver等管理者的通讯及Executor实例的创建
+ *
+ * 广义上的Executor包括通讯和计算两个部分功能，在代码实现时被两个不同的类实现
+ * 通讯部分由 CoarseGrainedExecutorBackend实现， 而计算部分由 Executor类实现
+ * 创建顺序 Driver --> ExecutorBackend --> Executor
+ */
 private[spark] class CoarseGrainedExecutorBackend(
     driverUrl: String,
     executorId: String,
