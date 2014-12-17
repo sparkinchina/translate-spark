@@ -69,6 +69,10 @@ import org.apache.spark.storage.BlockManagerMessages.BlockManagerHeartbeat
  **   Stage调度阶段：一个任务集所对应的调度阶段
  **   Job作业：一次RDD Action生成的一个或多个Stage所组成的一次计算作业
  **   DAGScheduler内部维护了各种 task / stage / job之间的映射关系表
+ *
+ *  DAGSchedulerActorSupervisor 负责监控策略及创建DAGSchedulerEventProcessActor
+ *  DAGSchedulerEventProcessActor 负责消息循环，并为内部提供统一的作业调度接口（ TODO 这个接口没有发现其存在的必要性，很多代码写了两边？)
+ *
  */
 private[spark]
 class DAGScheduler(
@@ -121,7 +125,9 @@ class DAGScheduler(
   // For tracking failed nodes, we use the MapOutputTracker's epoch number, which is sent with
   // every task. When we detect a node failing, we note the current epoch number and failed
   // executor, increment it for new tasks, and use this to ignore stray ShuffleMapTask results.
-  //
+  // 为了跟踪失败的节点，我们使用了MapOutputTracker中的epoch时间戳。当探测到一个节点失败时，我们记录下
+  // 当前epoch值和失败的Executor，将epoch+1作为新任务的epoch，从而能够甄别一个ShuffleMapTask返回的结果
+  // 是否该丢弃。（注：该map的key为ExecutorId, Value为时间戳）
   // TODO: Garbage collect information about failure epochs when we know there are no more
   //       stray messages to detect.
   private val failedEpoch = new HashMap[String, Long]
@@ -605,6 +611,7 @@ class DAGScheduler(
   /**
    * Resubmit any failed stages. Ordinarily called after a small amount of time has passed since
    * the last fetch failure.
+   * 重新提交失败的stage。 通常在最后一次抓取失败后，过一小段时间再调用该函数
    */
   private[scheduler] def resubmitFailedStages() {
     if (failedStages.size > 0) {
