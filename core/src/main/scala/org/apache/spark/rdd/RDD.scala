@@ -907,6 +907,8 @@ abstract class RDD[T: ClassTag](
    * and one operation for merging two U's, as in scala.TraversableOnce. Both of these functions are
    * allowed to modify and return their first argument instead of creating a new U to avoid memory
    * allocation.
+   * 对每个分区的元素进行聚合，然后对所有分区聚合的结果进行组合运算(combOp),zeroValue作为组合运算的初值。
+   *
    */
   def aggregate[U: ClassTag](zeroValue: U)(seqOp: (U, T) => U, combOp: (U, U) => U): U = {
     // Clone the zero value since we will also be serializing it as part of tasks
@@ -917,6 +919,7 @@ abstract class RDD[T: ClassTag](
     val mergeResult = (index: Int, taskResult: U) => jobResult = combOp(jobResult, taskResult)
     sc.runJob(this, aggregatePartition, mergeResult)
     jobResult
+    List().aggregate()
   }
 
   /**

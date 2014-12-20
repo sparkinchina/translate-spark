@@ -73,6 +73,8 @@ private[spark] class MapOutputTrackerMasterActor(tracker: MapOutputTrackerMaster
  * Class that keeps track of the location of the map output of
  * a stage. This is abstract because different versions of MapOutputTracker
  * (driver and worker) use different HashMap to store its metadata.
+ * 用于跟踪一个stage的map输出位置
+ * 该类为抽象类。Driver和Worker保存元数据使用不同的的HashMap
  */
 private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging {
   private val timeout = AkkaUtils.askTimeout(conf)
@@ -86,6 +88,10 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
    * On the master, it serves as the source of map outputs recorded from ShuffleMapTasks.
    * On the workers, it simply serves as a cache, in which a miss triggers a fetch from the
    * master's corresponding HashMap.
+   * 
+   * 这个HashMap在Master和Worker上有不同的行为
+   * 在Master上，它负责保存着map输出记录的原始数据，这些数据由ShuffleMapTasks产生
+   * 在Worker上，它仅仅作为数据缓存，如果数据不存在，就会触发一个抓取动作，从Master上获取相应的数据
    *
    * Note: because mapStatuses is accessed concurrently, subclasses should make sure it's a
    * thread-safe map.
@@ -95,6 +101,7 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
   /**
    * Incremented every time a fetch fails so that client nodes know to clear
    * their cache of map output locations if this happens.
+   * 作为一个时间戳存在。每次获取失败都会增大，从而让客户节点知道清理本地缓存的数据
    */
   protected var epoch: Long = 0
   protected val epochLock = new AnyRef
@@ -200,6 +207,8 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
    * Called from executors to update the epoch number, potentially clearing old outputs
    * because of a fetch failure. Each worker task calls this with the latest epoch
    * number on the master at the time it was created.
+   * 该函数由Executor调用，用来更新时间戳。
+   * Worker上的任务在调用该函数时会回传一个Worker上的时间戳
    */
   def updateEpoch(newEpoch: Long) {
     epochLock.synchronized {
@@ -354,6 +363,8 @@ private[spark] object MapOutputTracker extends Logging {
   // Serialize an array of map output locations into an efficient byte format so that we can send
   // it to reduce tasks. We do this by compressing the serialized bytes using GZIP. They will
   // generally be pretty compressible because many map outputs will be on the same hostname.
+  // 对map的输出位置进行序列化，从而提高reduce任务的性能。序列化采用GZIP压缩算法。
+  // 由于很多输出都在同一台主机上，因此这个压缩比一般会很高
   def serializeMapStatuses(statuses: Array[MapStatus]): Array[Byte] = {
     val out = new ByteArrayOutputStream
     val objOut = new ObjectOutputStream(new GZIPOutputStream(out))

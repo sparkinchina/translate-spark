@@ -27,6 +27,8 @@ import org.apache.spark.annotation.DeveloperApi
  * A Block can be uniquely identified by its filename, but each type of Block has a different
  * set of keys which produce its unique name.
  *
+ *  用来表示某种类型的数据块，一般是一个单独的文件。文件名可以作为一个数据块的唯一表示符，但每种类型的数据块
+ *  都可以根据其主键来产生唯一的名字
  * If your BlockId should be serializable, be sure to add it to the BlockId.apply() method.
  */
 @DeveloperApi

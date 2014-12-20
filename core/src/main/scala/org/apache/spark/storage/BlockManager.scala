@@ -262,6 +262,8 @@ private[spark] class BlockManager(
    * thread if our heartbeat to the block manager indicates that we were not registered.
    *
    * Note that this method must be called without any BlockInfo locks held.
+   *
+   * 向 BlockManagerMaster（重新）注册，并报告所负责的数据块。该调用是在 heart beat 线程中完成的
    */
   def reregister(): Unit = {
     // TODO: We might need to rate limit re-registering.
