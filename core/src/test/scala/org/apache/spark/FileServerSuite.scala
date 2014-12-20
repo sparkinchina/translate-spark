@@ -21,7 +21,6 @@ import java.io._
 import java.util.jar.{JarEntry, JarOutputStream}
 
 import com.google.common.io.ByteStreams
-import com.google.common.io.Files
 import org.scalatest.FunSuite
 
 import org.apache.spark.SparkContext._
@@ -42,8 +41,7 @@ class FileServerSuite extends FunSuite with LocalSparkContext {
   override def beforeAll() {
     super.beforeAll()
 
-    tmpDir = Files.createTempDir()
-    tmpDir.deleteOnExit()
+    tmpDir = Utils.createTempDir()
     val testTempDir = new File(tmpDir, "test")
     testTempDir.mkdir()
 

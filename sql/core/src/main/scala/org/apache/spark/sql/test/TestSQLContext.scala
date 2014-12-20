@@ -17,8 +17,8 @@
 
 package org.apache.spark.sql.test
 
-import org.apache.spark.sql.{SQLConf, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.{SQLConf, SQLContext}
 
 /** A SQLContext that can be used for local testing. */
 object TestSQLContext

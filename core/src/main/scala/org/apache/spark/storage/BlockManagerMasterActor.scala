@@ -86,6 +86,9 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
     case GetPeers(blockManagerId) =>
       sender ! getPeers(blockManagerId)
 
+    case GetActorSystemHostPortForExecutor(executorId) =>
+      sender ! getActorSystemHostPortForExecutor(executorId)
+
     case GetMemoryStatus =>
       sender ! memoryStatus
 
@@ -202,7 +205,7 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
         blockLocations.remove(blockId)
       }
     }
-    listenerBus.post(SparkListenerBlockManagerRemoved(blockManagerId))
+    listenerBus.post(SparkListenerBlockManagerRemoved(System.currentTimeMillis(), blockManagerId))
     logInfo(s"Removing block manager $blockManagerId")
   }
 
@@ -325,6 +328,7 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
   }
 
   private def register(id: BlockManagerId, maxMemSize: Long, slaveActor: ActorRef) {
+    val time = System.currentTimeMillis()
     if (!blockManagerInfo.contains(id)) {
       blockManagerIdByExecutor.get(id.executorId) match {
         case Some(oldId) =>
@@ -342,7 +346,7 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
       blockManagerInfo(id) = new BlockManagerInfo(
         id, System.currentTimeMillis(), maxMemSize, slaveActor)
     }
-    listenerBus.post(SparkListenerBlockManagerAdded(id, maxMemSize))
+    listenerBus.post(SparkListenerBlockManagerAdded(time, id, maxMemSize))
   }
 
   private def updateBlockInfo(
@@ -411,6 +415,21 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
       Seq.empty
     }
   }
+
+  /**
+   * Returns the hostname and port of an executor's actor system, based on the Akka address of its
+   * BlockManagerSlaveActor.
+   */
+  private def getActorSystemHostPortForExecutor(executorId: String): Option[(String, Int)] = {
+    for (
+      blockManagerId <- blockManagerIdByExecutor.get(executorId);
+      info <- blockManagerInfo.get(blockManagerId);
+      host <- info.slaveActor.path.address.host;
+      port <- info.slaveActor.path.address.port
+    ) yield {
+      (host, port)
+    }
+  }
 }
 
 @DeveloperApi
@@ -457,16 +476,18 @@ private[spark] class BlockManagerInfo(
 
     if (_blocks.containsKey(blockId)) {
       // The block exists on the slave already.
-      val originalLevel: StorageLevel = _blocks.get(blockId).storageLevel
+      val blockStatus: BlockStatus = _blocks.get(blockId)
+      val originalLevel: StorageLevel = blockStatus.storageLevel
+      val originalMemSize: Long = blockStatus.memSize
 
       if (originalLevel.useMemory) {
-        _remainingMem += memSize
+        _remainingMem += originalMemSize
       }
     }
 
     if (storageLevel.isValid) {
       /* isValid means it is either stored in-memory, on-disk or on-Tachyon.
-       * But the memSize here indicates the data size in or dropped from memory,
+       * The memSize here indicates the data size in or dropped from memory,
        * tachyonSize here indicates the data size in or dropped from Tachyon,
        * and the diskSize here indicates the data size in or dropped to disk.
        * They can be both larger than 0, when a block is dropped from memory to disk.
@@ -493,7 +514,6 @@ private[spark] class BlockManagerInfo(
       val blockStatus: BlockStatus = _blocks.get(blockId)
       _blocks.remove(blockId)
       if (blockStatus.storageLevel.useMemory) {
-        _remainingMem += blockStatus.memSize
         logInfo("Removed %s on %s in memory (size: %s, free: %s)".format(
           blockId, blockManagerId.hostPort, Utils.bytesToString(blockStatus.memSize),
           Utils.bytesToString(_remainingMem)))

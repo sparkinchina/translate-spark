@@ -763,5 +763,5 @@ class ExternalSorterSuite extends FunSuite with LocalSparkContext with PrivateMe
     }
 
     sorter2.stop()
-  }
+ }
 }

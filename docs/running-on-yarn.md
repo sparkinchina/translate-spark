@@ -11,7 +11,7 @@ was added to Spark in version 0.6.0, and improved in subsequent releases.
 
 Running Spark-on-YARN requires a binary distribution of Spark which is built with YARN support.
 Binary distributions can be downloaded from the Spark project website. 
-To build Spark yourself, refer to the [building with Maven guide](building-with-maven.html).
+To build Spark yourself, refer to [Building Spark](building-spark.html).
 
 # Configuration
 
@@ -30,7 +30,7 @@ Most of the configs are the same for Spark on YARN as for other deployment modes
 </tr>
 <tr>
   <td><code>spark.yarn.submit.file.replication</code></td>
-  <td>3</td>
+  <td>The default HDFS replication (usually 3)</td>
   <td>
     HDFS replication level for the files uploaded into HDFS for the application. These include things like the Spark jar, the app jar, and any distributed cache files/archives.
   </td>
@@ -79,16 +79,23 @@ Most of the configs are the same for Spark on YARN as for other deployment modes
 </tr>
 <tr>
  <td><code>spark.yarn.executor.memoryOverhead</code></td>
-  <td>384</td>
+  <td>executorMemory * 0.07, with minimum of 384 </td>
   <td>
-    The amount of off heap memory (in megabytes) to be allocated per executor. This is memory that accounts for things like VM overheads, interned strings, other native overheads, etc.
+    The amount of off heap memory (in megabytes) to be allocated per executor. This is memory that accounts for things like VM overheads, interned strings, other native overheads, etc. This tends to grow with the executor size (typically 6-10%).
   </td>
 </tr>
 <tr>
   <td><code>spark.yarn.driver.memoryOverhead</code></td>
-  <td>384</td>
+  <td>driverMemory * 0.07, with minimum of 384 </td>
   <td>
-    The amount of off heap memory (in megabytes) to be allocated per driver. This is memory that accounts for things like VM overheads, interned strings, other native overheads, etc.
+    The amount of off heap memory (in megabytes) to be allocated per driver. This is memory that accounts for things like VM overheads, interned strings, other native overheads, etc. This tends to grow with the container size (typically 6-10%).
+  </td>
+</tr>
+<tr>
+  <td><code>spark.yarn.queue</code></td>
+  <td>default</td>
+  <td>
+    The name of the YARN queue to which the application is submitted.
   </td>
 </tr>
 <tr>
@@ -125,6 +132,28 @@ Most of the configs are the same for Spark on YARN as for other deployment modes
      the environment of the executor launcher. 
   </td>
 </tr>
+<tr>
+  <td><code>spark.yarn.containerLauncherMaxThreads</code></td>
+  <td>25</td>
+  <td>
+    The maximum number of threads to use in the application master for launching executor containers.
+  </td>
+</tr>
+<tr>
+  <td><code>spark.yarn.datanucleus.dir</code></td>
+  <td>$SPARK_HOME/lib</td>
+  <td>
+     The location of the DataNucleus jars, in case overriding the default location is desired.
+     By default, Spark on YARN will use the DataNucleus jars installed at
+     <code>$SPARK_HOME/lib</code>, but the jars can also be in a world-readable location on HDFS.
+     This allows YARN to cache it on nodes so that it doesn't need to be distributed each time an
+     application runs. To point to a directory on HDFS, for example, set this configuration to
+     "hdfs:///some/path".
+
+     This is required because the datanucleus jars cannot be packaged into the
+     assembly jar due to metadata conflicts (involving <code>plugin.xml</code>.)
+  </td>
+</tr>
 </table>
 
 # Launching Spark on YARN
@@ -148,6 +177,7 @@ For example:
         --driver-memory 4g \
         --executor-memory 2g \
         --executor-cores 1 \
+        --queue thequeue \
         lib/spark-examples*.jar \
         10
 
@@ -196,6 +226,8 @@ To use a custom log4j configuration for the application master or executors, the
 Note that for the first option, both executors and the application master will share the same
 log4j configuration, which may cause issues when they run on the same node (e.g. trying to write
 to the same log file).
+
+If you need a reference to the proper location to put log files in the YARN so that YARN can properly display and aggregate them, use "${spark.yarn.app.container.log.dir}" in your log4j.properties. For example, log4j.appender.file_appender.File=${spark.yarn.app.container.log.dir}/spark.log. For streaming application, configuring RollingFileAppender and setting file location to YARN's log directory will avoid disk overflow caused by large log file, and logs can be accessed using YARN's log utility.
 
 # Important notes
 

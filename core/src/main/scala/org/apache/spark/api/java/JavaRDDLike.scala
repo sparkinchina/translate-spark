@@ -21,12 +21,14 @@ import java.util.{Comparator, List => JList, Iterator => JIterator}
 import java.lang.{Iterable => JIterable, Long => JLong}
 
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
 import com.google.common.base.Optional
 import org.apache.hadoop.io.compress.CompressionCodec
 
-import org.apache.spark.{Partition, SparkContext, TaskContext}
+import org.apache.spark._
+import org.apache.spark.SparkContext._
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.api.java.JavaPairRDD._
 import org.apache.spark.api.java.JavaSparkContext.fakeClassTag
@@ -294,8 +296,7 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
    * Applies a function f to all elements of this RDD.
    */
   def foreach(f: VoidFunction[T]) {
-    val cleanF = rdd.context.clean((x: T) => f.call(x))
-    rdd.foreach(cleanF)
+    rdd.foreach(x => f.call(x))
   }
 
   /**
@@ -492,9 +493,9 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
   }
 
   /**
-   * Returns the top K elements from this RDD as defined by
+   * Returns the top k (largest) elements from this RDD as defined by
    * the specified Comparator[T].
-   * @param num the number of top elements to return
+   * @param num k, the number of top elements to return
    * @param comp the comparator that defines the order
    * @return an array of top elements
    */
@@ -506,9 +507,9 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
   }
 
   /**
-   * Returns the top K elements from this RDD using the
+   * Returns the top k (largest) elements from this RDD using the
    * natural ordering for T.
-   * @param num the number of top elements to return
+   * @param num k, the number of top elements to return
    * @return an array of top elements
    */
   def top(num: Int): JList[T] = {
@@ -517,9 +518,9 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
   }
 
   /**
-   * Returns the first K elements from this RDD as defined by
+   * Returns the first k (smallest) elements from this RDD as defined by
    * the specified Comparator[T] and maintains the order.
-   * @param num the number of top elements to return
+   * @param num k, the number of elements to return
    * @param comp the comparator that defines the order
    * @return an array of top elements
    */
@@ -551,9 +552,9 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
   }
 
   /**
-   * Returns the first K elements from this RDD using the
+   * Returns the first k (smallest) elements from this RDD using the
    * natural ordering for T while maintain the order.
-   * @param num the number of top elements to return
+   * @param num k, the number of top elements to return
    * @return an array of top elements
    */
   def takeOrdered(num: Int): JList[T] = {
@@ -575,4 +576,45 @@ trait JavaRDDLike[T, This <: JavaRDDLike[T, This]] extends Serializable {
 
   def name(): String = rdd.name
 
+  /**
+   * The asynchronous version of `count`, which returns a
+   * future for counting the number of elements in this RDD.
+   */
+  def countAsync(): JavaFutureAction[JLong] = {
+    new JavaFutureActionWrapper[Long, JLong](rdd.countAsync(), JLong.valueOf)
+  }
+
+  /**
+   * The asynchronous version of `collect`, which returns a future for
+   * retrieving an array containing all of the elements in this RDD.
+   */
+  def collectAsync(): JavaFutureAction[JList[T]] = {
+    new JavaFutureActionWrapper(rdd.collectAsync(), (x: Seq[T]) => x.asJava)
+  }
+
+  /**
+   * The asynchronous version of the `take` action, which returns a
+   * future for retrieving the first `num` elements of this RDD.
+   */
+  def takeAsync(num: Int): JavaFutureAction[JList[T]] = {
+    new JavaFutureActionWrapper(rdd.takeAsync(num), (x: Seq[T]) => x.asJava)
+  }
+
+  /**
+   * The asynchronous version of the `foreach` action, which
+   * applies a function f to all the elements of this RDD.
+   */
+  def foreachAsync(f: VoidFunction[T]): JavaFutureAction[Void] = {
+    new JavaFutureActionWrapper[Unit, Void](rdd.foreachAsync(x => f.call(x)),
+      { x => null.asInstanceOf[Void] })
+  }
+
+  /**
+   * The asynchronous version of the `foreachPartition` action, which
+   * applies a function f to each partition of this RDD.
+   */
+  def foreachPartitionAsync(f: VoidFunction[java.util.Iterator[T]]): JavaFutureAction[Void] = {
+    new JavaFutureActionWrapper[Unit, Void](rdd.foreachPartitionAsync(x => f.call(x)),
+      { x => null.asInstanceOf[Void] })
+  }
 }

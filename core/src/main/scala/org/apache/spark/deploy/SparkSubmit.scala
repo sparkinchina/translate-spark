@@ -18,7 +18,7 @@
 package org.apache.spark.deploy
 
 import java.io.{File, PrintStream}
-import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.{Modifier, InvocationTargetException}
 import java.net.URL
 
 import scala.collection.mutable.{ArrayBuffer, HashMap, Map}
@@ -67,7 +67,7 @@ object SparkSubmit {
   private val SPARK_SHELL = "spark-shell"
   private val PYSPARK_SHELL = "pyspark-shell"
 
-  private val CLASS_NOT_FOUND_EXIT_STATUS = 1
+  private val CLASS_NOT_FOUND_EXIT_STATUS = 101
 
   // Exposed for testing
   private[spark] var exitFn: () => Unit = () => System.exit(-1)
@@ -171,8 +171,9 @@ object SparkSubmit {
         args.files = mergeFileLists(args.files, args.primaryResource)
       }
       args.files = mergeFileLists(args.files, args.pyFiles)
-      // Format python file paths properly before adding them to the PYTHONPATH
-      sysProps("spark.submit.pyFiles") = PythonRunner.formatPaths(args.pyFiles).mkString(",")
+      if (args.pyFiles != null) {
+        sysProps("spark.submit.pyFiles") = args.pyFiles
+      }
     }
 
     // Special flag to avoid deprecation warnings at the client
@@ -287,15 +288,37 @@ object SparkSubmit {
       }
     }
 
-    // Properties given with --conf are superceded by other options, but take precedence over
-    // properties in the defaults file.
+    // Load any properties specified through --conf and the default properties file
     for ((k, v) <- args.sparkProperties) {
       sysProps.getOrElseUpdate(k, v)
     }
 
-    // Read from default spark properties, if any
-    for ((k, v) <- args.getDefaultSparkProperties) {
-      sysProps.getOrElseUpdate(k, v)
+    // Ignore invalid spark.driver.host in cluster modes.
+    if (deployMode == CLUSTER) {
+      sysProps -= ("spark.driver.host")
+    }
+
+    // Resolve paths in certain spark properties
+    val pathConfigs = Seq(
+      "spark.jars",
+      "spark.files",
+      "spark.yarn.jar",
+      "spark.yarn.dist.files",
+      "spark.yarn.dist.archives")
+    pathConfigs.foreach { config =>
+      // Replace old URIs with resolved URIs, if they exist
+      sysProps.get(config).foreach { oldValue =>
+        sysProps(config) = Utils.resolveURIs(oldValue)
+      }
+    }
+
+    // Resolve and format python file paths properly before adding them to the PYTHONPATH.
+    // The resolving part is redundant in the case of --py-files, but necessary if the user
+    // explicitly sets `spark.submit.pyFiles` in his/her default properties file.
+    sysProps.get("spark.submit.pyFiles").foreach { pyFiles =>
+      val resolvedPyFiles = Utils.resolveURIs(pyFiles)
+      val formattedPyFiles = PythonRunner.formatPaths(resolvedPyFiles).mkString(",")
+      sysProps("spark.submit.pyFiles") = formattedPyFiles
     }
 
     (childArgs, childClasspath, sysProps, childMainClass)
@@ -334,11 +357,17 @@ object SparkSubmit {
     } catch {
       case e: ClassNotFoundException =>
         e.printStackTrace(printStream)
+        if (childMainClass.contains("thriftserver")) {
+          println(s"Failed to load main class $childMainClass.")
+          println("You need to build Spark with -Phive and -Phive-thriftserver.")
+        }
         System.exit(CLASS_NOT_FOUND_EXIT_STATUS)
     }
 
     val mainMethod = mainClass.getMethod("main", new Array[String](0).getClass)
-
+    if (!Modifier.isStatic(mainMethod.getModifiers)) {
+      throw new IllegalStateException("The main method in the given main class must be static")
+    }
     try {
       mainMethod.invoke(null, childArgs.toArray)
     } catch {

@@ -30,17 +30,14 @@ import subprocess
 import time
 import traceback
 
-# Note: These variables must be updated before use!
-NEW_RELEASE_VERSION = "1.1.1"
-PREV_RELEASE_GIT_TAG = "1.1.0"
-
-# Do not set these
 SPARK_HOME = os.environ["SPARK_HOME"]
+NEW_RELEASE_VERSION = "1.0.0"
+PREV_RELEASE_GIT_TAG = "v0.9.1"
+
 CHANGELIST = "CHANGES.txt"
 OLD_CHANGELIST = "%s.old" % (CHANGELIST)
 NEW_CHANGELIST = "%s.new" % (CHANGELIST)
 TMP_CHANGELIST = "%s.tmp" % (CHANGELIST)
-PREV_RELEASE_GIT_TAG = "v" + PREV_RELEASE_GIT_TAG
 
 # date before first PR in TLP Spark repo
 SPARK_REPO_CHANGE_DATE1 = time.strptime("2014-02-26", "%Y-%m-%d")

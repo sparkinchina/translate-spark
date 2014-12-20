@@ -56,8 +56,15 @@ case class SparkListenerTaskEnd(
   extends SparkListenerEvent
 
 @DeveloperApi
-case class SparkListenerJobStart(jobId: Int, stageIds: Seq[Int], properties: Properties = null)
-  extends SparkListenerEvent
+case class SparkListenerJobStart(
+    jobId: Int,
+    stageInfos: Seq[StageInfo],
+    properties: Properties = null)
+  extends SparkListenerEvent {
+  // Note: this is here for backwards-compatibility with older versions of this event which
+  // only stored stageIds and not StageInfos:
+  val stageIds: Seq[Int] = stageInfos.map(_.stageId)
+}
 
 @DeveloperApi
 case class SparkListenerJobEnd(jobId: Int, jobResult: JobResult) extends SparkListenerEvent
@@ -67,11 +74,11 @@ case class SparkListenerEnvironmentUpdate(environmentDetails: Map[String, Seq[(S
   extends SparkListenerEvent
 
 @DeveloperApi
-case class SparkListenerBlockManagerAdded(blockManagerId: BlockManagerId, maxMem: Long)
+case class SparkListenerBlockManagerAdded(time: Long, blockManagerId: BlockManagerId, maxMem: Long)
   extends SparkListenerEvent
 
 @DeveloperApi
-case class SparkListenerBlockManagerRemoved(blockManagerId: BlockManagerId)
+case class SparkListenerBlockManagerRemoved(time: Long, blockManagerId: BlockManagerId)
   extends SparkListenerEvent
 
 @DeveloperApi
@@ -89,8 +96,8 @@ case class SparkListenerExecutorMetricsUpdate(
   extends SparkListenerEvent
 
 @DeveloperApi
-case class SparkListenerApplicationStart(appName: String, time: Long, sparkUser: String)
-  extends SparkListenerEvent
+case class SparkListenerApplicationStart(appName: String, appId: Option[String], time: Long,
+  sparkUser: String) extends SparkListenerEvent
 
 @DeveloperApi
 case class SparkListenerApplicationEnd(time: Long) extends SparkListenerEvent

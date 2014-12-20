@@ -25,6 +25,8 @@ package org.apache.spark.scheduler
  * 调度系统后台接口
  */
 private[spark] trait SchedulerBackend {
+  private val appId = "spark-application-" + System.currentTimeMillis
+
   def start(): Unit
   def stop(): Unit
   def reviveOffers(): Unit
@@ -33,4 +35,12 @@ private[spark] trait SchedulerBackend {
   def killTask(taskId: Long, executorId: String, interruptThread: Boolean): Unit =
     throw new UnsupportedOperationException
   def isReady(): Boolean = true
+
+  /**
+   * Get an application ID associated with the job.
+   *
+   * @return An application ID
+   */
+  def applicationId(): String = appId
+
 }

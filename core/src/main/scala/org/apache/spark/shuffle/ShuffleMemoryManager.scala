@@ -19,7 +19,7 @@ package org.apache.spark.shuffle
 
 import scala.collection.mutable
 
-import org.apache.spark.{Logging, SparkConf, SparkEnv, SparkException}
+import org.apache.spark.{Logging, SparkException, SparkConf}
 
 /**
  * Allocates a pool of memory to task threads for use in shuffle operations. Each disk-spilling
@@ -66,8 +66,9 @@ private[spark] class ShuffleMemoryManager(maxMemory: Long) extends Logging {
       val curMem = threadMemory(threadId)
       val freeMemory = maxMemory - threadMemory.values.sum
 
-      // How much we can grant this thread; don't let it grow to more than 1 / numActiveThreads
-      val maxToGrant = math.min(numBytes, (maxMemory / numActiveThreads) - curMem)
+      // How much we can grant this thread; don't let it grow to more than 1 / numActiveThreads;
+      // don't let it be negative
+      val maxToGrant = math.min(numBytes, math.max(0, (maxMemory / numActiveThreads) - curMem))
 
       if (curMem < maxMemory / (2 * numActiveThreads)) {
         // We want to let each thread get at least 1 / (2 * numActiveThreads) before blocking;
@@ -111,7 +112,7 @@ private[spark] class ShuffleMemoryManager(maxMemory: Long) extends Logging {
   }
 }
 
-private[spark] object ShuffleMemoryManager {
+private object ShuffleMemoryManager {
   /**
    * Figure out the shuffle memory limit from a SparkConf. We currently have both a fraction
    * of the memory pool and a safety factor since collections can sometimes grow bigger than
@@ -122,7 +123,4 @@ private[spark] object ShuffleMemoryManager {
     val safetyFraction = conf.getDouble("spark.shuffle.safetyFraction", 0.8)
     (Runtime.getRuntime.maxMemory * memoryFraction * safetyFraction).toLong
   }
-
-  // Initial threshold for the size of a collection before we start tracking its memory usage
-  val DEFAULT_INITIAL_MEMORY_THRESHOLD: Long = 5 * 1024 * 1024
 }
