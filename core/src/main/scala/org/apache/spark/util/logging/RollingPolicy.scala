@@ -26,18 +26,25 @@ import org.apache.spark.Logging
  * Defines the policy based on which [[org.apache.spark.util.logging.RollingFileAppender]] will
  * generate rolling files.
  */
+/**
+ * 定义一个用 [[org.apache.spark.util.logging.RollingFileAppender]] 类产生连续文件的策略类.
+ */
 private[spark] trait RollingPolicy {
 
+  /** Whether rollover should be initiated at this moment */
   /** Whether rollover should be initiated at this moment */
   def shouldRollover(bytesToBeWritten: Long): Boolean
 
   /** Notify that rollover has occurred */
+  /** 通知翻转已经发生 */
   def rolledOver()
 
   /** Notify that bytes have been written */
+  /** 通知字节组已经被写入 */
   def bytesWritten(bytes: Long)
 
   /** Get the desired name of the rollover file */
+  /** 产生这个翻转文件请求的名字 */
   def generateRolledOverFileSuffix(): String
 }
 
@@ -45,10 +52,14 @@ private[spark] trait RollingPolicy {
  * Defines a [[org.apache.spark.util.logging.RollingPolicy]] by which files will be rolled
  * over at a fixed interval.
  */
+/**
+ * 定义一个在固定时间间隔哪些文件将被翻转的策略类 [[org.apache.spark.util.logging.RollingPolicy]]
+ */
 private[spark] class TimeBasedRollingPolicy(
     var rolloverIntervalMillis: Long,
     rollingFileSuffixPattern: String,
     checkIntervalConstraint: Boolean = true   // set to false while testing
+    // 当测试的时候设置为false
   ) extends RollingPolicy with Logging {
 
   import TimeBasedRollingPolicy._
@@ -62,17 +73,19 @@ private[spark] class TimeBasedRollingPolicy(
   private val formatter = new SimpleDateFormat(rollingFileSuffixPattern)
 
   /** Should rollover if current time has exceeded next rollover time */
+  /** 根据当前时间是否已经超过了下一次翻转时间判断是否应该翻转 */
   def shouldRollover(bytesToBeWritten: Long): Boolean = {
     System.currentTimeMillis > nextRolloverTime
   }
 
   /** Rollover has occurred, so find the next time to rollover */
+  /** 翻转完成后计算下一个翻转的时间 */
   def rolledOver() {
     nextRolloverTime = calculateNextRolloverTime()
     logDebug(s"Current time: ${System.currentTimeMillis}, next rollover time: " + nextRolloverTime)
   }
 
-  def bytesWritten(bytes: Long) { }  // nothing to do
+  def bytesWritten(bytes: Long) { }  // nothing to do  // 啥也不干
 
   private def calculateNextRolloverTime(): Long = {
     val now = System.currentTimeMillis()
@@ -96,6 +109,9 @@ private[spark] object TimeBasedRollingPolicy {
  * Defines a [[org.apache.spark.util.logging.RollingPolicy]] by which files will be rolled
  * over after reaching a particular size.
  */
+/**
+ * 定义一个在达到一个特定大小后哪些文件将被翻转的策略类 [[org.apache.spark.util.logging.RollingPolicy]]
+ */
 private[spark] class SizeBasedRollingPolicy(
     var rolloverSizeBytes: Long,
     checkSizeConstraint: Boolean = true     // set to false while testing
@@ -112,22 +128,26 @@ private[spark] class SizeBasedRollingPolicy(
   val formatter = new SimpleDateFormat("--yyyy-MM-dd--HH-mm-ss--SSSS")
 
   /** Should rollover if the next set of bytes is going to exceed the size limit */
+  /** 根据下一组字节是否会好处大小限制来判断是否翻转 */
   def shouldRollover(bytesToBeWritten: Long): Boolean = {
     logInfo(s"$bytesToBeWritten + $bytesWrittenSinceRollover > $rolloverSizeBytes")
     bytesToBeWritten + bytesWrittenSinceRollover > rolloverSizeBytes
   }
 
   /** Rollover has occurred, so reset the counter */
+  /** 发生翻转后重置这个计数器 */
   def rolledOver() {
     bytesWrittenSinceRollover = 0
   }
 
   /** Increment the bytes that have been written in the current file */
+  /** 增加将被写入当前文件的字节 */
   def bytesWritten(bytes: Long) {
     bytesWrittenSinceRollover += bytes
   }
 
   /** Get the desired name of the rollover file */
+  /** 生成这个翻转文件请求的名字 */
   def generateRolledOverFileSuffix(): String = {
     formatter.format(Calendar.getInstance.getTime)
   }

@@ -25,6 +25,11 @@ import java.util.Comparator
  * The Java implementation is package private, and hence it cannot be called outside package
  * org.apache.spark.util.collection. This is a simple wrapper of it that is available to spark.
  */
+/**
+ * 这个Java实现版的[[TimSort]]类的简单包装类.
+ * 这个对应的Java实现版的类修饰符是包私有类型,因此它不能被包org.apache.spark.util.collection之
+ * 外的范围调用。当前这个类是对它的在spark内可用的简单包装。
+ */
 private[spark]
 class Sorter[K, Buffer](private val s: SortDataFormat[K, Buffer]) {
 

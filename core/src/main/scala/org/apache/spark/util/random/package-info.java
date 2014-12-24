@@ -18,4 +18,7 @@
 /**
  * Utilities for random number generation.
  */
+/**
+ * 随机数字生成的工具集.
+ */
 package org.apache.spark.util.random;

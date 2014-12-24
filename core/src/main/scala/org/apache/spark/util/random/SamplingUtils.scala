@@ -30,6 +30,14 @@ private[spark] object SamplingUtils {
    * @param seed random seed
    * @return (samples, input size)
    */
+  /**
+   * Reservoir sampling implementation that also returns the input size.
+   *
+   * @param input 输入大小
+   * @param k 样本库容量
+   * @param seed 随机数种子
+   * @return (样本数据集, 输入大小)
+   */
   def reservoirSampleAndCount[T: ClassTag](
       input: Iterator[T],
       k: Int,

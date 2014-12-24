@@ -110,9 +110,14 @@ private[spark] class FileAppender(inputStream: InputStream, file: File, bufferSi
  * Companion object to [[org.apache.spark.util.logging.FileAppender]] which has helper
  * functions to choose the correct type of FileAppender based on SparkConf configuration.
  */
+/**
+ *  [[org.apache.spark.util.logging.FileAppender]] 类的伴生object,它包含可以选择基于
+ *  SparkConf配置的直接的FileAppender类型的助手函数.
+ */
 private[spark] object FileAppender extends Logging {
 
   /** Create the right appender based on Spark configuration */
+  /** 基于Spark配置创建直接的appender */
   def apply(inputStream: InputStream, file: File, conf: SparkConf): FileAppender = {
 
     import RollingFileAppender._

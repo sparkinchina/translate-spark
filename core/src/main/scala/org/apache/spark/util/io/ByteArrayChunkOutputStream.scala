@@ -27,12 +27,20 @@ import scala.collection.mutable.ArrayBuffer
  *
  * @param chunkSize size of each chunk, in bytes.
  */
+
+/**
+ * 一个写入固定大小分片的字节数组的输出流.
+ *
+ * @param chunkSize 每个分片的大小, 单位是字节.
+ */
 private[spark]
 class ByteArrayChunkOutputStream(chunkSize: Int) extends OutputStream {
 
   private val chunks = new ArrayBuffer[Array[Byte]]
 
   /** Index of the last chunk. Starting with -1 when the chunks array is empty. */
+
+  /** 最新的分片的下标. 当分片数组为空时以-1开始. */
   private var lastChunkIndex = -1
 
   /**
@@ -40,6 +48,13 @@ class ByteArrayChunkOutputStream(chunkSize: Int) extends OutputStream {
    *
    * If this equals chunkSize, it means for next write we need to allocate a new chunk.
    * This can also never be 0.
+   */
+
+  /**
+   * 下一个插入这个最新切片的位置.
+   *
+   * 如果这个和chunkSize相等,意味着我们需要为下一次写入分配一个新的分片.
+   * 这个可能永远不是0.
    */
   private var position = chunkSize
 
@@ -78,6 +93,13 @@ class ByteArrayChunkOutputStream(chunkSize: Int) extends OutputStream {
       // bounded to only the last chunk's position. However, given our use case in Spark (to put
       // the chunks in block manager), only limiting the view bound of the buffer would still
       // require the block manager to store the whole chunk.
+
+      // 将开头的 n-1 分片复制到输出, 然后创建适应这个最后分片的数组.
+      // An alternative would have been returning an array of ByteBuffers, with the last buffer
+      // bounded to only the last chunk's position. However, given our use case in Spark (to put
+      // the chunks in block manager), only limiting the view bound of the buffer would still
+      // require the block manager to store the whole chunk.
+
       val ret = new Array[Array[Byte]](chunks.size)
       for (i <- 0 until chunks.size - 1) {
         ret(i) = chunks(i)
