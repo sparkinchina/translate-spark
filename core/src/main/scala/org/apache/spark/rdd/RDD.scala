@@ -919,7 +919,6 @@ abstract class RDD[T: ClassTag](
     val mergeResult = (index: Int, taskResult: U) => jobResult = combOp(jobResult, taskResult)
     sc.runJob(this, aggregatePartition, mergeResult)
     jobResult
-    List().aggregate()
   }
 
   /**
