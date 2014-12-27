@@ -104,7 +104,6 @@ private[spark] class RollingFileAppender(
           // The resultant file names are long and ugly, so this is used only
           // if there is a name collision. This can be avoided by the using
           // the right pattern such that name collisions do not occur.
-
           // 一旦这个翻转文件名字冲突 , 产生一个独一无二的文件名.
           // 因为这些组合的文件名是长且丑陋, 因此只有当有一个名字冲突出现的时候才适合使用
           // 这个采用使用适当的模式来避免名称冲突的发生

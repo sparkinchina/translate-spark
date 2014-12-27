@@ -25,6 +25,9 @@ import org.apache.spark.util.{IntParam, Utils}
 /**
  * Continuously appends the data from an input stream into the given file.
  */
+/**
+ * 连续从一个输入流向给定的文件追加数据.
+ */
 private[spark] class FileAppender(inputStream: InputStream, file: File, bufferSize: Int = 8192)
   extends Logging {
   @volatile private var outputStream: FileOutputStream = null
@@ -32,6 +35,7 @@ private[spark] class FileAppender(inputStream: InputStream, file: File, bufferSi
   @volatile private var stopped = false           // has the appender stopped
 
   // Thread that reads the input stream and writes to file
+  // 读取输入流并写入文件的线程
   private val writingThread = new Thread("File appending thread for " + file) {
     setDaemon(true)
     override def run() {
@@ -46,6 +50,9 @@ private[spark] class FileAppender(inputStream: InputStream, file: File, bufferSi
    * Wait for the appender to stop appending, either because input stream is closed
    * or because of any error in appending
    */
+  /**
+   * 等待这个appender停止追加, 要么因为输入流关闭了，要么就因为在追加过程中出现任何错误
+   */
   def awaitTermination() {
     synchronized {
       if (!stopped) {
@@ -55,11 +62,13 @@ private[spark] class FileAppender(inputStream: InputStream, file: File, bufferSi
   }
 
   /** Stop the appender */
+  /** 停止这个appender */
   def stop() {
     markedForStop = true
   }
 
   /** Continuously read chunks from the input stream and append to the file */
+  /** 连续从输入流读取分块数据并且追加内容到当前文件 */
   protected def appendStreamToFile() {
     try {
       logDebug("Started appending thread")
@@ -85,6 +94,7 @@ private[spark] class FileAppender(inputStream: InputStream, file: File, bufferSi
   }
 
   /** Append bytes to the file output stream */
+  /** 在文件时输出流追加字节 */
   protected def appendToFile(bytes: Array[Byte], len: Int) {
     if (outputStream == null) {
       openFile()
@@ -93,12 +103,14 @@ private[spark] class FileAppender(inputStream: InputStream, file: File, bufferSi
   }
 
   /** Open the file output stream */
+  /** 打开这个文件输出流 */
   protected def openFile() {
     outputStream = new FileOutputStream(file, false)
     logDebug(s"Opened file $file")
   }
 
   /** Close the file output stream */
+  /** 关闭这个文件输出流 */
   protected def closeFile() {
     outputStream.flush()
     outputStream.close()
