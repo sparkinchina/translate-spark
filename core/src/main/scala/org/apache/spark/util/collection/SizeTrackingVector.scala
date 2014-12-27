@@ -23,7 +23,7 @@ import scala.reflect.ClassTag
  * An append-only buffer that keeps track of its estimated size in bytes.
  */
 /**
- * 一个跟踪目标估算字节大小的只追加的缓冲区.
+ * 一个跟踪目标估算字节容量的只追加的缓冲区.
  */
 private[spark] class SizeTrackingVector[T: ClassTag]
   extends PrimitiveVector[T]
@@ -44,7 +44,7 @@ private[spark] class SizeTrackingVector[T: ClassTag]
    * Return a trimmed version of the underlying array.
    */
   /**
-   * 返回一个底层数组的修剪版本
+   * 返回一个底层数组的剪裁版本
    */
   def toArray: Array[T] = {
     super.iterator.toArray
