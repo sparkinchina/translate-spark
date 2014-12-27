@@ -38,6 +38,9 @@ class Sorter[K, Buffer](private val s: SortDataFormat[K, Buffer]) {
   /**
    * Sorts the input buffer within range [lo, hi).
    */
+  /**
+   * 在范围 [lo, hi)内排序输入buffe .
+   */
   def sort(a: Buffer, lo: Int, hi: Int, c: Comparator[_ >: K]): Unit = {
     timSort.sort(a, lo, hi, c)
   }
