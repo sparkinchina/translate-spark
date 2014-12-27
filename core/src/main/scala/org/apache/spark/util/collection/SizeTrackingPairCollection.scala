@@ -32,7 +32,7 @@ import java.util.Comparator
 // TODO: 应该extend Iterable[Product2[K, V]] 而不是 (K, V)
 private[spark] trait SizeTrackingPairCollection[K, V] extends Iterable[(K, V)] {
   /** Estimate the collection's current memory usage in bytes. */
-  /** 估计这个集合的当前内存使用字节数. */
+  /** 估计这个集合的当前内存字节使用量. */
   def estimateSize(): Long
 
   /** Iterate through the data in a given key order. This may destroy the underlying collection. */
