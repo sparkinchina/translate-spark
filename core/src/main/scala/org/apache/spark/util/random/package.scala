@@ -20,4 +20,7 @@ package org.apache.spark.util
 /**
  * Utilities for random number generation.
  */
+/**
+ * 随机数生成的工具集.
+ */
 package object random

@@ -24,12 +24,12 @@ import org.apache.spark.annotation.DeveloperApi
  * A class with pseudorandom behavior.
  */
 /**
- * :: 开发者API ::
+ * :: DeveloperApi ::
  * 一个提供伪随机数行为的类.
  */
 @DeveloperApi
 trait Pseudorandom {
   /** Set random seed. */
-  /** 设置随机种子. */
+  /** 设置随机数种子. */
   def setSeed(seed: Long)
 }

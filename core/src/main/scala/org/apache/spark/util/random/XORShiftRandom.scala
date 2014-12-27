@@ -98,6 +98,8 @@ private[spark] object XORShiftRandom {
 
     /* Return results as a map instead of just printing to screen
     in case the user wants to do something with them */
+    /* Return results as a map instead of just printing to screen
+  in case the user wants to do something with them */
     Map("javaTime" -> timeIt(numIters) { javaRand.nextInt() },
         "xorTime" -> timeIt(numIters) { xorRand.nextInt() })
   }

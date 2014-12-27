@@ -35,13 +35,23 @@ import org.apache.spark.annotation.DeveloperApi
  * @tparam T item type
  * @tparam U sampled item type
  */
+/**
+ * :: DeveloperApi ::
+ * 一个伪随机数抽样器.它可能会改变这个样本项类型. 举例来说, 我们可能要添加权重到分层抽样或者重要性抽样.
+ * 应该仅仅使用绑定到这个抽样器的变换器而且不能在抽样之后应用.
+ *
+ * @tparam T 项目类型
+ * @tparam U 抽样的项目类型
+ */
 @DeveloperApi
 trait RandomSampler[T, U] extends Pseudorandom with Cloneable with Serializable {
 
   /** take a random sample */
+  /** 取得一个随机样本 */
   def sample(items: Iterator[T]): Iterator[U]
 
   /** return a copy of the RandomSampler object */
+  /** 返回 RandomSampler 对象的副本 */
   override def clone: RandomSampler[T, U] =
     throw new NotImplementedError("clone() is not implemented.")
 }
@@ -49,6 +59,7 @@ trait RandomSampler[T, U] extends Pseudorandom with Cloneable with Serializable 
 private[spark]
 object RandomSampler {
   /** Default random number generator used by random samplers. */
+  /** 随机数抽样器使用的默认随机数生成器. */
   def newDefaultRNG: Random = new XORShiftRandom
 
   /**
@@ -330,10 +341,13 @@ class GapSamplingReplacementIterator[T: ClassTag](
   private def poissonGE1: Int = {
     // simulate that the standard poisson sampling
     // gave us at least one iteration, for a sample of >= 1
+    // 模拟标准的泊松抽样算法
+    // 对于Sample值>=1,提供给我们至少一次迭代.
     var pp = q + ((1.0 - q) * rng.nextDouble())
     var r = 1
 
     // now continue with standard poisson sampling algorithm
+    // 现在继续进行标准的泊松抽样算法
     pp *= rng.nextDouble()
     while (pp > q) {
       r += 1
@@ -343,6 +357,7 @@ class GapSamplingReplacementIterator[T: ClassTag](
   }
 
   /** advance to first sample as part of object construction. */
+  /** 作为对象构造的部分提升到第一个抽样. */
   advance
   // Attempting to invoke this closer to the top with other object initialization
   // was causing it to break in strange ways, so I'm invoking it last, which seems to
