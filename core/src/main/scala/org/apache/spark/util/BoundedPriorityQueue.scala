@@ -28,6 +28,11 @@ import scala.collection.generic.Growable
  * class and modifies it such that only the top K elements are retained.
  * The top K elements are defined by an implicit Ordering[A].
  */
+/** 一个可以指定最大元素个数、且带优先级的队列。封装了 PriorityQueue 类。
+ * 仅仅保存了根据 隐式参数 ord: Ordering[A] 排序后的前 K 个元素。
+ *
+ * 扩展： 如果要在表达式中连续使用的话，方法需要返回 this。
+ */
 private[spark] class BoundedPriorityQueue[A](maxSize: Int)(implicit ord: Ordering[A])
   extends Iterable[A] with Growable[A] with Serializable {
 
