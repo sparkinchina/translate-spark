@@ -21,6 +21,11 @@ package org.apache.spark.util
  * Wrapper around an iterator which calls a completion method after it successfully iterates
  * through all the elements.
  */
+/**
+ * 一个 iterator 的封装类，在成功迭代所有元素之后，调用一个 completion 方法。
+ * 提供了一个伴生对象，方便构造 CompletionIterator 对象。
+ * 理解：可以参考 装饰模式。
+ */
 private[spark]
 // scalastyle:off
 abstract class CompletionIterator[ +A, +I <: Iterator[A]](sub: I) extends Iterator[A] {
