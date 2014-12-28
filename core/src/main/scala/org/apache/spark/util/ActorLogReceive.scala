@@ -19,7 +19,6 @@ package org.apache.spark.util
 
 import akka.actor.Actor
 import org.slf4j.Logger
-
 /**
  * A trait to enable logging all Akka actor messages. Here's an example of using this:
  *
@@ -35,6 +34,14 @@ import org.slf4j.Logger
  *   }
  * }}}
  *
+ */
+/**
+ * 一个 trait，混入该 trait 后，可以在日志中记录所有 Akka actor 的消息及其处理情况。
+ * 主要的作用：在重载 Actor 的 receive 方法的基础上，添加日志信息，
+ * 然后将消息转入 receiveWithLogging 方法进行处理。
+ *
+ * 这里的 self，可以理解成 java 中的 this 。
+ * 扩展： 可以参考装饰模式。
  */
 private[spark] trait ActorLogReceive {
   self: Actor =>
