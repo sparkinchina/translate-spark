@@ -33,9 +33,9 @@ import org.apache.spark.{Logging, SecurityManager, SparkConf, SparkEnv, SparkExc
  * Various utility classes for working with Akka.
  */
 /**
- * ÎªÊ¹ÓÃ Akka ¶øÌá¹©µÄ¸÷ÖÖ¹¤¾ßÀà¡£
+ * ä¸ºä½¿ç”¨ Akka è€Œæä¾›çš„å„ç§å·¥å…·ç±»ã€‚
  *
- * À©Õ¹£º¿ÉÒÔ²Î¿¼¼òµ¥¹¤³§Ä£Ê½£¬ÈçÌá¹©ÁË ActorSystem µÈ¹¹½¨·½·¨¡£
+ * æ‰©å±•ï¼šå¯ä»¥å‚è€ƒç®€å•å·¥å‚æ¨¡å¼ï¼Œå¦‚æä¾›äº† ActorSystem ç­‰æ„å»ºæ–¹æ³•ã€‚
  */
 private[spark] object AkkaUtils extends Logging {
 
@@ -50,10 +50,10 @@ private[spark] object AkkaUtils extends Logging {
    * of a fatal exception. This is used by [[org.apache.spark.executor.Executor]].
    */
   /**
-   * ×¢Òâ £ºÃû×Ö²ÎÊı·Ç³£ÖØÒª£¬£¨²Î¿¼ Akka ÏµÍ³Ê¹ÓÃµÄÊ÷ĞÎ½á¹¹£¬ÒÔ¼° Akka µÄÂ·¾¶£©£¬Ò»¸ö¿Í»§¶Ë·¢ËÍÏûÏ¢Ê±£¬
-   * Èç¹ûÃû×Ö²»ÕıÈ·£¬¼´Ê¹Ö¸¶¨µÄ host + port Ã»ÓĞÎÊÌâ£¬ÏûÏ¢Ò²²»ÄÜ·¢ËÍµ½¶ÔÓ¦µÄ actor ÉÏ£¬¼´£¬ Akka »á¶ªÆú¸ÃÏûÏ¢¡£
+   * æ³¨æ„ ï¼šåå­—å‚æ•°éå¸¸é‡è¦ï¼Œï¼ˆå‚è€ƒ Akka ç³»ç»Ÿä½¿ç”¨çš„æ ‘å½¢ç»“æ„ï¼Œä»¥åŠ Akka çš„è·¯å¾„ï¼‰ï¼Œä¸€ä¸ªå®¢æˆ·ç«¯å‘é€æ¶ˆæ¯æ—¶ï¼Œ
+   * å¦‚æœåå­—ä¸æ­£ç¡®ï¼Œå³ä½¿æŒ‡å®šçš„ host + port æ²¡æœ‰é—®é¢˜ï¼Œæ¶ˆæ¯ä¹Ÿä¸èƒ½å‘é€åˆ°å¯¹åº”çš„ actor ä¸Šï¼Œå³ï¼Œ Akka ä¼šä¸¢å¼ƒè¯¥æ¶ˆæ¯ã€‚
    *
-   * ´ıÀ©Õ¹£ºindestructible µÄÉèÖÃÖ÷ÒªÊÇÓÃÓÚ Akka ÏµÍ³µÄ Supervise »úÖÆÉÏ£¬¿ØÖÆÔÚÖÂÃüÒì³£·¢ÉúÊ±£¬ÊÇ·ñ¼ÌĞøÔËĞĞ¡£
+   * å¾…æ‰©å±•ï¼šindestructible çš„è®¾ç½®ä¸»è¦æ˜¯ç”¨äº Akka ç³»ç»Ÿçš„ Supervise æœºåˆ¶ä¸Šï¼Œæ§åˆ¶åœ¨è‡´å‘½å¼‚å¸¸å‘ç”Ÿæ—¶ï¼Œæ˜¯å¦ç»§ç»­è¿è¡Œã€‚
    */
   def createActorSystem(
       name: String,
@@ -168,8 +168,8 @@ private[spark] object AkkaUtils extends Logging {
    * throw a SparkException if this fails.
    */
   /**
-   * ÕâÊÇÒ»¸ö×èÈûÊ½µÄ·½·¨£¬ÏòÖ¸¶¨ actor ·¢ËÍÏûÏ¢ºó£¬»áÔÚÄ¬ÈÏ timeout ÄÚµÈ´ıÏûÏ¢½á¹û£¬Èç¹ûÊ§°ÜµÄ»°£¬
-   * »áÅ×³öÒ»¸ö SparkException¡£
+   * è¿™æ˜¯ä¸€ä¸ªé˜»å¡å¼çš„æ–¹æ³•ï¼Œå‘æŒ‡å®š actor å‘é€æ¶ˆæ¯åï¼Œä¼šåœ¨é»˜è®¤ timeout å†…ç­‰å¾…æ¶ˆæ¯ç»“æœï¼Œå¦‚æœå¤±è´¥çš„è¯ï¼Œ
+   * ä¼šæŠ›å‡ºä¸€ä¸ª SparkExceptionã€‚
    */
   def askWithReply[T](
       message: Any,
@@ -218,9 +218,9 @@ private[spark] object AkkaUtils extends Logging {
   }
 
   /**
-   * ·â×°ÁË»ñÈ¡ Driver µÄ ActorSystem ÏÂÖ¸¶¨Ãû×ÖµÄ Actor µÄÒıÓÃ¡£
-   * ×¢Òâ£º²ÎÊı actorSystem ¶ÔÓ¦ Driver£¬ ²Î¼û SparkContext ÔÚÊµÀı»¯ SparkEnv Ê±£¬
-   *       »á´´½¨¸Ã ActorSystem¡£
+   * å°è£…äº†è·å– Driver çš„ ActorSystem ä¸‹æŒ‡å®šåå­—çš„ Actor çš„å¼•ç”¨ã€‚
+   * æ³¨æ„ï¼šå‚æ•° actorSystem å¯¹åº” Driverï¼Œ å‚è§ SparkContext åœ¨å®ä¾‹åŒ– SparkEnv æ—¶ï¼Œ
+   *       ä¼šåˆ›å»ºè¯¥ ActorSystemã€‚
    */
   def makeDriverRef(name: String, conf: SparkConf, actorSystem: ActorSystem): ActorRef = {
     val driverActorSystemName = SparkEnv.driverActorSystemName

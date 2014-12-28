@@ -28,10 +28,10 @@ import scala.collection.generic.Growable
  * class and modifies it such that only the top K elements are retained.
  * The top K elements are defined by an implicit Ordering[A].
  */
-/** Ò»¸ö¿ÉÒÔÖ¸¶¨×î´óÔªËØ¸öÊı¡¢ÇÒ´øÓÅÏÈ¼¶µÄ¶ÓÁĞ¡£·â×°ÁË PriorityQueue Àà¡£
- * ½ö½ö±£´æÁË¸ù¾İ ÒşÊ½²ÎÊı ord: Ordering[A] ÅÅĞòºóµÄÇ° K ¸öÔªËØ¡£
+/** ä¸€ä¸ªå¯ä»¥æŒ‡å®šæœ€å¤§å…ƒç´ ä¸ªæ•°ã€ä¸”å¸¦ä¼˜å…ˆçº§çš„é˜Ÿåˆ—ã€‚å°è£…äº† PriorityQueue ç±»ã€‚
+ * ä»…ä»…ä¿å­˜äº†æ ¹æ® éšå¼å‚æ•° ord: Ordering[A] æ’åºåçš„å‰ K ä¸ªå…ƒç´ ã€‚
  *
- * À©Õ¹£º Èç¹ûÒªÔÚ±í´ïÊ½ÖĞÁ¬ĞøÊ¹ÓÃµÄ»°£¬·½·¨ĞèÒª·µ»Ø this¡£
+ * æ‰©å±•ï¼š å¦‚æœè¦åœ¨è¡¨è¾¾å¼ä¸­è¿ç»­ä½¿ç”¨çš„è¯ï¼Œæ–¹æ³•éœ€è¦è¿”å› thisã€‚
  */
 private[spark] class BoundedPriorityQueue[A](maxSize: Int)(implicit ord: Ordering[A])
   extends Iterable[A] with Growable[A] with Serializable {

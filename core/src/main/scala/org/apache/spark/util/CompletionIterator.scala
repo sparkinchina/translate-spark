@@ -22,9 +22,9 @@ package org.apache.spark.util
  * through all the elements.
  */
 /**
- * Ò»¸ö iterator µÄ·â×°Àà£¬ÔÚ³É¹¦µü´úËùÓĞÔªËØÖ®ºó£¬µ÷ÓÃÒ»¸ö completion ·½·¨¡£
- * Ìá¹©ÁËÒ»¸ö°éÉú¶ÔÏó£¬·½±ã¹¹Ôì CompletionIterator ¶ÔÏó¡£
- * Àí½â£º¿ÉÒÔ²Î¿¼ ×°ÊÎÄ£Ê½¡£
+ * ä¸€ä¸ª iterator çš„å°è£…ç±»ï¼Œåœ¨æˆåŠŸè¿­ä»£æ‰€æœ‰å…ƒç´ ä¹‹åï¼Œè°ƒç”¨ä¸€ä¸ª completion æ–¹æ³•ã€‚
+ * æä¾›äº†ä¸€ä¸ªä¼´ç”Ÿå¯¹è±¡ï¼Œæ–¹ä¾¿æ„é€  CompletionIterator å¯¹è±¡ã€‚
+ * ç†è§£ï¼šå¯ä»¥å‚è€ƒ è£…é¥°æ¨¡å¼ã€‚
  */
 private[spark]
 // scalastyle:off
