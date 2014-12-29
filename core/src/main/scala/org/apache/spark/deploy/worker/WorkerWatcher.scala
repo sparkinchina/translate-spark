@@ -57,17 +57,20 @@ private[spark] class WorkerWatcher(workerUrl: String)
     case AssociationErrorEvent(cause, localAddress, remoteAddress, inbound, _)
         if isWorker(remoteAddress) =>
       // These logs may not be seen if the worker (and associated pipe) has died
+      // These logs may not be seen if the worker (and associated pipe) has died
       logError(s"Could not initialize connection to worker $workerUrl. Exiting.")
       logError(s"Error was: $cause")
       exitNonZero()
 
     case DisassociatedEvent(localAddress, remoteAddress, inbound) if isWorker(remoteAddress) =>
       // This log message will never be seen
+      // 这个日志消息将永远看不到
       logError(s"Lost connection to worker actor $workerUrl. Exiting.")
       exitNonZero()
 
     case e: AssociationEvent =>
       // pass through association events relating to other remote actor systems
+      // 通过关联事件连接别的远程actor系统
 
     case e => logWarning(s"Received unexpected actor system event: $e")
   }
