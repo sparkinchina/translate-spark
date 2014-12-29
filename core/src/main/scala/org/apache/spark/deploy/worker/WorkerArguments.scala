@@ -103,6 +103,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
 
     case value :: tail =>
       if (masters != null) {  // Two positional arguments were given
+        // 给定两个位置的参数
         printUsageAndExit(1)
       }
       masters = value.stripPrefix("spark://").split(",").map("spark://" + _)
@@ -110,6 +111,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
 
     case Nil =>
       if (masters == null) {  // No positional argument was given
+        // 没有给定位置参数
         printUsageAndExit(1)
       }
 
@@ -119,6 +121,9 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
 
   /**
    * Print usage and exit JVM with the given exit code.
+   */
+  /**
+   * 打印使用率并且离开根据给定的exit code而退出JVM.
    */
   def printUsageAndExit(exitCode: Int) {
     System.err.println(
@@ -164,6 +169,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
       }
     }
     // Leave out 1 GB for the operating system, but don't return a negative memory size
+    // 给当前操作系统预留1GB内存, 而且不会返回一个负的内存大小
     math.max(totalMb - 1024, 512)
   }
 
