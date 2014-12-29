@@ -30,6 +30,9 @@ import org.apache.spark.util.AkkaUtils
 /**
  * Web UI server for the standalone worker.
  */
+/**
+ * 独立worker的Web界面UI服务器.
+ */
 private[spark]
 class WorkerWebUI(
     val worker: Worker,
@@ -43,6 +46,7 @@ class WorkerWebUI(
   initialize()
 
   /** Initialize all components of the server. */
+  /** 初始化所有当前服务器的组件. */
   def initialize() {
     val logPage = new LogPage(this)
     attachPage(logPage)
