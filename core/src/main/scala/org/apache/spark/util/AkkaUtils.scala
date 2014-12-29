@@ -32,6 +32,11 @@ import org.apache.spark.{Logging, SecurityManager, SparkConf, SparkEnv, SparkExc
 /**
  * Various utility classes for working with Akka.
  */
+/**
+ * 为使用 Akka 而提供的各种工具类。
+ *
+ * 扩展：可以参考简单工厂模式，如提供了 ActorSystem 等构建方法。
+ */
 private[spark] object AkkaUtils extends Logging {
 
   /**
@@ -43,6 +48,12 @@ private[spark] object AkkaUtils extends Logging {
    *
    * If indestructible is set to true, the Actor System will continue running in the event
    * of a fatal exception. This is used by [[org.apache.spark.executor.Executor]].
+   */
+  /**
+   * 注意 ：名字参数非常重要，（参考 Akka 系统使用的树形结构，以及 Akka 的路径），一个客户端发送消息时，
+   * 如果名字不正确，即使指定的 host + port 没有问题，消息也不能发送到对应的 actor 上，即， Akka 会丢弃该消息。
+   *
+   * 待扩展：indestructible 的设置主要是用于 Akka 系统的 Supervise 机制上，控制在致命异常发生时，是否继续运行。
    */
   def createActorSystem(
       name: String,
@@ -156,6 +167,10 @@ private[spark] object AkkaUtils extends Logging {
    * Send a message to the given actor and get its result within a default timeout, or
    * throw a SparkException if this fails.
    */
+  /**
+   * 这是一个阻塞式的方法，向指定 actor 发送消息后，会在默认 timeout 内等待消息结果，如果失败的话，
+   * 会抛出一个 SparkException。
+   */
   def askWithReply[T](
       message: Any,
       actor: ActorRef,
@@ -202,6 +217,11 @@ private[spark] object AkkaUtils extends Logging {
       "Error sending message [message = " + message + "]", lastException)
   }
 
+  /**
+   * 封装了获取 Driver 的 ActorSystem 下指定名字的 Actor 的引用。
+   * 注意：参数 actorSystem 对应 Driver， 参见 SparkContext 在实例化 SparkEnv 时，
+   *       会创建该 ActorSystem。
+   */
   def makeDriverRef(name: String, conf: SparkConf, actorSystem: ActorSystem): ActorRef = {
     val driverActorSystemName = SparkEnv.driverActorSystemName
     val driverHost: String = conf.get("spark.driver.host", "localhost")
