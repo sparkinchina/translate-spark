@@ -60,7 +60,8 @@ private[spark] class Worker(
   Utils.checkHost(host, "Expected hostname")
   assert (port > 0)
 
-  def createDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")  // For worker and executor IDs
+  // worker and executor ID 中添加时间戳，保证其唯一性
+  def createDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")  // For worker and executor IDs，
 
   // Send a heartbeat every (heartbeat timeout) / 4 milliseconds
   val HEARTBEAT_MILLIS = conf.getLong("spark.worker.timeout", 60) * 1000 / 4
@@ -70,6 +71,7 @@ private[spark] class Worker(
   // Afterwards, the next 10 attempts are between 30 and 90 seconds.
   // A bit of randomness is introduced so that not all of the workers attempt to reconnect at
   // the same time.
+  // 对Worker的重联进行分散化处理，避免集中重联对Master的冲击  两种策略 5-15， 30-90
   val INITIAL_REGISTRATION_RETRIES = 6
   val TOTAL_REGISTRATION_RETRIES = INITIAL_REGISTRATION_RETRIES + 10
   val FUZZ_MULTIPLIER_INTERVAL_LOWER_BOUND = 0.500
@@ -193,7 +195,9 @@ private[spark] class Worker(
    * Re-register with the master because a network failure or a master failure has occurred.
    * If the re-registration attempt threshold is exceeded, the worker exits with error.
    * Note that for thread-safety this should only be called from the actor.
-   */
+   * 由于网络失败或者Master的失败导致的Worker重新向Master的注册。如果重新注册尝试测试超过门限值，则
+   * 认为Worker自身存在问题。 注意: 为了保证线程的安全，该方法只能由Actor调用
+   */ // TODO @QQ:10697840  Master使用HashSet管理注册信息，没有看出重复注册有什么严重问题
   private def reregisterWithMaster(): Unit = {
     Utils.tryOrExit {
       connectionAttemptCount += 1
@@ -221,6 +225,8 @@ private[spark] class Worker(
          * old master must have died because another master has taken over. Note that this is
          * still not safe if the old master recovers within this interval, but this is a much
          * less likely scenario.
+         * 详细背书了在竞争条件下，Worker的注册可能存在重复的情况及如何尽量减少， 但无法彻底杜绝。
+         * 这是V1.2在Worker注册方面改动较大的原因。
          */
         if (master != null) {
           master ! RegisterWorker(

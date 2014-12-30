@@ -79,7 +79,7 @@ private[spark] class AppClient(
         logInfo("Connecting to master " + masterUrl + "...")
         val actor = context.actorSelection(Master.toAkkaUrl(masterUrl))
         actor ! RegisterApplication(appDescription)
-      }
+      }ft
     }
 
     def registerWithMaster() {

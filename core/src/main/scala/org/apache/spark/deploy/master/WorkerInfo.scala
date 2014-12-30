@@ -23,6 +23,11 @@ import akka.actor.ActorRef
 
 import org.apache.spark.util.Utils
 
+/**
+ * Worker资源收支平衡账面表
+ *   Worker.UserdMem = Driver.mem + Executor.mem
+ *   Worker.UserCore = Driver.Core  + Executor.Core
+ */
 private[spark] class WorkerInfo(
     val id: String,
     val host: String,
