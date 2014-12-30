@@ -25,6 +25,9 @@ import org.apache.spark.util.{AkkaUtils, Utils}
 /**
  * Utility object for launching driver programs such that they share fate with the Worker process.
  */
+/**
+ * 为了启动driver程序的工具对象诸如它们和Worker进程共享状态 .
+ */
 object DriverWrapper {
   def main(args: Array[String]) {
     args.toList match {

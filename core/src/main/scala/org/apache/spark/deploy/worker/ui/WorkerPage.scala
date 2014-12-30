@@ -62,7 +62,8 @@ private[spark] class WorkerPage(parent: WorkerWebUI) extends WebUIPage("") {
 
     // For now we only show driver information if the user has submitted drivers to the cluster.
     // This is until we integrate the notion of drivers and applications in the UI.
-
+    // 如果用户已经提交drivers到这个集群的话眼下我们就只能显示驱动信息了.
+    // 这个会直到我们整合在UI中的drivers和applications的概念的时候.
     val content =
       <div class="row-fluid"> <!-- Worker Details -->
         <div class="span12">

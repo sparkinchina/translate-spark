@@ -25,6 +25,9 @@ import org.apache.spark.SparkConf
 /**
  * Command-line parser for the worker.
  */
+/**
+ * 当前Worker的命令行解析器.
+ */
 private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
   var host = Utils.localHostName()
   var port = 0
@@ -36,6 +39,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
   var propertiesFile: String = null
 
   // Check for settings in environment variables
+  // 检查环境变量设置
   if (System.getenv("SPARK_WORKER_PORT") != null) {
     port = System.getenv("SPARK_WORKER_PORT").toInt
   }
@@ -55,6 +59,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
   parse(args.toList)
 
   // This mutates the SparkConf, so all accesses to it must be made after this line
+  // 这个改变了SparkConf，因此所有访问它的对象在这一行之后都必需被构造
   propertiesFile = Utils.loadDefaultSparkProperties(conf, propertiesFile)
 
   if (conf.contains("spark.worker.ui.port")) {
@@ -103,6 +108,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
 
     case value :: tail =>
       if (masters != null) {  // Two positional arguments were given
+        // 给定两个位置的参数
         printUsageAndExit(1)
       }
       masters = value.stripPrefix("spark://").split(",").map("spark://" + _)
@@ -110,6 +116,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
 
     case Nil =>
       if (masters == null) {  // No positional argument was given
+        // 没有给定位置参数
         printUsageAndExit(1)
       }
 
@@ -119,6 +126,9 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
 
   /**
    * Print usage and exit JVM with the given exit code.
+   */
+  /**
+   * 打印使用率并且离开根据给定的退出编码退出JVM.
    */
   def printUsageAndExit(exitCode: Int) {
     System.err.println(
@@ -164,6 +174,7 @@ private[spark] class WorkerArguments(args: Array[String], conf: SparkConf) {
       }
     }
     // Leave out 1 GB for the operating system, but don't return a negative memory size
+    // 给当前操作系统预留1GB内存, 而且不会返回一个负的内存大小
     math.max(totalMb - 1024, 512)
   }
 
