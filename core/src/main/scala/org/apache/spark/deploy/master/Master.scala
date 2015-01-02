@@ -231,7 +231,7 @@ private[spark] class Master(
         }
       }
     }
-
+    // 接收客户端的注册Driver的请求；参数description为DriverDescription类型；
     case RequestSubmitDriver(description) => {
       if (state != RecoveryState.ALIVE) {
         val msg = s"Can only accept driver submissions in ALIVE state. Current state: $state."
@@ -242,6 +242,7 @@ private[spark] class Master(
         persistenceEngine.addDriver(driver)
         waitingDrivers += driver
         drivers.add(driver)
+        //Master收到Client的RequestSubmitDriver消息后，开始调度
         schedule()
 
         // TODO: It might be good to instead have the submission client poll the master to determine
@@ -347,7 +348,7 @@ private[spark] class Master(
     case DriverStateChanged(driverId, state, exception) => {
       state match {
         case DriverState.ERROR | DriverState.FINISHED | DriverState.KILLED | DriverState.FAILED =>
-          removeDriver(driverId, state, exception)
+          removeDriver(driverId, state, exception)    // Master收到消息后，移除Driver
         case _ =>
           throw new Exception(s"Received unexpected state update for driver $driverId: $state")
       }
@@ -529,6 +530,7 @@ private[spark] class Master(
       while (numWorkersVisited < numWorkersAlive && !launched) {
         val worker = shuffledAliveWorkers(curPos)
         numWorkersVisited += 1
+        //判断内存和cpu够不够，够的话就启动driver
         if (worker.memoryFree >= driver.desc.mem && worker.coresFree >= driver.desc.cores) {
           launchDriver(worker, driver)
           waitingDrivers -= driver
@@ -546,6 +548,7 @@ private[spark] class Master(
       // Try to spread out each app among all the nodes, until it has all its cores
       for (app <- waitingApps if app.coresLeft > 0) {
         val usableWorkers = workers.toArray.filter(_.state == WorkerState.ALIVE)
+          // canUse里面判断了worker的内存是否够用，并且该worker是否已经包含了该app的Executor
           .filter(canUse(app, _)).sortBy(_.coresFree).reverse
         val numUsable = usableWorkers.length
         val assigned = new Array[Int](numUsable) // Number of cores to give on each node
@@ -811,6 +814,7 @@ private[spark] class Master(
     logInfo("Launching driver " + driver.id + " on worker " + worker.id)
     worker.addDriver(driver)
     driver.worker = Some(worker)
+    //给worker发送了一个LaunchDriver的消息
     worker.actor ! LaunchDriver(driver.id, driver.desc)
     driver.state = DriverState.RUNNING
   }
