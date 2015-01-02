@@ -12,6 +12,7 @@ sbt/*.jar
 .settings
 .cache
 .generated-mima*
+external/flume-sink/src/main/scala/META-INF/
 /build/
 work/
 out/
