@@ -31,6 +31,8 @@ import org.apache.spark.util.Utils
  * spark.deploy.master.Master and spark.deploy.worker.Workers in the same JVMs). Executors launched
  * by the Workers still run in separate JVMs. This can be used to test distributed operation and
  * fault recovery without spinning up a lot of processes.
+ * 测试类，生成一个单进程的Spark Standalone集群（也就是说Master和所有的Worker运行在同一个JVM中）。Executors
+ * 仍就运行在一个独立的JVM中。在、该类用来测试分布式操作和错误恢复，同时却不用衍生出很多进程
  */
 private[spark]
 class LocalSparkCluster(numWorkers: Int, coresPerWorker: Int, memoryPerWorker: Int)

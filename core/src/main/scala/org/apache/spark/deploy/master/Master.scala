@@ -46,7 +46,7 @@ import org.apache.spark.ui.SparkUI
 import org.apache.spark.util.{ActorLogReceive, AkkaUtils, SignalLogger, Utils}
 
 /**
- * 一个信奉无为而治的资源大管家，其职责主要包括两个方面：
+ * 一个资源大管家，其职责主要包括两个方面：
  * Cluster资源的管理和Cluster的通讯管理
  *
  *   资源管理
