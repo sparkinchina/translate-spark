@@ -65,6 +65,12 @@ class Vector(val elements: Array[Double]) extends Serializable {
    * @param other
    * @return
    */
+  /**
+   * 返回 (this + 加) 点 other, 但是没有创建人和立刻的存储（延迟处理）
+   * @param plus
+   * @param other
+   * @return
+   */
   def plusDot(plus: Vector, other: Vector): Double = {
     if (length != other.length) {
       throw new IllegalArgumentException("Vectors of different length")
