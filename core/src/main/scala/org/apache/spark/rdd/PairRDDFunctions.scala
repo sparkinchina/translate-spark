@@ -907,6 +907,10 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
    * Output the RDD to any Hadoop-supported file system, using a Hadoop `OutputFormat` class
    * supporting the key and value types K and V in this RDD.
    */
+  /**
+   * 输出RDD到任意Hadoop支持的文件系统,使用一个Hadoop `OutputFormat` 类支持这个在
+   * 这个RDD中的K和V两种键和值类型.
+   */
   def saveAsHadoopFile(
       path: String,
       keyClass: Class[_],
@@ -931,6 +935,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
     }
 
     // Use configured output committer if already set
+    // 如果已经设置的话使用配置的输出提交者
     if (conf.getOutputCommitter == null) {
       hadoopConf.setOutputCommitter(classOf[FileOutputCommitter])
     }
@@ -1014,8 +1019,13 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
    * (e.g. a table name to write to) in the same way as it would be configured for a Hadoop
    * MapReduce job.
    */
+  /**
+   * 输出这个RDD到任意Hadoop支持的存储，为那种存储系统使用Hadoop JobConf对象.这个JobConf应该
+   * 设置一个OutputFormat和要求的输出路径(例如将要写入的表名)用同样的方式它会配置成Hadoop MapReduce的job.
+   */
   def saveAsHadoopDataset(conf: JobConf) {
     // Rename this as hadoopConf internally to avoid shadowing (see SPARK-2038).
+    // 内部重命名这个conf为hadoopConf来避免屏蔽 (查看 SPARK-2038).
     val hadoopConf = conf
     val wrappedConf = new SerializableWritable(hadoopConf)
     val outputFormatInstance = hadoopConf.getOutputFormat
@@ -1037,6 +1047,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
 
     if (self.conf.getBoolean("spark.hadoop.validateOutputSpecs", true)) {
       // FileOutputFormat ignores the filesystem parameter
+      // FileOutputFormat 忽略掉这个 filesystem 参数
       val ignoredFs = FileSystem.get(hadoopConf)
       hadoopConf.getOutputFormat.checkOutputSpecs(ignoredFs, hadoopConf)
     }
@@ -1048,6 +1059,8 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
       val config = wrappedConf.value
       // Hadoop wants a 32-bit task attempt ID, so if ours is bigger than Int.MaxValue, roll it
       // around by taking a mod. We expect that no task will be attempted 2 billion times.
+      // Hadoop希望尝试一个32位的任务attempt ID,所以如果我们的这个id比Int.MaxValue更大,
+      // 那么通过一个模除来进行转换。我们估计应该不会尝试任务20亿次。
       val attemptNumber = (context.attemptId % Int.MaxValue).toInt
 
       val (outputMetrics, bytesWrittenCallback) = initHadoopOutputMetrics(context, config)
@@ -1061,6 +1074,7 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
           writer.write(record._1.asInstanceOf[AnyRef], record._2.asInstanceOf[AnyRef])
 
           // Update bytes written metric every few records
+          // 每隔几条记录更新一下字节写入的度量
           maybeUpdateOutputMetrics(bytesWrittenCallback, outputMetrics, recordsWritten)
           recordsWritten += 1
         }
@@ -1098,10 +1112,17 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
   /**
    * Return an RDD with the keys of each tuple.
    */
+
+  /**
+   * 返回一个带着每个tuple的键的RDD
+   */
   def keys: RDD[K] = self.map(_._1)
 
   /**
    * Return an RDD with the values of each tuple.
+   */
+  /**
+   * 返回一个带着每个tuple的值的RDD.
    */
   def values: RDD[V] = self.map(_._2)
 
