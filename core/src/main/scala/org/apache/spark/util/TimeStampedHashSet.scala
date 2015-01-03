@@ -72,6 +72,9 @@ private[spark] class TimeStampedHashSet[A] extends Set[A] {
   /**
    * Removes old values that have timestamp earlier than `threshTime`
    */
+  /**
+   * 去除那个时间戳早于 `threshTime` 的旧值
+   */
   def clearOldValues(threshTime: Long) {
     val iterator = internalMap.entrySet().iterator()
     while(iterator.hasNext) {
