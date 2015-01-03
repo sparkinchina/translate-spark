@@ -113,7 +113,7 @@ private[spark] class Worker(
   val finishedDrivers = new HashMap[String, DriverRunner]
 
   // The shuffle service is not actually started unless configured.
-  // 除非配置这个shuffle服务不会实际启动.
+  // 除非配置过,不然这个shuffle服务不会实际启动.
   val shuffleService = new StandaloneWorkerShuffleService(conf, securityMgr)
 
   val publicAddress = {
