@@ -113,6 +113,7 @@ private[spark] class Worker(
   val finishedDrivers = new HashMap[String, DriverRunner]
 
   // The shuffle service is not actually started unless configured.
+  // 除非配置这个shuffle服务不会实际启动.
   val shuffleService = new StandaloneWorkerShuffleService(conf, securityMgr)
 
   val publicAddress = {
@@ -179,6 +180,7 @@ private[spark] class Worker(
     }
     connected = true
     // Cancel any outstanding re-registration attempts because we found a new master
+    // 因为我们发现了一个新的master取消任何未处理的重注册attempts
     registrationRetryTimer.foreach(_.cancel())
     registrationRetryTimer = None
   }
