@@ -140,6 +140,10 @@ object Vector {
    * Creates this [[org.apache.spark.util.Vector]] of given length containing random numbers
    * between 0.0 and 1.0. Optional scala.util.Random number generator can be provided.
    */
+  /**
+   * 创建这个给定长度包含随机数在0.0到1.0之间随机数的 [[org.apache.spark.util.Vector]]
+   * 会提供一个可选的scala.util.Random 类型的数字生成器
+   */
   def random(length: Int, random: Random = new XORShiftRandom()) =
     Vector(length, _ => random.nextDouble())
 
