@@ -31,6 +31,13 @@ import org.apache.spark.network.shuffle.ExternalShuffleBlockHandler
  *
  * Optionally requires SASL authentication in order to read. See [[SecurityManager]].
  */
+/**
+ *
+ * 提供了一个server,Executors可以读取shuffle文件(而不是直接从对方读取),面向被关闭或者被
+ * 杀死的executors提供不间断的文件访问。
+ *
+ * 可选地为了读取需要提供SASL验证。查看[[SecurityManager]]。.
+ */
 private[worker]
 class StandaloneWorkerShuffleService(sparkConf: SparkConf, securityManager: SecurityManager)
   extends Logging {
@@ -49,6 +56,7 @@ class StandaloneWorkerShuffleService(sparkConf: SparkConf, securityManager: Secu
   private var server: TransportServer = _
 
   /** Starts the external shuffle service if the user has configured us to. */
+  /** 如果用户已经配置我们做的话就启动这个外部的shuffle服务. */
   def startIfEnabled() {
     if (enabled) {
       require(server == null, "Shuffle server already started")

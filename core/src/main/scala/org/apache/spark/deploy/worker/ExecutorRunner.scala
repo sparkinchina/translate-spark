@@ -34,6 +34,10 @@ import org.apache.spark.util.logging.FileAppender
  * Manages the execution of one executor process.
  * This is currently only used in standalone mode.
  */
+/**
+ * 管理这个executor进程的执行.
+ * 这个类当前仅仅用在standalone模式.
+ */
 private[spark] class ExecutorRunner(
     val appId: String,
     val execId: Int,
@@ -58,6 +62,7 @@ private[spark] class ExecutorRunner(
 
   // NOTE: This is now redundant with the automated shut-down enforced by the Executor. It might
   // make sense to remove this in the future.
+  // NOTE: 由Executor程序强制执行自动关闭现在是冗余的。将来删除这个看起来才更合理.
   var shutdownHook: Thread = null
 
   def start() {
@@ -66,6 +71,7 @@ private[spark] class ExecutorRunner(
     }
     workerThread.start()
     // Shutdown hook that kills actors on shutdown.
+    // 关闭回调在关闭时杀掉actors.
     shutdownHook = new Thread() {
       override def run() {
         killProcess(Some("Worker shutting down"))
@@ -78,6 +84,12 @@ private[spark] class ExecutorRunner(
    * Kill executor process, wait for exit and notify worker to update resource status.
    *
    * @param message the exception message which caused the executor's death 
+   */
+
+  /**
+   * 杀掉executor进程，等待离开并通知worker来更新资源状态.
+   *
+   * @param message 这个是引起executor的死掉的异常消息
    */
   private def killProcess(message: Option[String]) {
     var exitCode: Option[Int] = None
@@ -97,9 +109,11 @@ private[spark] class ExecutorRunner(
   }
 
   /** Stop this executor runner, including killing the process it launched */
+  /** 关掉这个executor运行器，包括在这个进程启动时杀掉它 */
   def kill() {
     if (workerThread != null) {
       // the workerThread will kill the child process when interrupted
+      // 当中断时workerThread将杀死子进程
       workerThread.interrupt()
       workerThread = null
       state = ExecutorState.KILLED
@@ -108,6 +122,7 @@ private[spark] class ExecutorRunner(
   }
 
   /** Replace variables such as {{EXECUTOR_ID}} and {{CORES}} in a command argument passed to us */
+  /** 一个命令参数内替换变量如{ { EXECUTOR_ID } }和{ {CORES} }后传递给我们 */
   def substituteVariables(argument: String): String = argument match {
     case "{{WORKER_URL}}" => workerUrl
     case "{{EXECUTOR_ID}}" => execId.toString
@@ -120,9 +135,13 @@ private[spark] class ExecutorRunner(
   /**
    * Download and run the executor described in our ApplicationDescription
    */
+  /**
+   * 下载并运行我们ApplicationDescription描述的executor
+   */
   def fetchAndRunExecutor() {
     try {
       // Launch the process
+      // 启动这个进程
       val builder = CommandUtils.buildProcessBuilder(appDesc.command, memory,
         sparkHome.getAbsolutePath, substituteVariables)
       val command = builder.command()
@@ -131,12 +150,14 @@ private[spark] class ExecutorRunner(
       builder.directory(executorDir)
       // In case we are running this from within the Spark Shell, avoid creating a "scala"
       // parent process for the executor command
+      // 一旦我们再Spark Shell中运行这个类, 避免为executor命令创建一个"scala"父进程
       builder.environment.put("SPARK_LAUNCH_WITH_SCALA", "0")
       process = builder.start()
       val header = "Spark Executor Command: %s\n%s\n\n".format(
         command.mkString("\"", "\" \"", "\""), "=" * 40)
 
       // Redirect its stdout and stderr to files
+      // 重定向它的stdout和stderr到文件中
       val stdout = new File(executorDir, "stdout")
       stdoutAppender = FileAppender(process.getInputStream, stdout, conf)
 
@@ -146,6 +167,7 @@ private[spark] class ExecutorRunner(
 
       // Wait for it to exit; executor may exit with code 0 (when driver instructs it to shutdown)
       // or with nonzero exit code
+      // 等待他离开; executor 可能会带着0编码退出(当driver指示它关闭时)或者带着非零编码退出
       val exitCode = process.waitFor()
       state = ExecutorState.EXITED
       val message = "Command exited with code " + exitCode

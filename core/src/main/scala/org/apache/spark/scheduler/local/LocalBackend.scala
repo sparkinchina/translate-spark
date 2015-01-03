@@ -39,6 +39,8 @@ private case class StopExecutor()
  * Calls to LocalBackend are all serialized through LocalActor. Using an actor makes the calls on
  * LocalBackend asynchronous, which is necessary to prevent deadlock between LocalBackend
  * and the TaskSchedulerImpl.
+ * 对LocalBackend的调用都是通过LocalActor序列化的。LocalActor使的对LocalBackend调用都是异步方式执行的，
+ * 这对于预防LocalBackend和TaskSchedulerImpl之间的死锁是必须的
  */
 private[spark] class LocalActor(
   scheduler: TaskSchedulerImpl,
@@ -84,6 +86,9 @@ private[spark] class LocalActor(
  * LocalBackend is used when running a local version of Spark where the executor, backend, and
  * master all run in the same JVM. It sits behind a TaskSchedulerImpl and handles launching tasks
  * on a single Executor (created by the LocalBackend) running locally.
+ * LocalBackend用来运行一个本地版的Spark，即包括executor, backend, and master全都运行在同一个JVM中。
+ * LocalBackend位于TaskSchedulerImpl后端，负责启动任务并在本地的Executor上运行
+ * （这个Executor是由LocalBackend创建的)
  */
 private[spark] class LocalBackend(scheduler: TaskSchedulerImpl, val totalCores: Int)
   extends SchedulerBackend with ExecutorBackend {
