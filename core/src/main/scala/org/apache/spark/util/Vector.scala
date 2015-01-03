@@ -66,7 +66,7 @@ class Vector(val elements: Array[Double]) extends Serializable {
    * @return
    */
   /**
-   * 返回 (this + 加) 点 other, 但是没有创建人和立刻的存储（延迟处理）
+   * 返回 (this + plus) dot other, 但没有任何中间存储
    * @param plus
    * @param other
    * @return
