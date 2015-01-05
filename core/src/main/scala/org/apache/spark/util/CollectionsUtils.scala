@@ -24,6 +24,7 @@ import scala.reflect.{classTag, ClassTag}
 private[spark] object CollectionsUtils {
   def makeBinarySearch[K : Ordering : ClassTag] : (Array[K], K) => Int = {
     // For primitive keys, we can use the natural ordering. Otherwise, use the Ordering comparator.
+    // 最原始的键，我们可以使用自然排序。否则，使用Ordering比较器排序.
     classTag[K] match {
       case ClassTag.Float =>
         (l, x) => util.Arrays.binarySearch(l.asInstanceOf[Array[Float]], x.asInstanceOf[Float])
