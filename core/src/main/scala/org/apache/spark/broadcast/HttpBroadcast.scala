@@ -35,6 +35,10 @@ import org.apache.spark.util.{MetadataCleaner, MetadataCleanerType, TimeStampedH
  * task) is deserialized in the executor, the broadcasted data is fetched from the driver
  * (through a HTTP server running at the driver) and stored in the BlockManager of the
  * executor to speed up future accesses.
+ *
+ * HttpBroadcast是使用HTTP server做为广播媒介，实现Broadcast的一种方式。HTTP broadcast变量（作为task
+ * 的一部分）最初是在Executor上反序列化，被广播的数据从Driver上获取下来（通过在Driver上运行的HTTP server），
+ * 并存储在Exexutor的BlockManager中，从而加速了后续的访问
  */
 private[spark] class HttpBroadcast[T: ClassTag](
     @transient var value_ : T, isLocal: Boolean, id: Long)
@@ -47,6 +51,7 @@ private[spark] class HttpBroadcast[T: ClassTag](
   /*
    * Broadcasted data is also stored in the BlockManager of the driver. The BlockManagerMaster
    * does not need to be told about this block as not only need to know about this data block.
+   * 被广播的数据同时也存储在Driver上的BlockManager。不必
    */
   HttpBroadcast.synchronized {
     SparkEnv.get.blockManager.putSingle(
@@ -219,6 +224,8 @@ private[broadcast] object HttpBroadcast extends Logging {
    * Remove all persisted blocks associated with this HTTP broadcast on the executors.
    * If removeFromDriver is true, also remove these persisted blocks on the driver
    * and delete the associated broadcast file.
+   * 清除Exexutor上所有的与HTTP广播数据有关的持久化数据块。
+   * 如果removeFromDriver被设置为true，则同时清除Driver上的持久化数据块，删除相关的广播数据文件
    */
   def unpersist(id: Long, removeFromDriver: Boolean, blocking: Boolean) = synchronized {
     SparkEnv.get.blockManager.master.removeBroadcast(id, removeFromDriver, blocking)
@@ -232,6 +239,8 @@ private[broadcast] object HttpBroadcast extends Logging {
   /**
    * Periodically clean up old broadcasts by removing the associated map entries and
    * deleting the associated files.
+   *
+   * 定期清除过期的broadcast数据，移除相关的映射数据，删除相关的数据文件
    */
   private def cleanup(cleanupTime: Long) {
     val iterator = files.internalMap.entrySet().iterator()

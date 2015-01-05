@@ -24,8 +24,10 @@ import org.apache.spark.scheduler.MapStatus
  */
 private[spark] trait ShuffleWriter[K, V] {
   /** Write a bunch of records to this task's output */
+  /** 将一大堆的记录写到当前任务的输出中 */
   def write(records: Iterator[_ <: Product2[K, V]]): Unit
 
   /** Close this writer, passing along whether the map completed */
+  /** 关闭这个writer, 传回是否这个map计算过程完成的状态 */
   def stop(success: Boolean): Option[MapStatus]
 }

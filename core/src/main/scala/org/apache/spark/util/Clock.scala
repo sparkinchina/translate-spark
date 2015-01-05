@@ -20,6 +20,9 @@ package org.apache.spark.util
 /**
  * An interface to represent clocks, so that they can be mocked out in unit tests.
  */
+/**
+ * 代表时钟的接口, 以便在单元测试中对它们进行模拟.
+ */
 private[spark] trait Clock {
   def getTime(): Long
 }
