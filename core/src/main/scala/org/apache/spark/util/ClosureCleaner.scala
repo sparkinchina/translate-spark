@@ -42,6 +42,7 @@ private[spark] object ClosureCleaner extends Logging {
   }
 
   // Check whether a class represents a Scala closure
+  // 检验一个类是否代表一个Scala闭包
   private def isClosure(cls: Class[_]): Boolean = {
     cls.getName.contains("$anonfun$")
   }
@@ -95,7 +96,7 @@ private[spark] object ClosureCleaner extends Logging {
 
   private def createNullValue(cls: Class[_]): AnyRef = {
     if (cls.isPrimitive) {
-      new java.lang.Byte(0: Byte) // Should be convertible to any primitive type
+      new java.lang.Byte(0: Byte) // Should be convertible to any primitive type  // 应转换为原始类型
     } else {
       null
     }
@@ -136,6 +137,8 @@ private[spark] object ClosureCleaner extends Logging {
     }
     // Clone the closure objects themselves, nulling out any fields that are not
     // used in the closure we're working on or any of its inner closures.
+    // Clone the closure objects themselves, nulling out any fields that are not
+    // used in the closure we're working on or any of its inner closures.
     for ((cls, obj) <- outerPairs) {
       outer = instantiateClass(cls, outer, inInterpreter)
       for (fieldName <- accessedFields(cls)) {
@@ -172,6 +175,8 @@ private[spark] object ClosureCleaner extends Logging {
     if (!inInterpreter) {
       // This is a bona fide closure class, whose constructor has no effects
       // other than to set its fields, so use its constructor
+      // 这个是一个珍重的闭包类，除非设置它的属性，否则他的构造器不会
+      // 生效，因此使用它的构造器
       val cons = cls.getConstructors()(0)
       val params = cons.getParameterTypes.map(createNullValue).toArray
       if (outer != null) {
@@ -180,6 +185,7 @@ private[spark] object ClosureCleaner extends Logging {
       return cons.newInstance(params: _*).asInstanceOf[AnyRef]
     } else {
       // Use reflection to instantiate object without calling constructor
+      // 使用反射区初始化对象而不是调用构造器
       val rf = sun.reflect.ReflectionFactory.getReflectionFactory()
       val parentCtor = classOf[java.lang.Object].getDeclaredConstructor()
       val newCtor = rf.newConstructorForSerialization(cls, parentCtor)
