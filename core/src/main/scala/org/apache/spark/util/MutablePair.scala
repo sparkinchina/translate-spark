@@ -23,6 +23,7 @@ import org.apache.spark.annotation.DeveloperApi
  * :: DeveloperApi ::
  * A tuple of 2 elements. This can be used as an alternative to Scala's Tuple2 when we want to
  * minimize object allocation.
+ * 2个元素的一个元组. 这个可以用来作为Scala's的Tuple2的替代类当我们想最小化对象资源分配的时候.
  *
  * @param  _1   Element 1 of this MutablePair
  * @param  _2   Element 2 of this MutablePair
