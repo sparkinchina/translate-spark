@@ -78,6 +78,7 @@ class BufferMessage(id_ : Int, val buffers: ArrayBuffer[ByteBuffer], var ackId: 
 
   def getChunkForReceiving(chunkSize: Int): Option[MessageChunk] = {
     // STRONG ASSUMPTION: BufferMessage created when receiving data has ONLY ONE data buffer
+    // 强假设：当接收数据只有一个数据缓冲区时BufferMessage被创建
     if (buffers.size > 1) {
       throw new Exception("Attempting to get chunk from message with multiple data buffers")
     }
