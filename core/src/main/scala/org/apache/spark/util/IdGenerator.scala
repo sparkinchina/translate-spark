@@ -24,6 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * AtomicInteger. An example usage is in BlockManager, where each BlockManager
  * instance would start an Akka actor and we use this utility to assign the Akka
  * actors unique names.
+ *  一个工具用来得到一个唯一的生成ID.这是在Java的AtomicInteger包装。一个例子是在
+ *  使用BlockManager，每个BlockManager实例都会启动一个Akka actor和我们使用这个工具
+ *  赋给Akka Actors唯一的名字.
  */
 private[spark] class IdGenerator {
   private var id = new AtomicInteger
