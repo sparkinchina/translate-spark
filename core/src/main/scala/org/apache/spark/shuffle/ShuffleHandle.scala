@@ -22,4 +22,9 @@ package org.apache.spark.shuffle
  *
  * @param shuffleId ID of the shuffle
  */
+/**
+ * 一个shuffle的一个迟钝的处理器, ShuffleManager用它来传递他的信息到任务.
+ *
+ * @param shuffleId 这个shuffle的ID
+ */
 private[spark] abstract class ShuffleHandle(val shuffleId: Int) extends Serializable {}

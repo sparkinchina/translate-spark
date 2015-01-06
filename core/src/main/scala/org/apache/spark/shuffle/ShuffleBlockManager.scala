@@ -29,6 +29,10 @@ trait ShuffleBlockManager {
    * Get shuffle block data managed by the local ShuffleBlockManager.
    * @return Some(ByteBuffer) if block found, otherwise None.
    */
+  /**
+   * 获取由本地ShuffleBlockManager管理的shuffle块数据.
+   * @return 如果block发现了就返回Some(ByteBuffer) , 否则返回 None.
+   */
   def getBytes(blockId: ShuffleBlockId): Option[ByteBuffer]
 
   def getBlockData(blockId: ShuffleBlockId): ManagedBuffer
