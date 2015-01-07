@@ -35,20 +35,32 @@ abstract class BlockTransferService extends ShuffleClient with Closeable with Lo
    * Initialize the transfer service by giving it the BlockDataManager that can be used to fetch
    * local blocks or put local blocks.
    */
+  /**
+   * 通过给它提供BlockDataManager来初始化传输服务，可以用来获取本地块或将放置本地块。
+   */
   def init(blockDataManager: BlockDataManager)
 
   /**
    * Tear down the transfer service.
+   */
+  /**
+   *  关闭这个传输服务..
    */
   def close(): Unit
 
   /**
    * Port number the service is listening on, available only after [[init]] is invoked.
    */
+  /**
+   * 当前这个服务监听的端口, 只有当 [[init]]被调用后可用.
+   */
   def port: Int
 
   /**
    * Host name the service is listening on, available only after [[init]] is invoked.
+   */
+  /**
+   * 当前这个服务监听的主机名, 只有当 [[init]]被调用后可用.
    */
   def hostName: String
 
@@ -70,6 +82,9 @@ abstract class BlockTransferService extends ShuffleClient with Closeable with Lo
   /**
    * Upload a single block to a remote node, available only after [[init]] is invoked.
    */
+  /**
+   * 单数据块上传到远程节点，只有在[[init]]被调用后可用.
+   */
   def uploadBlock(
       hostname: String,
       port: Int,
@@ -83,8 +98,14 @@ abstract class BlockTransferService extends ShuffleClient with Closeable with Lo
    *
    * It is also only available after [[init]] is invoked.
    */
+  /**
+   * 一个 [[fetchBlocks]]的特殊用例,它只获取一个数据块并且置于阻塞中.
+   *
+   * 只有当 [[init]] 被调用后才可用.
+   */
   def fetchBlockSync(host: String, port: Int, execId: String, blockId: String): ManagedBuffer = {
     // A monitor for the thread to wait on.
+    // 为了处理等待的线程的一个监视器.
     val result = Promise[ManagedBuffer]()
     fetchBlocks(host, port, execId, Array(blockId),
       new BlockFetchingListener {
@@ -107,6 +128,11 @@ abstract class BlockTransferService extends ShuffleClient with Closeable with Lo
    *
    * This method is similar to [[uploadBlock]], except this one blocks the thread
    * until the upload finishes.
+   */
+  /**
+   * 单数据块上传到远程节点，只有在[[init]]被调用后可用..
+   *
+   * 这个方法和 [[uploadBlock]]类似, 不同的是这个方法会阻塞线程直到上传完成(同步).
    */
   def uploadBlockSync(
       hostname: String,
