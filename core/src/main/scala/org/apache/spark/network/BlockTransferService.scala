@@ -72,6 +72,12 @@ abstract class BlockTransferService extends ShuffleClient with Closeable with Lo
    * return a future so the underlying implementation can invoke onBlockFetchSuccess as soon as
    * the data of a block is fetched, rather than waiting for all blocks to be fetched.
    */
+  /**
+   * 从一个远程节点异步抓取一个连续数据块,只有在[[init]]被调用后可用.
+   *
+   * 注意,此API需要一个序列以便实现批处理请求,不返回一个future,可以只要一个块的数据被获取
+   * 就调用底层实现onBlockFetchSuccess,而不是等待所有块取出。
+   */
   override def fetchBlocks(
       host: String,
       port: Int,
