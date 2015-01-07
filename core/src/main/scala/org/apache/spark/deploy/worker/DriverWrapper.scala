@@ -38,6 +38,7 @@ object DriverWrapper {
         actorSystem.actorOf(Props(classOf[WorkerWatcher], workerUrl), name = "workerWatcher")
 
         // Delegate to supplied main class
+        // 委托调用到提供的主类
         val clazz = Class.forName(args(1))
         val mainMethod = clazz.getMethod("main", classOf[Array[String]])
         mainMethod.invoke(null, extraArgs.toArray[String])

@@ -25,6 +25,8 @@ import org.apache.spark.storage.BlockManager
 /**
  * Reads data from a ByteBuffer, and optionally cleans it up using BlockManager.dispose()
  * at the end of the stream (e.g. to close a memory-mapped file).
+ * 从一个ByteBuffer读取数据, 然后通过使用BlockManager.dispose()在当前流的末尾进行清理
+ * (例如去关闭内存映射文件).
  */
 private[spark]
 class ByteBufferInputStream(private var buffer: ByteBuffer, dispose: Boolean = false)
@@ -69,6 +71,7 @@ class ByteBufferInputStream(private var buffer: ByteBuffer, dispose: Boolean = f
 
   /**
    * Clean up the buffer, and potentially dispose of it using BlockManager.dispose().
+   * 清理缓存并且通过调用BlockManager.dispose()方法清除它..
    */
   private def cleanUp() {
     if (buffer != null) {

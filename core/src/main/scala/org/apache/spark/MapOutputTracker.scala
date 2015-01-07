@@ -88,7 +88,7 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
    * On the master, it serves as the source of map outputs recorded from ShuffleMapTasks.
    * On the workers, it simply serves as a cache, in which a miss triggers a fetch from the
    * master's corresponding HashMap.
-   * 
+   *
    * 这个HashMap在Master和Worker上有不同的行为
    * 在Master上，它负责保存着map输出记录的原始数据，这些数据由ShuffleMapTasks产生
    * 在Worker上，它仅仅作为数据缓存，如果数据不存在，就会触发一个抓取动作，从Master上获取相应的数据

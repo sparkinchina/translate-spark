@@ -31,17 +31,25 @@ private[spark] trait ShuffleManager {
   /**
    * Register a shuffle with the manager and obtain a handle for it to pass to tasks.
    */
+  /**
+   * 通过这个管理者注册一个shuffle 并且为他获取一个处理器来传给任务.
+   */
   def registerShuffle[K, V, C](
       shuffleId: Int,
       numMaps: Int,
       dependency: ShuffleDependency[K, V, C]): ShuffleHandle
 
   /** Get a writer for a given partition. Called on executors by map tasks. */
+  /** 给一个给定的分区获取一个writer. 被map任务在执行者上调用. */
   def getWriter[K, V](handle: ShuffleHandle, mapId: Int, context: TaskContext): ShuffleWriter[K, V]
 
   /**
    * Get a reader for a range of reduce partitions (startPartition to endPartition-1, inclusive).
    * Called on executors by reduce tasks.
+   */
+  /**
+   *  为reduce分区的一个范围获取一个reader (startPartition 到 endPartition-1, 排除).
+   *  被reduce任务在执行者上调用.
    */
   def getReader[K, C](
       handle: ShuffleHandle,
@@ -53,10 +61,15 @@ private[spark] trait ShuffleManager {
     * Remove a shuffle's metadata from the ShuffleManager.
     * @return true if the metadata removed successfully, otherwise false.
     */
+  /**
+   * 从这个ShuffleManager移除一个shuffle的元数据.
+   * @return 如果成功移除元数据返回true，否则返回false.
+   */
   def unregisterShuffle(shuffleId: Int): Boolean
 
   def shuffleBlockManager: ShuffleBlockManager
 
   /** Shut down this ShuffleManager. */
+  /** 关闭这个 ShuffleManager. */
   def stop(): Unit
 }

@@ -28,6 +28,11 @@ import org.apache.spark.storage.BlockManagerId
  * DAGScheduler for each stage, and are responsible for sending the tasks to the cluster, running
  * them, retrying if there are failures, and mitigating stragglers. They return events to the
  * DAGScheduler.
+ *
+ * 底层调度接口。当前该接口的唯一是实现类就是TaskSchedulerImpl。
+ * 该接口允许有不同的任务调度实现。每个任务调度器只能调度一个SparkContext的任务。这些任务调度器接收由DagScheduler
+ * 分配来个每一个Stage的任务集，并负责将任务分发到集群上运行，重试失败的任务，处理进展缓慢的任务。并将处理过程和结果
+ * 以事件的形式返回给DAGScheduler。
  */
 private[spark] trait TaskScheduler {
 

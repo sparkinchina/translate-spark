@@ -79,6 +79,9 @@ private[spark] class FileLogger(
   /**
    * To avoid effects of FileSystem#close or FileSystem.closeAll called from other modules,
    * create unique FileSystem instance only for FileLogger
+   *
+   * 为了避免从其他模块调用 FileSystem#close 或者 FileSystem.closeAll,从这里
+   * 为FileLogger创建唯一的FileSystem对象实例
    */
   private val fileSystem = {
     val conf = SparkHadoopUtil.get.newConfiguration(sparkConf)
@@ -93,9 +96,11 @@ private[spark] class FileLogger(
   var fileIndex = 0
 
   // Only used if compression is enabled
+  // 只有当压缩激活了之后使用
   private lazy val compressionCodec = CompressionCodec.createCodec(sparkConf)
 
   // Only defined if the file system scheme is not local
+  // 只有当这个文件系统不是本地的时候定义
   private var hadoopDataStream: Option[FSDataOutputStream] = None
 
   // The Hadoop APIs have changed over time, so we use reflection to figure out
@@ -110,6 +115,8 @@ private[spark] class FileLogger(
 
   /**
    * Start this logger by creating the logging directory.
+   *
+   * 依赖创建这个日志目录来启动logger.
    */
   def start() {
     createLogDir()
@@ -117,6 +124,8 @@ private[spark] class FileLogger(
 
   /**
    * Create a logging directory with the given path.
+   *
+   * 通过给定的路径创建logging目录.
    */
   private def createLogDir() {
     val path = new Path(logDir)
@@ -124,6 +133,7 @@ private[spark] class FileLogger(
       if (overwrite) {
         logWarning("Log directory %s already exists. Overwriting...".format(logDir))
         // Second parameter is whether to delete recursively
+        // 第二个参数是用来判断是否递归删除的
         fileSystem.delete(path, true)
       } else {
         throw new IOException("Log directory %s already exists!".format(logDir))

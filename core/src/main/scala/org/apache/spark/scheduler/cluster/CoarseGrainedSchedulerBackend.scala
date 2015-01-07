@@ -41,8 +41,8 @@ import org.apache.spark.util.{ActorLogReceive, SerializableBuffer, AkkaUtils, Ut
  * (spark.deploy.*).
  *
  * 调度器后台，等待Exexutor接入（通过Akka)。
- * 该后台会在Spark Job运行期间一直持有每一个Exexutor，而不是task一
- * 结束后就放弃Exexutor、新的task则再启动一个Exexutor这种低效的方式。
+ * 该后台会在Spark Job运行期间一直持有每一个Exexutor，而不是当task完成
+ * 后就立即放弃Exexutor、新的task则再启动一个Exexutor这种低效的方式。
  *
  * 该类通过内部类DriverActor实现了对资源的调度，并通过SchedulerBackend接口为外界服务
  */

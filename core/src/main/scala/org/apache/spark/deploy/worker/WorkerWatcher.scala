@@ -29,8 +29,9 @@ import org.apache.spark.util.ActorLogReceive
  * Provides fate sharing between a worker and its associated child processes.
  */
 /**
- * 如果这个连接严重错误的话将会连接到一个worker进程并且终止当前JVM的Actor.
- * 提供介于一个worker和它的关联子进程之间的共享生命周期.
+ * WorkerWatcher是一个连接到worker进程的Actor，如果该连接被断开，则终止当前JVM.
+ * 它提供一种让worker和它的关联子进程之间的共享生命周期的机制.
+ * (运行于某个Worker节点上的Driver与此worker节点有相同的生命周期）
  */
 private[spark] class WorkerWatcher(workerUrl: String)
   extends Actor with ActorLogReceive with Logging {

@@ -31,7 +31,7 @@ import org.apache.spark.util.{ActorLogReceive, AkkaUtils, Utils}
 
 /**
  * Proxy that relays messages to the driver.
- * 职能： 提交Driver。 该类已经被 deprecated
+ * 职能： 消息代理，转发消息到Driver。从main函数看出，该类将要被标记为deprecated
  */
 private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
   extends Actor with ActorLogReceive with Logging {

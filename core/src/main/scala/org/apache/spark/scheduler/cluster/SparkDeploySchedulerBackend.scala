@@ -50,7 +50,8 @@ private[spark] class SparkDeploySchedulerBackend(
   val totalExpectedCores = maxCores.getOrElse(0)
 
   override def start() {
-    super.start()   //创建并启动DriverActor
+    //创建并启动DriverActor
+    super.start()
 
     // The endpoint for executors to talk to us
     val driverUrl = "akka.tcp://%s@%s:%s/user/%s".format(
@@ -80,7 +81,8 @@ private[spark] class SparkDeploySchedulerBackend(
       appUIAddress, sc.eventLogDir)
 
     client = new AppClient(sc.env.actorSystem, masters, appDesc, this, conf)
-    client.start()   // 注册当前App
+    // 注册当前App
+    client.start()
 
     waitForRegistration()
   }

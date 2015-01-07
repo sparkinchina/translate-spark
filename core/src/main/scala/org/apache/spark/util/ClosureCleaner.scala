@@ -31,6 +31,7 @@ private[spark] object ClosureCleaner extends Logging {
   // Get an ASM class reader for a given class from the JAR that loaded it
   private def getClassReader(cls: Class[_]): ClassReader = {
     // Copy data over, before delegating to ClassReader - else we can run out of open file handles.
+    // 委托给ClassReader之前完成复制数据 -或者我们处理完了打开的文件句柄.
     val className = cls.getName.replaceFirst("^.*\\.", "") + ".class"
     val resourceStream = cls.getResourceAsStream(className)
     // todo: Fixme - continuing with earlier behavior ...
@@ -42,6 +43,7 @@ private[spark] object ClosureCleaner extends Logging {
   }
 
   // Check whether a class represents a Scala closure
+  // 检验一个类是否代表一个Scala闭包
   private def isClosure(cls: Class[_]): Boolean = {
     cls.getName.contains("$anonfun$")
   }
@@ -59,6 +61,7 @@ private[spark] object ClosureCleaner extends Logging {
         return f.getType :: getOuterClasses(f.get(obj))
       } else {
         return f.getType :: Nil // Stop at the first $outer that is not a closure
+        // 在第一个不是闭包的$outer处终止
       }
     }
     Nil
@@ -95,7 +98,7 @@ private[spark] object ClosureCleaner extends Logging {
 
   private def createNullValue(cls: Class[_]): AnyRef = {
     if (cls.isPrimitive) {
-      new java.lang.Byte(0: Byte) // Should be convertible to any primitive type
+      new java.lang.Byte(0: Byte) // Should be convertible to any primitive type  // 应转换为原始类型
     } else {
       null
     }
@@ -131,11 +134,13 @@ private[spark] object ClosureCleaner extends Logging {
     if (outerPairs.size > 0 && !isClosure(outerPairs.head._1)) {
       // The closure is ultimately nested inside a class; keep the object of that
       // class without cloning it since we don't want to clone the user's objects.
+      // 这个闭包最终嵌入一个类内部; 保持该类的对象引用没有克隆它因为我们不想克隆用户的对象.
       outer = outerPairs.head._2
       outerPairs = outerPairs.tail
     }
     // Clone the closure objects themselves, nulling out any fields that are not
     // used in the closure we're working on or any of its inner closures.
+    // 克隆这个闭包对象本身, 清空我们正在处理的闭包中没有使用的的任何属性或者他的内部闭包。
     for ((cls, obj) <- outerPairs) {
       outer = instantiateClass(cls, outer, inInterpreter)
       for (fieldName <- accessedFields(cls)) {
@@ -172,6 +177,8 @@ private[spark] object ClosureCleaner extends Logging {
     if (!inInterpreter) {
       // This is a bona fide closure class, whose constructor has no effects
       // other than to set its fields, so use its constructor
+      // 这个是一个珍重的闭包类，除非设置它的属性，否则他的构造器不会
+      // 生效，因此使用它的构造器
       val cons = cls.getConstructors()(0)
       val params = cons.getParameterTypes.map(createNullValue).toArray
       if (outer != null) {
@@ -180,6 +187,7 @@ private[spark] object ClosureCleaner extends Logging {
       return cons.newInstance(params: _*).asInstanceOf[AnyRef]
     } else {
       // Use reflection to instantiate object without calling constructor
+      // 使用反射区初始化对象而不是调用构造器
       val rf = sun.reflect.ReflectionFactory.getReflectionFactory()
       val parentCtor = classOf[java.lang.Object].getDeclaredConstructor()
       val newCtor = rf.newConstructorForSerialization(cls, parentCtor)
@@ -230,6 +238,8 @@ class FieldAccessFinder(output: Map[Class[_], Set[String]]) extends ClassVisitor
           desc: String) {
         // Check for calls a getter method for a variable in an interpreter wrapper object.
         // This means that the corresponding field will be accessed, so we should save it.
+        // 检查在一个解释器封装对象中调用一个变量的getter方法。
+        // 这意味着，相应的字段将被访问，所以我们应该保存它。
         if (op == INVOKEVIRTUAL && owner.endsWith("$iwC") && !name.endsWith("$outer")) {
           for (cl <- output.keys if cl.getName == owner.replace('/', '.')) {
             output(cl) += name

@@ -1176,6 +1176,9 @@ abstract class RDD[T: ClassTag](
   /**
    * Save this RDD as a text file, using string representations of elements.
    */
+  /**
+   * 把这个RDD保存为一个文本文件，采用元素集的字符串表示方法.
+   */
   def saveAsTextFile(path: String) {
     this.map(x => (NullWritable.get(), new Text(x.toString)))
       .saveAsHadoopFile[TextOutputFormat[NullWritable, Text]](path)
