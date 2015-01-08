@@ -70,6 +70,7 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
   /**
    * Flag signifying whether the broadcast variable is valid
    * (that is, not already destroyed) or not.
+   * 标记位，表明当前broadcast是否处于有效状态 (是否已经被销毁)
    */
   @volatile private var _isValid = true
 
@@ -84,6 +85,8 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
   /**
    * Asynchronously delete cached copies of this broadcast on the executors.
    * If the broadcast is used after this is called, it will need to be re-sent to each executor.
+   * 删除缓存在Exexutor上的当前广播变量副本（异步方式）
+   * 如果广播变量被删除后却再次被使用到，则需要重新发送到Exexutor上
    */
   def unpersist() {
     unpersist(blocking = false)
@@ -92,6 +95,9 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
   /**
    * Delete cached copies of this broadcast on the executors. If the broadcast is used after
    * this is called, it will need to be re-sent to each executor.
+   * 删除缓存在Exexutor上的当前广播变量副本
+   * 如果广播变量被删除后却再次被使用到，则需要重新发送到Exexutor上
+   * 参数blocking 是否启用阻塞模式
    * @param blocking Whether to block until unpersisting has completed
    */
   def unpersist(blocking: Boolean) {
@@ -104,6 +110,8 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
    * Destroy all data and metadata related to this broadcast variable. Use this with caution;
    * once a broadcast variable has been destroyed, it cannot be used again.
    * This method blocks until destroy has completed
+   * 删除与当前广播变量有关的数据和元数据。 使用该方法时需谨慎；广播变量一旦被销毁就不能再次使用了。
+   * 该方法会阻塞程序的执行，直到数据销毁动作完成
    */
   def destroy() {
     destroy(blocking = true)
@@ -125,6 +133,7 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
   /**
    * Whether this Broadcast is actually usable. This should be false once persisted state is
    * removed from the driver.
+   * 查看当前广播变量是否可用。 一旦Driver上的数据被删除，该状态应该是 false
    */
   private[spark] def isValid: Boolean = {
     _isValid
@@ -133,12 +142,14 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
   /**
    * Actually get the broadcasted value. Concrete implementations of Broadcast class must
    * define their own way to get the value.
+   * 获取广播变量值的实际接口。 具体内容由子类实现
    */
   protected def getValue(): T
 
   /**
    * Actually unpersist the broadcasted value on the executors. Concrete implementations of
    * Broadcast class must define their own logic to unpersist their own data.
+   * 删除Exexutor上广播变量值的接口。具体由子类实现
    */
   protected def doUnpersist(blocking: Boolean)
 
@@ -146,10 +157,12 @@ abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Lo
    * Actually destroy all data and metadata related to this broadcast variable.
    * Implementation of Broadcast class must define their own logic to destroy their own
    * state.
+   * 销毁跟当前广播变量有关的数据和元数据的实际接口。具体的Broadcast实现类必须根据自己的逻辑来销毁数据
    */
   protected def doDestroy(blocking: Boolean)
 
   /** Check if this broadcast is valid. If not valid, exception is thrown. */
+  //检查当前广播变量是否有效。如果该变量无效，抛出异常
   protected def assertValid() {
     if (!_isValid) {
       throw new SparkException(
