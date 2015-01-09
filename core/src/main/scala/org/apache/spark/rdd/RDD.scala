@@ -17,26 +17,34 @@
 
 package org.apache.spark.rdd
 
-import java.util.Random
+import java.util.{Properties, Random}
+
+import scala.collection.{mutable, Map}
+import scala.collection.mutable.ArrayBuffer
+import scala.reflect.{classTag, ClassTag}
 
 import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus
-import org.apache.hadoop.io.{BytesWritable, NullWritable, Text}
+import org.apache.hadoop.io.BytesWritable
 import org.apache.hadoop.io.compress.CompressionCodec
+import org.apache.hadoop.io.NullWritable
+import org.apache.hadoop.io.Text
 import org.apache.hadoop.mapred.TextOutputFormat
+
+import org.apache.spark._
 import org.apache.spark.Partitioner._
 import org.apache.spark.SparkContext._
-import org.apache.spark._
 import org.apache.spark.annotation.{DeveloperApi, Experimental}
 import org.apache.spark.api.java.JavaRDD
-import org.apache.spark.partial.{BoundedDouble, CountEvaluator, GroupedCountEvaluator, PartialResult}
+import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.partial.BoundedDouble
+import org.apache.spark.partial.CountEvaluator
+import org.apache.spark.partial.GroupedCountEvaluator
+import org.apache.spark.partial.PartialResult
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.util.{BoundedPriorityQueue, Utils, CallSite}
 import org.apache.spark.util.collection.OpenHashMap
-import org.apache.spark.util.random.{BernoulliCellSampler, BernoulliSampler, PoissonSampler, SamplingUtils}
-import org.apache.spark.util.{BoundedPriorityQueue, Utils}
-
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.{Map, mutable}
-import scala.reflect.{ClassTag, classTag}
+import org.apache.spark.util.random.{BernoulliSampler, PoissonSampler, BernoulliCellSampler,
+  SamplingUtils}
 
 /**
  * A Resilient Distributed Dataset (RDD), the basic abstraction in Spark. Represents an immutable,
@@ -1324,7 +1332,7 @@ abstract class RDD[T: ClassTag](
   def toDebugString: String = {
     // Get a debug description of an rdd without its children
     def debugSelf (rdd: RDD[_]): Seq[String] = {
-      import org.apache.spark.util.Utils.bytesToString
+      import Utils.bytesToString
 
       val persistence = if (storageLevel != StorageLevel.NONE) storageLevel.description else ""
       val storageInfo = rdd.context.getRDDStorageInfo.filter(_.id == rdd.id).map(info =>

@@ -48,7 +48,7 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
    * add by yay(598775508) at 2015/1/9-11:11
    * 对spark.local.dir中设置的每一个path创建一个本地的目录；然后在这个目录中创建多个hash存储Block文件的子目录,目的是为了避免上级拥有大量的索引节点
    */
-   private[spark] val localDirs: Array[File] = createLocalDirs(conf)
+  private[spark] val localDirs: Array[File] = createLocalDirs(conf)
   if (localDirs.isEmpty) {
     logError("Failed to create any local dir.")
     System.exit(ExecutorExitCode.DISK_STORE_FAILED_TO_CREATE_DIR)
