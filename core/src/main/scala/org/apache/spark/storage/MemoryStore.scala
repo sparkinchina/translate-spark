@@ -32,10 +32,16 @@ private case class MemoryEntry(value: Any, size: Long, deserialized: Boolean)
  * Stores blocks in memory, either as Arrays of deserialized Java objects or as
  * serialized ByteBuffers.
  */
+/**
+ * add by yay(598775508) at 2015/1/9-11:52
+ * MemoryStore内部维护了一个hash map来管理所有的block，以block id为key将block存放到hash map中
+ * 在MemoryStore中存放block必须确保内存足够容纳下该block，若内存不足则会将block写到文件中,参考：putBytes函数
+ */
 private[spark] class MemoryStore(blockManager: BlockManager, maxMemory: Long)
   extends BlockStore(blockManager) {
 
   private val conf = blockManager.conf
+
   private val entries = new LinkedHashMap[BlockId, MemoryEntry](32, 0.75f, true)
 
   @volatile private var currentMemory = 0L

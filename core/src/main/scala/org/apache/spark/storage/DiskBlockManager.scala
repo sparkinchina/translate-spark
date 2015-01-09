@@ -44,7 +44,11 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
   /* Create one local directory for each path mentioned in spark.local.dir; then, inside this
    * directory, create multiple subdirectories that we will hash files into, in order to avoid
    * having really large inodes at the top level. */
-  private[spark] val localDirs: Array[File] = createLocalDirs(conf)
+  /**
+   * add by yay(598775508) at 2015/1/9-11:11
+   * 对spark.local.dir中设置的每一个path创建一个本地的目录；然后在这个目录中创建多个hash存储Block文件的子目录,目的是为了避免上级拥有大量的索引节点
+   */
+   private[spark] val localDirs: Array[File] = createLocalDirs(conf)
   if (localDirs.isEmpty) {
     logError("Failed to create any local dir.")
     System.exit(ExecutorExitCode.DISK_STORE_FAILED_TO_CREATE_DIR)
@@ -56,13 +60,21 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
   /** Looks up a file by hashing it into one of our local subdirectories. */
   // This method should be kept in sync with
   // org.apache.spark.network.shuffle.StandaloneShuffleBlockManager#getFile().
+  /**
+   * add by yay(598775508) at 2015/1/9-11:33
+   * 在diskManager里面，每一个block都被存储为一个file，通过计算block id的hash值将block映射到文件中.
+   * block id与文件路径的映射关系如下：
+   * 根据block id计算出hash值，将hash取模获得dirId和subDirId，在subDirs中找出相应的subDir，若没有则新建一个subDir，最后以subDir为路径、block id为文件名创建file handler
+   */
   def getFile(filename: String): File = {
     // Figure out which local directory it hashes to, and which subdirectory in that
+//    filename=blockId.name
     val hash = Utils.nonNegativeHash(filename)
     val dirId = hash % localDirs.length
     val subDirId = (hash / localDirs.length) % subDirsPerLocalDir
 
     // Create the subdirectory if it doesn't already exist
+    //    如果子目录不存在则创建
     var subDir = subDirs(dirId)(subDirId)
     if (subDir == null) {
       subDir = subDirs(dirId).synchronized {
@@ -120,6 +132,7 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
     (blockId, getFile(blockId))
   }
 
+
   private def createLocalDirs(conf: SparkConf): Array[File] = {
     val dateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
     Utils.getOrCreateLocalRootDirs(conf).flatMap { rootDir =>
@@ -131,6 +144,7 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
       while (!foundLocalDir && tries < MAX_DIR_CREATION_ATTEMPTS) {
         tries += 1
         try {
+          //  文件夹的命名方式为(spark-local-yyyyMMddHHmmss-xxxx, xxxx是一个随机数)
           localDirId = "%s-%04x".format(dateFormat.format(new Date), rand.nextInt(65536))
           localDir = new File(rootDir, s"spark-local-$localDirId")
           if (!localDir.exists) {

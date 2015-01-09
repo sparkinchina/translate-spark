@@ -17,11 +17,11 @@
 
 package org.apache.spark
 
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage._
+
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Spark class responsible for passing RDDs partition contents to the BlockManager and making
@@ -40,7 +40,11 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
       partition: Partition,
       context: TaskContext,
       storageLevel: StorageLevel): Iterator[T] = {
-
+    /**
+     * add by yay(598775508) at 2015/1/9-13:53
+     * 根据RDD的id和partition的索引生成BlockId，这也是partition和block发生关联的地方。
+     * RDD为我们提供的各种transformation和action接口实现我们的应用，RDD的引入提高了抽象层次，在接口和实现上进行有效地隔离，使用户无需关心底层的实现。但是RDD提供给我们的仅仅是一个“形”, 我们所操作的数据究竟放在哪里，如何存取？它的“体”是怎么样的？这是由storage模块来实现和管理的
+     */
     val key = RDDBlockId(rdd.id, partition.index)
     logDebug(s"Looking for partition $key")
     blockManager.get(key) match {

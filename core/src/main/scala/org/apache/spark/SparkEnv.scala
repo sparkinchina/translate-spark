@@ -250,6 +250,11 @@ object SparkEnv extends Logging {
     val closureSerializer = instantiateClassFromConf[Serializer](
       "spark.closure.serializer", "org.apache.spark.serializer.JavaSerializer")
 
+    /**
+     * add by yay(598775508) at 2015/1/7-22:38
+     * 如果当前节点是driver则创建这个actor，否则建立到driver的连接。
+     * 也就是说：对于BlockManagerMaster, 在master上创建BlockManagerMasterActor, 而在slave上创建BlockManagerMasterActor的ref
+     */
     def registerOrLookup(name: String, newActor: => Actor): ActorRef = {
       if (isDriver) {
         logInfo("Registering " + name)
@@ -289,11 +294,20 @@ object SparkEnv extends Logging {
           new NioBlockTransferService(conf, securityManager)
       }
 
+    /**
+     * add by yay(598775508) at 2015/1/7-22:36
+     * BlockManagerMaster模块只运行在Driver Application所在的Executor，功能是负责记录下所有BlockIds存储在哪个SlaveWorker上，比如RDD Task运行在机器A，所需要的BlockId为3，但在机器A上没有BlockId为3的数值，这个时候Slave worker需要通过BlockManager向BlockManagerMaster询问数据存储的位置，然后再通过ConnectionManager去获取.
+     */
     val blockManagerMaster = new BlockManagerMaster(registerOrLookup(
       "BlockManagerMaster",
       new BlockManagerMasterActor(isLocal, conf, listenerBus)), conf, isDriver)
 
     // NB: blockManager is not valid until initialize() is called later.
+    /**
+     * add by yay(598775508) at 2015/1/8-21:44
+     * BlockManager wrap了BlockManagerMaster，通过BlockManagerMaster进行通信。
+     * Spark会在client driver和executor端创建各自的BlockManager，通过BlockManager对storage模块进行操作。
+     */
     val blockManager = new BlockManager(executorId, actorSystem, blockManagerMaster,
       serializer, conf, mapOutputTracker, shuffleManager, blockTransferService, securityManager,
       numUsableCores)

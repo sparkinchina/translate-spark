@@ -20,28 +20,26 @@ package org.apache.spark.storage
 import java.io.{BufferedOutputStream, ByteArrayOutputStream, File, InputStream, OutputStream}
 import java.nio.{ByteBuffer, MappedByteBuffer}
 
-import scala.collection.mutable.{ArrayBuffer, HashMap}
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.util.Random
-
 import akka.actor.{ActorSystem, Props}
-import sun.nio.ch.DirectBuffer
-
 import org.apache.spark._
 import org.apache.spark.executor._
 import org.apache.spark.io.CompressionCodec
 import org.apache.spark.network._
 import org.apache.spark.network.buffer.{ManagedBuffer, NioManagedBuffer}
-import org.apache.spark.network.netty.{SparkTransportConf, NettyBlockTransferService}
+import org.apache.spark.network.netty.SparkTransportConf
 import org.apache.spark.network.shuffle.ExternalShuffleClient
 import org.apache.spark.network.shuffle.protocol.ExecutorShuffleInfo
-import org.apache.spark.network.util.{ConfigProvider, TransportConf}
 import org.apache.spark.serializer.Serializer
 import org.apache.spark.shuffle.ShuffleManager
 import org.apache.spark.shuffle.hash.HashShuffleManager
 import org.apache.spark.util._
+import sun.nio.ch.DirectBuffer
+
+import scala.collection.mutable.{ArrayBuffer, HashMap}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.Random
 
 private[spark] sealed trait BlockValues
 private[spark] case class ByteBufferValues(buffer: ByteBuffer) extends BlockValues
@@ -62,6 +60,11 @@ private[spark] class BlockResult(
  * retrieving blocks both locally and remotely into various stores (memory, disk, and off-heap).
  *
  * Note that #initialize() must be called before the BlockManager is usable.
+ */
+/**
+ * add by yay(598775508) at 2015/1/9-14:09
+ * 每个节点都有一个BlockManager, 其中有一个是Driver(master), 其余的都是slave
+ * BlockManager是被master和slave公用的, 但对于master的逻辑都已经wrap在BlockManagerMaster中了
  */
 private[spark] class BlockManager(
     executorId: String,
@@ -190,6 +193,16 @@ private[spark] class BlockManager(
    * BlockManagerMaster, starts the BlockManagerWorker actor, and registers with a local shuffle
    * service if configured.
    */
+  /**
+   * add by yay(598775508) at 2015/1/8-21:53
+   * 根据给定的appId初始BlockManager
+   * 对应前面说了一堆的：Note that #initialize() must be called before the BlockManager is usable.
+   * 之所以不在构造函数中执行初始化，是因为那个时候还不知道appId是啥。要等 taskScheduler.start()之后（会把application注册到Master）才会调用这个方法，可以在SparkContext中找到如下代码验证：
+   *  taskScheduler.start()
+      val applicationId: String = taskScheduler.applicationId()
+      conf.set("spark.app.id", applicationId)
+      env.blockManager.initialize(applicationId)   *
+   */
   def initialize(appId: String): Unit = {
     blockTransferService.init(this)
     shuffleClient.init(appId)
@@ -203,6 +216,10 @@ private[spark] class BlockManager(
       blockManagerId
     }
 
+    /**
+     * add by yay(598775508) at 2015/1/8-22:19
+     * blockManager向Driver注册，并传递了自身的slaveActor
+     */
     master.registerBlockManager(blockManagerId, maxMemory, slaveActor)
 
     // Register Executors' configuration with the local shuffle service, if one should exist.
@@ -360,6 +377,7 @@ private[spark] class BlockManager(
       info: BlockInfo,
       status: BlockStatus,
       droppedMemorySize: Long = 0L): Unit = {
+    // 如果返回false, 说明你发的blockid在master没有, 需要重新注册
     val needReregister = !tryToReportBlockStatus(blockId, info, status, droppedMemorySize)
     if (needReregister) {
       logInfo(s"Got told to re-register updating block $blockId")
@@ -429,6 +447,9 @@ private[spark] class BlockManager(
   /**
    * Get block from local block manager.
    */
+  /**
+   * 先后查找Memory，Tachyon,disk
+   */
   def getLocal(blockId: BlockId): Option[BlockResult] = {
     logDebug(s"Getting local block $blockId")
     doGetLocal(blockId, asBlockResult = true).asInstanceOf[Option[BlockResult]]
@@ -478,7 +499,12 @@ private[spark] class BlockManager(
 
         val level = info.level
         logDebug(s"Level for block $blockId is $level")
-
+        /**
+         * add by yay(598775508) at 2015/1/9-13:28
+         * 1.level.useMemory == true：从memory中取出block并返回，若没有取到则进入分支2。
+         * 2.level.useDisk == true: level.useMemory == true: 将block从disk中读出并写入内存以便下次使用时直接从内存中获得，同时返回该block；level.useMemory == false: 将block从disk中读出并返回
+         * 3.level.useDisk == false: 没有在本地找到block，返回None
+         * */
         // Look for the block in memory
         if (level.useMemory) {
           logDebug(s"Getting block $blockId from memory")
@@ -591,12 +617,15 @@ private[spark] class BlockManager(
 
   private def doGetRemote(blockId: BlockId, asBlockResult: Boolean): Option[Any] = {
     require(blockId != null, "BlockId is null")
+//   具体处理请查看BlockManagerMasterActor中的getLocations函数
     val locations = Random.shuffle(master.getLocations(blockId))
     for (loc <- locations) {
       logDebug(s"Getting remote block $blockId from $loc")
+//      根据location向远端发送请求获取block
       val data = blockTransferService.fetchBlockSync(
         loc.host, loc.port, loc.executorId, blockId.toString).nioByteBuffer()
 
+//      只要有一个远端返回block该函数就返回而不继续发送请求。
       if (data != null) {
         if (asBlockResult) {
           return Some(new BlockResult(
@@ -713,7 +742,7 @@ private[spark] class BlockManager(
     /* Remember the block's storage level so that we can correctly drop it to disk if it needs
      * to be dropped right after it got put into memory. Note, however, that other threads will
      * not be able to get() this block until we call markReady on its BlockInfo. */
-    val putBlockInfo = {
+     val putBlockInfo = {
       val tinfo = new BlockInfo(level, tellMaster)
       // Do atomically !
       val oldBlockOpt = blockInfo.putIfAbsent(blockId, tinfo)
@@ -760,7 +789,7 @@ private[spark] class BlockManager(
     putBlockInfo.synchronized {
       logTrace("Put for block %s took %s to get into synchronized block"
         .format(blockId, Utils.getUsedTimeMs(startTimeMs)))
-
+//标志该blockInfo不能被读取
       var marked = false
       try {
         // returnValues - Whether to return the values put
@@ -810,6 +839,7 @@ private[spark] class BlockManager(
           // Now that the block is in either the memory, tachyon, or disk store,
           // let other threads read it, and tell the master about it.
           marked = true
+//          标志该Block已经可以被读取了
           putBlockInfo.markReady(size)
           if (tellMaster) {
             reportBlockStatus(blockId, putBlockInfo, putBlockStatus)
