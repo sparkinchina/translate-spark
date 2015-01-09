@@ -61,7 +61,7 @@ private[spark] class Worker(
   assert (port > 0)
 
   // worker and executor ID 中添加时间戳，保证其唯一性
-  def createDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")  // For worker and executor IDs，
+  def createDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")  // For worker and executor IDs
 
   // Send a heartbeat every (heartbeat timeout) / 4 milliseconds
   val HEARTBEAT_MILLIS = conf.getLong("spark.worker.timeout", 60) * 1000 / 4

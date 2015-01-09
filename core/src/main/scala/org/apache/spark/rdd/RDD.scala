@@ -159,7 +159,8 @@ abstract class RDD[T: ClassTag](
       throw new UnsupportedOperationException(
         "Cannot change storage level of an RDD after it was already assigned a level")
     }
-    sc.persistRDD(this)    // RDD的缓存由SparkContext执行
+    // RDD的缓存由SparkContext执行
+    sc.persistRDD(this)
     // Register the RDD with the ContextCleaner for automatic GC-based cleanup
     sc.cleaner.foreach(_.registerRDDForCleanup(this))
     storageLevel = newLevel

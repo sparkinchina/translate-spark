@@ -318,7 +318,8 @@ class DAGScheduler(
    * 创建或者获取一个RDD的 parent stage列表，并为JobId赋值（如果JobId为空）
    */
   private def getParentStages(rdd: RDD[_], jobId: Int): List[Stage] = {
-    val parents = new HashSet[Stage]  // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
+    // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
+    val parents = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
     // We are manually maintaining a stack here to prevent StackOverflowError
     // caused by recursively visiting
@@ -410,7 +411,8 @@ class DAGScheduler(
               case shufDep: ShuffleDependency[_, _, _] =>
                 val mapStage = getShuffleMapStage(shufDep, stage.jobId)
                 if (!mapStage.isAvailable) {
-                  missing += mapStage // 仅仅查找到最近邻的ShuffleMapStage
+                  // 仅仅查找到最近邻的ShuffleMapStage
+                  missing += mapStage
                 }
               case narrowDep: NarrowDependency[_] =>
                 waitingForVisit.push(narrowDep.rdd)
@@ -819,7 +821,8 @@ class DAGScheduler(
         submitStage(finalStage)
       }
     }
-    submitWaitingStages()   //检查waitingStages，并提交可用的Stage
+    //检查waitingStages，并提交可用的Stage
+    submitWaitingStages()
   }
 
   /** Submits stage, but first recursively submits any missing parents.
@@ -834,7 +837,8 @@ class DAGScheduler(
         logDebug("missing: " + missing)
         if (missing == Nil) {
           logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
-          submitMissingTasks(stage, jobId.get)  // 没有父stage，执行这stage的tasks
+          // 没有父stage，执行这stage的tasks
+          submitMissingTasks(stage, jobId.get)
         } else {
           for (parent <- missing) {
             submitStage(parent)
