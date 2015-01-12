@@ -312,6 +312,8 @@ object SparkEnv extends Logging {
       serializer, conf, mapOutputTracker, shuffleManager, blockTransferService, securityManager,
       numUsableCores)
 
+//    SparkContext初始化的时候会调用createDriverEnv，从而创建一个broadcastManager
+//    构造BlockcastManager对象时会调用initialize方法，主要根据配置初始化broadcastFactory变量，并且调用其initialize方法
     val broadcastManager = new BroadcastManager(isDriver, conf, securityManager)
 
     val cacheManager = new CacheManager(blockManager)

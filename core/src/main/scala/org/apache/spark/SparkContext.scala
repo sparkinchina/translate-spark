@@ -941,6 +941,11 @@ class SparkContext(config: SparkConf) extends Logging {
    * [[org.apache.spark.broadcast.Broadcast]] object for reading it in distributed functions.
    * The variable will be sent to each cluster only once.
    */
+  /**
+   * add by yay(598775508) at 2015/1/11-20:00
+   * 广播一个只读的变量到集群，返回一个[[org.apache.spark.broadcast.Broadcast]]用于在分布式函数中读取变量
+   * 这个变量只会在每个集群中的发送一次
+   */
   def broadcast[T: ClassTag](value: T): Broadcast[T] = {
     val bc = env.broadcastManager.newBroadcast[T](value, isLocal)
     val callSite = getCallSite

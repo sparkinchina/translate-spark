@@ -53,12 +53,17 @@ private[spark] class HttpBroadcast[T: ClassTag](
    * does not need to be told about this block as not only need to know about this data block.
    * 被广播的数据同时也存储在Driver上的BlockManager。不必
    */
+  /**
+   * add by yay(598775508) at 2015/1/11-21:14
+   * 将变量id和值放入blockManager，但并不通知master
+   */
   HttpBroadcast.synchronized {
     SparkEnv.get.blockManager.putSingle(
       blockId, value_, StorageLevel.MEMORY_AND_DISK, tellMaster = false)
   }
 
   if (!isLocal) {
+//    将对象值按照指定的压缩、序列化写入指定的文件
     HttpBroadcast.write(id, value_)
   }
 
@@ -86,6 +91,7 @@ private[spark] class HttpBroadcast[T: ClassTag](
   private def readObject(in: ObjectInputStream): Unit = Utils.tryOrIOException {
     in.defaultReadObject()
     HttpBroadcast.synchronized {
+//      首先查看blockManager中是否已有，如有则直接取值，否则调用伴生对象的read方法进行读取
       SparkEnv.get.blockManager.getSingle(blockId) match {
         case Some(x) => value_ = x.asInstanceOf[T]
         case None => {
@@ -96,6 +102,9 @@ private[spark] class HttpBroadcast[T: ClassTag](
            * We cache broadcast data in the BlockManager so that subsequent tasks using it
            * do not need to re-fetch. This data is only used locally and no other node
            * needs to fetch this block, so we don't notify the master.
+           */
+          /**
+           * 我们缓存广播变量的值到BlockManager以便后续的任务可以直接使用而不需要重新获取.因为这些数据仅仅在本地使用，并且其他的node不需要获取这个block，所以我们不用通知Master
            */
           SparkEnv.get.blockManager.putSingle(
             blockId, value_, StorageLevel.MEMORY_AND_DISK, tellMaster = false)
@@ -129,10 +138,12 @@ private[broadcast] object HttpBroadcast extends Logging {
         compress = conf.getBoolean("spark.broadcast.compress", true)
         securityManager = securityMgr
         if (isDriver) {
+//          根据conf在driver创建一个httpServer(封装了jetty)，并启动
           createServer(conf)
           conf.set("spark.httpBroadcast.uri",  serverUri)
         }
         serverUri = conf.get("spark.httpBroadcast.uri")
+//        创建一个对象，定时清理过时的元数据
         cleaner = new MetadataCleaner(MetadataCleanerType.HTTP_BROADCAST, cleanup, conf)
         compressionCodec = CompressionCodec.createCodec(conf)
         initialized = true
@@ -156,6 +167,7 @@ private[broadcast] object HttpBroadcast extends Logging {
   }
 
   private def createServer(conf: SparkConf) {
+//    首先创建一个存放广播变量的目录
     broadcastDir = Utils.createTempDir(Utils.getLocalDir(conf))
     val broadcastPort = conf.getInt("spark.broadcast.port", 0)
     server = new HttpServer(broadcastDir, securityManager, broadcastPort, "HTTP broadcast server")
@@ -166,7 +178,13 @@ private[broadcast] object HttpBroadcast extends Logging {
 
   def getFile(id: Long) = new File(broadcastDir, BroadcastBlockId(id).name)
 
+  /**
+   * 将对象值按照指定的压缩、序列化写入指定的文件
+   * @param id
+   * @param value
+   */
   private def write(id: Long, value: Any) {
+//    这个文件所在的目录即是HttpServer的资源目录
     val file = getFile(id)
     val fileOutputStream = new FileOutputStream(file)
     try {
@@ -187,6 +205,13 @@ private[broadcast] object HttpBroadcast extends Logging {
     }
   }
 
+  /**
+   * 使用serverUri和block id对应的文件名直接开启一个HttpConnection将中心服务器上相应的数据取过来，
+   * 并使用配置的压缩和序列化机制进行解压和反序列化
+   * @param id
+   * @tparam T
+   * @return
+   */
   private def read[T: ClassTag](id: Long): T = {
     logDebug("broadcast read server: " +  serverUri + " id: broadcast-" + id)
     val url = serverUri + "/" + BroadcastBlockId(id).name
