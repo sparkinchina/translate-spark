@@ -159,7 +159,8 @@ abstract class RDD[T: ClassTag](
       throw new UnsupportedOperationException(
         "Cannot change storage level of an RDD after it was already assigned a level")
     }
-    sc.persistRDD(this)    // RDD的缓存由SparkContext执行
+    // RDD的缓存由SparkContext执行
+    sc.persistRDD(this)
     // Register the RDD with the ContextCleaner for automatic GC-based cleanup
     sc.cleaner.foreach(_.registerRDDForCleanup(this))
     storageLevel = newLevel
@@ -236,6 +237,11 @@ abstract class RDD[T: ClassTag](
    * Internal method to this RDD; will read from cache if applicable, or otherwise compute it.
    * This should ''not'' be called by users directly, but is available for implementors of custom
    * subclasses of RDD.
+   */
+  /**
+   * add by yay(598775508) at 2015/1/7-22:48
+   * 如果当前RDD的storage level不是NONE的话，表示该RDD在BlockManager中有存储
+   * 如果缓存中存在该Patition的运算结果，那么直接拿取；否则进行计算并且根据StorageLevel的级别进行缓存处理
    */
   final def iterator(split: Partition, context: TaskContext): Iterator[T] = {
     if (storageLevel != StorageLevel.NONE) {

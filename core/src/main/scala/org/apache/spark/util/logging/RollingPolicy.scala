@@ -85,7 +85,7 @@ private[spark] class TimeBasedRollingPolicy(
     logDebug(s"Current time: ${System.currentTimeMillis}, next rollover time: " + nextRolloverTime)
   }
 
-  def bytesWritten(bytes: Long) { }  // nothing to do  // 啥也不干
+  def bytesWritten(bytes: Long) { }  // nothing to do
 
   private def calculateNextRolloverTime(): Long = {
     val now = System.currentTimeMillis()

@@ -26,8 +26,16 @@ import org.apache.spark.{Logging, SparkConf, SparkException}
 import org.apache.spark.storage.BlockManagerMessages._
 import org.apache.spark.util.AkkaUtils
 
+/**
+ * add by yay(598775508) at 2015/1/8-22:17
+ * 1、对于master和slave，BlockManager的创建有所不同（虽然是同一个类）
+ * 2、对于Driver而言，BlockManagerMaster直接拥有BlockManagerMasterActor的actor和间接拥有所有BlockManagerSlaveActor的ref（在BlockManagerMasterActor的blockManagerInfo中查看BlockManagerSlaveActor）
+ * 3、对于slave而言，BlockManagerMaster则拥有BlockManagerMasterActor的ref和自身BlockManagerSlaveActor的actor。
+ * 4、actor类似于网络服务中的server端，它保存所有的状态信息，接收client端的请求执行并返回给客户端；ref类似于网络服务中的client端，通过向server端发起请求获取结果。
+ */
 private[spark]
 class BlockManagerMaster(
+//    driverActor：如果是driver那么就是BlockManagerMasterActor的actor；否则为BlockManagerMasterActor的ref
     var driverActor: ActorRef,
     conf: SparkConf,
     isDriver: Boolean)
@@ -48,6 +56,7 @@ class BlockManagerMaster(
   /** Register the BlockManager's id with the driver. */
   def registerBlockManager(blockManagerId: BlockManagerId, maxMemSize: Long, slaveActor: ActorRef) {
     logInfo("Trying to register BlockManager")
+//    RegisterBlockManager表示的消息，由BlockManagerMasterActor接招，可以看它的receiveWithLogging函数
     tell(RegisterBlockManager(blockManagerId, maxMemSize, slaveActor))
     logInfo("Registered BlockManager")
   }
@@ -66,6 +75,11 @@ class BlockManagerMaster(
   }
 
   /** Get locations of the blockId from the driver */
+  /**
+   * 从Driver获取指定blockId的locations
+   * @param blockId
+   * @return
+   */
   def getLocations(blockId: BlockId): Seq[BlockManagerId] = {
     askDriverWithReply[Seq[BlockManagerId]](GetLocations(blockId))
   }
@@ -84,6 +98,7 @@ class BlockManagerMaster(
   }
 
   /** Get ids of other nodes in the cluster from the driver */
+//  请求获得其他BlockManager的id
   def getPeers(blockManagerId: BlockManagerId): Seq[BlockManagerId] = {
     askDriverWithReply[Seq[BlockManagerId]](GetPeers(blockManagerId))
   }

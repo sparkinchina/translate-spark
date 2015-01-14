@@ -120,6 +120,7 @@ private[spark] class Executor(
   // Maintains the list of running tasks.
   private val runningTasks = new ConcurrentHashMap[Long, TaskRunner]
 
+//  向Driver发送心跳更新Block信息
   startDriverHeartbeater()
 
   def launchTask(

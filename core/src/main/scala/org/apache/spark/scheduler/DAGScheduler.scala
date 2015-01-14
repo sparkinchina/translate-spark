@@ -71,8 +71,9 @@ import org.apache.spark.storage.BlockManagerMessages.BlockManagerHeartbeat
  **   DAGScheduler内部维护了各种 task / stage / job之间的映射关系表
  *
  *  DAGSchedulerActorSupervisor 负责监控策略及创建DAGSchedulerEventProcessActor
- *  DAGSchedulerEventProcessActor 负责消息循环，并为内部提供统一的作业调度接口（ TODO 这个接口没有发现其存在的必要性，很多代码写了两边？)
- *
+ *  DAGSchedulerEventProcessActor 负责消息循环，并为内部提供统一的作业调度接口
+ *  （用DAGSchedulerEventProcessActor解决了Event处理中的并发、同步、异步等问题，
+ *    没有所用锁机制，提高了效率，很漂亮)
  */
 private[spark]
 class DAGScheduler(
@@ -137,6 +138,7 @@ class DAGScheduler(
 
   // A closure serializer that we reuse.
   // This is only safe because DAGScheduler runs in a single thread.
+  // 闭包序列化器 DAGScheduler运行在一个单线程环境中，这样使用不存在安全问题
   private val closureSerializer = SparkEnv.get.closureSerializer.newInstance()
 
   private[scheduler] var eventProcessActor: ActorRef = _
@@ -150,6 +152,7 @@ class DAGScheduler(
   private def initializeEventProcessActor() {
     // blocking the thread until supervisor is started, which ensures eventProcessActor is
     // not null before any job is submitted
+    // 阻塞当前线程，等待supervisor启动，这样可以确保Job提交时，eventProcessActor not null
     implicit val timeout = Timeout(30 seconds)
     val initEventActorReply =
       dagSchedulerActorSupervisor ? Props(new DAGSchedulerEventProcessActor(this))
@@ -184,6 +187,9 @@ class DAGScheduler(
    * Update metrics for in-progress tasks and let the master know that the BlockManager is still
    * alive. Return true if the driver knows about the given block manager. Otherwise, return false,
    * indicating that the block manager should re-register.
+   * 更新进程中的统计数据，让Master知道BlockManager还活着。
+   *   返回值为  true 意味着 Master还记得该BlockManager；
+   *   返回值为 false 则表明该BlockManager需要重新向Master注册了
    */
   def executorHeartbeatReceived(
       execId: String,
@@ -312,7 +318,8 @@ class DAGScheduler(
    * 创建或者获取一个RDD的 parent stage列表，并为JobId赋值（如果JobId为空）
    */
   private def getParentStages(rdd: RDD[_], jobId: Int): List[Stage] = {
-    val parents = new HashSet[Stage]  // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
+    // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
+    val parents = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
     // We are manually maintaining a stack here to prevent StackOverflowError
     // caused by recursively visiting
@@ -404,7 +411,8 @@ class DAGScheduler(
               case shufDep: ShuffleDependency[_, _, _] =>
                 val mapStage = getShuffleMapStage(shufDep, stage.jobId)
                 if (!mapStage.isAvailable) {
-                  missing += mapStage // 仅仅查找到最近邻的ShuffleMapStage
+                  // 仅仅查找到最近邻的ShuffleMapStage
+                  missing += mapStage
                 }
               case narrowDep: NarrowDependency[_] =>
                 waitingForVisit.push(narrowDep.rdd)
@@ -813,7 +821,8 @@ class DAGScheduler(
         submitStage(finalStage)
       }
     }
-    submitWaitingStages()   //检查waitingStages，并提交可用的Stage
+    //检查waitingStages，并提交可用的Stage
+    submitWaitingStages()
   }
 
   /** Submits stage, but first recursively submits any missing parents.
@@ -828,7 +837,8 @@ class DAGScheduler(
         logDebug("missing: " + missing)
         if (missing == Nil) {
           logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
-          submitMissingTasks(stage, jobId.get)  // 没有父stage，执行这stage的tasks
+          // 没有父stage，执行这stage的tasks
+          submitMissingTasks(stage, jobId.get)
         } else {
           for (parent <- missing) {
             submitStage(parent)
@@ -1182,6 +1192,11 @@ class DAGScheduler(
    *
    * Optionally the epoch during which the failure was caught can be passed to avoid allowing
    * stray fetch failures from possibly retriggering the detection of a node as lost.
+   *
+   * 响应Exexutor丢失。 这个方法只能在事件循环内调用，因此它可以修改调度器内部的状态。事件循环外部可以调用
+   * executorLost()方法来提交一个Exexutor消失事件。
+   *
+   *
    */
   private[scheduler] def handleExecutorLost(
       execId: String,
@@ -1435,6 +1450,8 @@ private[scheduler] class DAGSchedulerEventProcessActor(dagScheduler: DAGSchedule
   override def preStart() {
     // set DAGScheduler for taskScheduler to ensure eventProcessActor is always
     // valid when the messages arrive
+    // 设置taskScheduler对DAGScheduler的引用句柄。在此处设置保证了Job提交时候
+    // eventProcessActor已经准备就绪
     dagScheduler.taskScheduler.setDAGScheduler(dagScheduler)
   }
 

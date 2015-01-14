@@ -92,14 +92,20 @@ private[spark] class TorrentBroadcast[T: ClassTag](obj: T, id: Long)
    * @param value the object to divide
    * @return number of blocks this broadcast variable is divided into
    */
+  /**
+   * add by yay(598775508) at 2015/1/12-21:26
+   * 将对象分隔成多个数据块，同时把这些数据块放到block manager上
+   */
   private def writeBlocks(value: T): Int = {
     // Store a copy of the broadcast variable in the driver so that tasks run on the driver
     // do not create a duplicate copy of the broadcast variable's value.
     SparkEnv.get.blockManager.putSingle(broadcastId, value, StorageLevel.MEMORY_AND_DISK,
       tellMaster = false)
+//    下面方法将对象obj分块（默认块大小为4M）
     val blocks =
       TorrentBroadcast.blockifyObject(value, blockSize, SparkEnv.get.serializer, compressionCodec)
     blocks.zipWithIndex.foreach { case (block, i) =>
+//      将数据块放到block manager上去
       SparkEnv.get.blockManager.putBytes(
         BroadcastBlockId(id, "piece" + i),
         block,

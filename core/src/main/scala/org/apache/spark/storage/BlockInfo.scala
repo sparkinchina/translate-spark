@@ -19,6 +19,10 @@ package org.apache.spark.storage
 
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * add by yay(598775508) at 2015/1/9-14:27
+ * BlockInfo关键是对block做了访问互斥, 访问block前需要, 先waitForReady
+ */
 private[storage] class BlockInfo(val level: StorageLevel, val tellMaster: Boolean) {
   // To save space, 'pending' and 'failed' are encoded as special sizes:
   @volatile var size: Long = BlockInfo.BLOCK_PENDING
@@ -51,6 +55,7 @@ private[storage] class BlockInfo(val level: StorageLevel, val tellMaster: Boolea
   }
 
   /** Mark this BlockInfo as ready (i.e. block is finished writing) */
+//  标志次Block可以被读取了
   def markReady(sizeInBytes: Long) {
     require(sizeInBytes >= 0, s"sizeInBytes was negative: $sizeInBytes")
     assert(pending)

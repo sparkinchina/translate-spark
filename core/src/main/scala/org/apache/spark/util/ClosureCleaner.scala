@@ -98,7 +98,8 @@ private[spark] object ClosureCleaner extends Logging {
 
   private def createNullValue(cls: Class[_]): AnyRef = {
     if (cls.isPrimitive) {
-      new java.lang.Byte(0: Byte) // Should be convertible to any primitive type  // 应转换为原始类型
+      // 应转换为原始类型
+      new java.lang.Byte(0: Byte) // Should be convertible to any primitive type
     } else {
       null
     }

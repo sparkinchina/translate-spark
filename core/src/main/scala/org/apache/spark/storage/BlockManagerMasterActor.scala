@@ -67,6 +67,7 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
   }
 
   override def receiveWithLogging = {
+//    只会由executor端的ref向client driver端的actor发送
     case RegisterBlockManager(blockManagerId, maxMemSize, slaveActor) =>
       register(blockManagerId, maxMemSize, slaveActor)
       sender ! true
@@ -113,7 +114,7 @@ class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus
     case RemoveBlock(blockId) =>
       removeBlockFromWorkers(blockId)
       sender ! true
-
+//      只会由client driver端的ref向client driver端的actor发送
     case RemoveExecutor(execId) =>
       removeExecutor(execId)
       sender ! true
