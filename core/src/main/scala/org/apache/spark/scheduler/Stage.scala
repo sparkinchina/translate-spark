@@ -54,6 +54,7 @@ private[spark] class Stage(
     val shuffleDep: Option[ShuffleDependency[_, _, _]],  // Output shuffle if stage is a map stage
     val parents: List[Stage],
     val jobId: Int,
+//    指定用户代码的位置
     val callSite: CallSite)
   extends Logging {
 

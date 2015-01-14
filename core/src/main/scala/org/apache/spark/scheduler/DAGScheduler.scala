@@ -317,12 +317,20 @@ class DAGScheduler(
    * provided jobId if they haven't already been created with a lower jobId.
    * 创建或者获取一个RDD的 parent stage列表，并为JobId赋值（如果JobId为空）
    */
+  /**
+   * add by yay(598775508) at 2015/1/13-13:57
+   * 生成RDD的parent Stage。每遇到一个ShuffleDependency，就生成一个Stage
+   */
   private def getParentStages(rdd: RDD[_], jobId: Int): List[Stage] = {
     // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
+    //回答上面的问题，一个Stage的parentStages之间肯定是没有依赖的，也就是说parentStages是可以并行计算的，自然没有顺序问题
     val parents = new HashSet[Stage]
+    //存储已经被访问到得RDD
     val visited = new HashSet[RDD[_]]
     // We are manually maintaining a stack here to prevent StackOverflowError
     // caused by recursively visiting
+    //手动维护一个stack防止因为递归访问导致栈溢出
+    //存储需要被处理的RDD。Stack中得RDD都需要被处理。
     val waitingForVisit = new Stack[RDD[_]]
     def visit(r: RDD[_]) {
       if (!visited(r)) {
@@ -336,6 +344,7 @@ class DAGScheduler(
             case shufDep: ShuffleDependency[_, _, _] =>
               parents += getShuffleMapStage(shufDep, jobId)
             case _ =>
+              //不是ShuffleDependency，那么就属于同一个Stage
               waitingForVisit.push(dep.rdd)
           }
         }
@@ -832,9 +841,11 @@ class DAGScheduler(
     val jobId = activeJobForStage(stage)
     if (jobId.isDefined) {
       logDebug("submitStage(" + stage + ")")
+      // 如果当前stage不再等待其parent stage的返回，并且 不在运行的状态， 并且 没有已经失败（失败会有重试机制，不会通过这里再次提交）
       if (!waitingStages(stage) && !runningStages(stage) && !failedStages(stage)) {
         val missing = getMissingParentStages(stage).sortBy(_.id)
         logDebug("missing: " + missing)
+        // 如果所有的parent stage都已经完成，那么提交该stage所包含的task
         if (missing == Nil) {
           logInfo("Submitting " + stage + " (" + stage.rdd + "), which has no missing parents")
           // 没有父stage，执行这stage的tasks
@@ -1460,41 +1471,54 @@ private[scheduler] class DAGSchedulerEventProcessActor(dagScheduler: DAGSchedule
    */
   def receive = {
     case JobSubmitted(jobId, rdd, func, partitions, allowLocal, callSite, listener, properties) =>
+      // 提交job，来自于RDD->SparkContext->DAGScheduler的消息。之所以在这需要在这里中转一下，是为了模块功能的一致性。
       dagScheduler.handleJobSubmitted(jobId, rdd, func, partitions, allowLocal, callSite,
         listener, properties)
 
     case StageCancelled(stageId) =>
+      // 消息源org.apache.spark.ui.jobs.JobProgressTab，在GUI上显示一个SparkContext的Job的执行状态。
+      // 用户可以cancel一个Stage，会通过SparkContext->DAGScheduler 传递到这里。
       dagScheduler.handleStageCancellation(stageId)
 
     case JobCancelled(jobId) =>
+      // 来自于org.apache.spark.scheduler.JobWaiter的消息。取消一个Job
       dagScheduler.handleJobCancellation(jobId)
 
     case JobGroupCancelled(groupId) =>
+      // 取消整个Job Group
       dagScheduler.handleJobGroupCancelled(groupId)
 
     case AllJobsCancelled =>
+      //取消所有Job
       dagScheduler.doCancelAllJobs()
 
     case ExecutorAdded(execId, host) =>
-      dagScheduler.handleExecutorAdded(execId, host)
+      // TaskScheduler得到一个Executor被添加的消息。具体来自org.apache.spark.scheduler.TaskSchedulerImpl.resourceOffers
+    dagScheduler.handleExecutorAdded(execId, host)
 
     case ExecutorLost(execId) =>
+      //来自TaskScheduler
       dagScheduler.handleExecutorLost(execId, fetchFailed = false)
 
     case BeginEvent(task, taskInfo) =>
+      // 来自TaskScheduler
       dagScheduler.handleBeginEvent(task, taskInfo)
 
     case GettingResultEvent(taskInfo) =>
+      //处理请求获得TaskResult信息的消息
       dagScheduler.handleGetTaskResult(taskInfo)
 
     case completion @ CompletionEvent(task, reason, _, _, taskInfo, taskMetrics) =>
-      dagScheduler.handleTaskCompletion(completion)
+      //来自TaskScheduler，报告task是完成或者失败
+    dagScheduler.handleTaskCompletion(completion)
 
     case TaskSetFailed(taskSet, reason) =>
-      dagScheduler.handleTaskSetFailed(taskSet, reason)
+      //来自TaskScheduler，要么TaskSet失败次数超过阈值或者由于Job Cancel。
+    dagScheduler.handleTaskSetFailed(taskSet, reason)
 
     case ResubmitFailedStages =>
-      dagScheduler.resubmitFailedStages()
+      //当一个Stage处理失败时，重试。来自org.apache.spark.scheduler.DAGScheduler.handleTaskCompletion
+    dagScheduler.resubmitFailedStages()
   }
 
   override def postStop() {
