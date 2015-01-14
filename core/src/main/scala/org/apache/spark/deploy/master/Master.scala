@@ -186,6 +186,7 @@ private[spark] class Master(
 
   override def receiveWithLogging = {
     case ElectedLeader => {
+      // 被选为Master，首先判断是否该Master原来为active，如果是那么进行Recovery。
       val (storedApps, storedDrivers, storedWorkers) = persistenceEngine.readPersistedData()
       state = if (storedApps.isEmpty && storedDrivers.isEmpty && storedWorkers.isEmpty) {
         RecoveryState.ALIVE
@@ -199,7 +200,7 @@ private[spark] class Master(
           CompleteRecovery)
       }
     }
-
+    // 删除没有响应的worker和app，并且将所有没有worker的Driver分配worker
     case CompleteRecovery => completeRecovery()
 
     case RevokedLeadership => {
@@ -213,7 +214,9 @@ private[spark] class Master(
         workerHost, workerPort, cores, Utils.megabytesToString(memory)))
       if (state == RecoveryState.STANDBY) {
         // ignore, don't send response
+        // 如果该Master不是active，不做任何操作，返回
       } else if (idToWorker.contains(id)) {
+        // 如果注册过该worker id，向sender返回错误
         sender ! RegisterWorkerFailed("Duplicate worker ID")
       } else {
         val worker = new WorkerInfo(id, workerHost, workerPort, cores, memory,
@@ -383,6 +386,9 @@ private[spark] class Master(
 
     case WorkerSchedulerStateResponse(workerId, executors, driverIds) => {
       idToWorker.get(workerId) match {
+        // 通过workerId查找到worker，那么worker的state置为ALIVE，
+        // 并且查找状态为idDefined的executors，并且将这些executors都加入到app中，
+        // 然后保存这些app到worker中。可以理解为Worker在Master端的Recovery
         case Some(worker) =>
           logInfo("Worker has been re-registered: " + workerId)
           worker.state = WorkerState.ALIVE
@@ -394,7 +400,7 @@ private[spark] class Master(
             worker.addExecutor(execInfo)
             execInfo.copyState(exec)
           }
-
+          // 将所有的driver设置为RUNNING然后加入到worker中。
           for (driverId <- driverIds) {
             drivers.find(_.id == driverId).foreach { driver =>
               driver.worker = Some(worker)
@@ -411,6 +417,8 @@ private[spark] class Master(
 
     case DisassociatedEvent(_, address, _) => {
       // The disconnected client could've been either a worker or an app; remove whichever it was
+      // 这个请求是Worker或者是App发送的。删除address对应的Worker和App
+      // 如果Recovery可以结束，那么结束Recovery
       logInfo(s"$address got disassociated, removing it.")
       addressToWorker.get(address).foreach(removeWorker)
       addressToApp.get(address).foreach(finishApplication)
