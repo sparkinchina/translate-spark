@@ -46,6 +46,12 @@ import org.apache.spark.util.CallSite
  * A single stage can consist of multiple attempts. In that case, the latestInfo field will
  * be updated for each attempt.
  *
+ * stage是一个独立任务的集合。这些任务是Spark Job的一部分，拥有相同的shuffle依赖，执行相同计算过程。
+ * DAG调度器根据是否发生shuffle为边界，将DAG任务划分为多个stage，并按照这些stage的拓扑顺序执行stage。
+ *
+ * 每个stage要么是一个shuffle map stage（其输出作为下个stage的输入)，要么是一个result stage（
+ * ）
+ *
  */
 private[spark] class Stage(
     val id: Int,

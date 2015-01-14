@@ -126,7 +126,7 @@ class DAGScheduler(
   // For tracking failed nodes, we use the MapOutputTracker's epoch number, which is sent with
   // every task. When we detect a node failing, we note the current epoch number and failed
   // executor, increment it for new tasks, and use this to ignore stray ShuffleMapTask results.
-  // 为了跟踪失败的节点，我们使用了MapOutputTracker中的epoch时间戳。当探测到一个节点失败时，我们记录下
+  // 为了跟踪失败的节点，我们使用了MapOutputTracker中的时间戳(epoch number)。当探测到一个节点失败时，我们记录下
   // 当前epoch值和失败的Executor，将epoch+1作为新任务的epoch，从而能够甄别一个ShuffleMapTask返回的结果
   // 是否该丢弃。（注：该map的key为ExecutorId, Value为时间戳）
   // TODO: Garbage collect information about failure epochs when we know there are no more
@@ -318,7 +318,7 @@ class DAGScheduler(
    * 创建或者获取一个RDD的 parent stage列表，并为JobId赋值（如果JobId为空）
    */
   private def getParentStages(rdd: RDD[_], jobId: Int): List[Stage] = {
-    // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
+    // TODO QQ:10697840 为啥是HashSet而不是List，没有是、次序问题吗？
     val parents = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
     // We are manually maintaining a stack here to prevent StackOverflowError
@@ -507,7 +507,7 @@ class DAGScheduler(
    * Submit a job to the job scheduler and get a JobWaiter object back. The JobWaiter object
    * can be used to block until the the job finishes executing or can be used to cancel the job.
    * 向job scheduler提交Job，并返回一个JobWaiter对象，该对象可以用来Block并等待Job完成或者取消该Job
-   * 这是DAG调度器提供的一个异步Job提交接口
+   * 这是DAG调度器提供的一个异步Job提交接口, 提交作业后，会获得一个JobWaiter对象。
    */
   def submitJob[T, U](
       rdd: RDD[T],

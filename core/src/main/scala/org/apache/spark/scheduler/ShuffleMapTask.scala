@@ -31,7 +31,8 @@ import org.apache.spark.shuffle.ShuffleWriter
 * specified in the ShuffleDependency).
 *
 * See [[org.apache.spark.scheduler.Task]] for more information.
-*
+* ShuffleMapTask将RDD中的元素按算法要求归类到不同的buckets（分类算法在ShuffleDependency中事先指定）
+ *
  * @param stageId id of the stage this task belongs to
  * @param taskBinary broadcast version of of the RDD and the ShuffleDependency. Once deserialized,
  *                   the type should be (RDD[_], ShuffleDependency[_, _, _]).

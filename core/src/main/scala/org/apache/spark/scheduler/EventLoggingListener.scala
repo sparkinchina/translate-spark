@@ -41,6 +41,13 @@ import org.apache.spark.util.{FileLogger, JsonProtocol, Utils}
  *   spark.eventLog.overwrite - Whether to overwrite any existing files.
  *   spark.eventLog.dir - Path to the directory in which events are logged.
  *   spark.eventLog.buffer.kb - Buffer size to use when writing to output streams
+ *
+ * EventLoggingListener实现了SparkListener接口，用于记录事件日志，并实现持久化
+ *   spark.eventLog.enabled - 是否启用事件日志.
+ *   spark.eventLog.compress - 是否启用日志压缩功能
+ *   spark.eventLog.overwrite - 是否允许覆盖已经存在的日志文件
+ *   spark.eventLog.dir - 事件日志所存储的目录
+ *   spark.eventLog.buffer.kb - 日志输出所使用的缓冲区大小（单位：KB）
  */
 private[spark] class EventLoggingListener(
     appId: String,
