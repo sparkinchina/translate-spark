@@ -96,6 +96,10 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
    *
    * If the lock is free, just acquire it and return None. Otherwise, another thread is already
    * loading the partition, so we wait for it to finish and return the values loaded by the thread.
+   * 根据给定的 block ID获取一个分片的加载锁。
+   *
+   * 如果该数据分片未被加锁，取得该加载锁，并返回 None，否则就说明其他线程正在加载该数据分片，因此我们只需要等待
+   * 其完成，并返回其加载的值即可。
    */
   private def acquireLockForPartition[T](id: RDDBlockId): Option[Iterator[T]] = {
     loading.synchronized {
@@ -136,6 +140,12 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
    * behavior, not the level originally specified by the user. This is mainly for forcing a
    * MEMORY_AND_DISK partition to disk if there is not enough room to unroll the partition,
    * while preserving the the original semantics of the RDD as specified by the application.
+   *
+   * 缓存一个分片的值，全程跟踪其他数据块的存储状态的更新
+   *
+   * 参数effective storage level指的是BlockManager实际的存储行为，不是由用户在初始化时指定的存储级别。
+   * 这主要是针对一个MEMORY_AND_DISK存储级别因存储空间不足而强制改变为存储到磁盘，而应用程序在存储级别的
+   * 改变上仍然保留了原有的语义（感觉好拗口）
    */
   private def putInBlockManager[T](
       key: BlockId,
@@ -149,6 +159,7 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
       /*
        * This RDD is not to be cached in memory, so we can just pass the computed values as an
        * iterator directly to the BlockManager rather than first fully unrolling it in memory.
+       * RDD不能被缓存到内存，该RDD计算的结果作为一个迭代器必须直接发送到BlockManager
        */
       updatedBlocks ++=
         blockManager.putIterator(key, values, level, tellMaster = true, effectiveStorageLevel)
@@ -168,6 +179,9 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
        * Otherwise, we may cause an OOM exception if the JVM does not have enough space for this
        * single partition. Instead, we unroll the values cautiously, potentially aborting and
        * dropping the partition to disk if applicable.
+       *
+       * RDD被缓存的内存中。这种情况下， RDD的计算结果不会传递给BlockManager。
+       * 另外就是要注意OOM的问题，OOM一直是Spark的一个最致命的问题。
        */
       blockManager.memoryStore.unrollSafely(key, values, updatedBlocks) match {
         case Left(arr) =>
