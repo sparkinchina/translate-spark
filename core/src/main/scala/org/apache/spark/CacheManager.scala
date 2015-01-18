@@ -124,7 +124,9 @@ private[spark] class CacheManager(blockManager: BlockManager) extends Logging {
           /* The block is not guaranteed to exist even after the other thread has finished.
            * For instance, the block could be evicted after it was put, but before our get.
            * In this case, we still need to load the partition ourselves. */
-          logInfo(s"Whoever was loading $id failed; we'll try it ourselves")
+          /* 即使其他线程已经完成，也不能确保数据块一定存在。例如,曾经存储过的数据块，在你获取前被删除了
+           * 在这种情况下，我们仍然需要自己来加载 */
+           logInfo(s"Whoever was loading $id failed; we'll try it ourselves")
           loading.add(id)
         }
         values.map(_.data.asInstanceOf[Iterator[T]])

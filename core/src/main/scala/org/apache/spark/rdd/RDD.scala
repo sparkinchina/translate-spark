@@ -74,6 +74,7 @@ import org.apache.spark.util.random.{BernoulliSampler, PoissonSampler, Bernoulli
  * [[http://www.cs.berkeley.edu/~matei/papers/2012/nsdi_spark.pdf Spark paper]] for more details
  * on RDD internals.
  *
+ *
  * RDD都会有5个特征：
  * 1、有一个分片列表。就是能被切分，和hadoop一样的，能够切分的数据才能并行计算。（数据可分片）
  * 2、有一个函数计算每一个分片，这里指的是下面会提到的compute函数。 （分片可计算）
@@ -154,7 +155,7 @@ abstract class RDD[T: ClassTag](
    */
   def persist(newLevel: StorageLevel): this.type = {
     // TODO: Handle changes of StorageLevel
-    // StorageLevel不能随意更改，仅仅运行没有物化的RDD进行该操作
+    // StorageLevel不能随意更改，仅仅允许对没有物化的RDD进行该操作
     if (storageLevel != StorageLevel.NONE && newLevel != storageLevel) {
       throw new UnsupportedOperationException(
         "Cannot change storage level of an RDD after it was already assigned a level")

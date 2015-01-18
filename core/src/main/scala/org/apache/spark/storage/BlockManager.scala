@@ -744,7 +744,9 @@ private[spark] class BlockManager(
     /* Remember the block's storage level so that we can correctly drop it to disk if it needs
      * to be dropped right after it got put into memory. Note, however, that other threads will
      * not be able to get() this block until we call markReady on its BlockInfo. */
-    val putBlockInfo = {
+     /* 记录当前Storage Level，以便我们在它加载进内存之后，还可以按需写入硬盘
+     *  此外，在我们调用BlockInfo的markReay方法之前，其他线程都没法通过get方法获得该Block内容 */
+     val putBlockInfo = {
       val tinfo = new BlockInfo(level, tellMaster)
       // Do atomically !
       val oldBlockOpt = blockInfo.putIfAbsent(blockId, tinfo)
@@ -767,6 +769,9 @@ private[spark] class BlockManager(
      * but because our put will read the whole iterator, there will be no values left. For the
      * case where the put serializes data, we'll remember the bytes, above; but for the case where
      * it doesn't, such as deserialized storage, let's rely on the put returning an Iterator. */
+    /* 如果我们不仅需要存储数据，并且要复制数据到别的机器，那么我们需要再次访问这些数据，但是因为我们的put操作操作时，
+     * iterator已经迭代到末尾了，当前Iterator已经无法读取了。对于保存序列化的数据的场景，我们可以记住这些bytes，
+     * 但在其他场景，比如反序列化存储的时候，我们就必须依赖返回一个Iterator*/
     var valuesAfterPut: Iterator[Any] = null
 
     // Ditto for the bytes after the put
@@ -796,10 +801,14 @@ private[spark] class BlockManager(
       try {
         // returnValues - Whether to return the values put
         // blockStore - The type of storage to put these values into
+        // returnValues - 是否返回保存的数据
+        // blockStore - 数据的存储类型
         val (returnValues, blockStore: BlockStore) = {
           if (putLevel.useMemory) {
             // Put it in memory first, even if it also has useDisk set to true;
             // We will drop it to disk later if the memory store can't hold it.
+            // 首先保存到内存中，即使putLevel设置了useDisk = true
+            // 如果内存装不下，我们随后会把数据丢到disk上
             (true, memoryStore)
           } else if (putLevel.useOffHeap) {
             // Use tachyon for off-heap storage
