@@ -21,6 +21,7 @@ import akka.actor.{Address, ActorRef}
 
 /**
  * Grouping of data for an executor used by CoarseGrainedSchedulerBackend.
+ * 为了一个被CoarseGrainedSchedulerBackend使用的执行器将数据分组
  *
  * @param executorActor The ActorRef representing this executor
  * @param executorAddress The network address of this executor
