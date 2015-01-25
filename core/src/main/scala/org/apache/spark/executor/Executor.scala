@@ -38,7 +38,7 @@ import org.apache.spark.util.{SparkUncaughtExceptionHandler, AkkaUtils, Utils}
 /**
  * Spark executor used with Mesos, YARN, and the standalone scheduler.
  * In coarse-grained mode, an existing actor system is provided.
- * Executor的职责：向Driver发送心跳，2. updateDependencies   3. launchTask/killTask
+ * Executor的职责：1. 向Driver发送心跳(BlockId信息)，2. updateDependencies   3. launchTask/killTask
  */
 private[spark] class Executor(
     executorId: String,

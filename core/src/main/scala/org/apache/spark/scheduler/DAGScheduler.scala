@@ -318,7 +318,7 @@ class DAGScheduler(
    * 创建或者获取一个RDD的 parent stage列表，并为JobId赋值（如果JobId为空）
    */
   private def getParentStages(rdd: RDD[_], jobId: Int): List[Stage] = {
-    // TODO 为啥是HashSet而不是List，没有是、次序问题吗？
+    // parents 的类型是Set，原因是：每一个RDD的类型都是唯一的，RDD之间也有依赖关系
     val parents = new HashSet[Stage]
     val visited = new HashSet[RDD[_]]
     // We are manually maintaining a stack here to prevent StackOverflowError
@@ -852,7 +852,7 @@ class DAGScheduler(
   }
 
   /** Called when stage's parents are available and we can now do its task.
-    * MissingTask (这个名字太费解了) 就是提交一个满足运行提交的Stage */
+    * MissingTask (这个名字太费解了) 就是提交一个满足运行条件的Stage */
   private def submitMissingTasks(stage: Stage, jobId: Int) {
     logDebug("submitMissingTasks(" + stage + ")")
     // Get our pending tasks and remember them in our pendingTasks entry

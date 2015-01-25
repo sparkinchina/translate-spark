@@ -38,7 +38,10 @@ import org.apache.spark.util.Utils
  * ResultTasks, while earlier stages consist of ShuffleMapTasks. A ResultTask executes the task
  * and sends the task output back to the driver application. A ShuffleMapTask executes the task
  * and divides the task output to multiple buckets (based on the task's partitioner).
- *
+ * 执行单元。Spark中有两种类型的Task： ShuffleMapTask 和 ResultTask
+ * Spark的Job是由一个或者多个Stage组成。 Job的最后一个Stage是由许多的ResultTask组成，其他的Stage则是由
+ * 许多ShuffleMapTask组成的。ResultTask执行后的结果直接返回给Driver；ShuffleMapTask执行后的结果则是
+ * 输出到多个buckets中（buckets的数量基于task的partitioner来决定)
  * @param stageId id of the stage this task belongs to
  * @param partitionId index of the number in the RDD
  */

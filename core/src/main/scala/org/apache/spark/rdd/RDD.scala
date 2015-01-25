@@ -81,6 +81,12 @@ import org.apache.spark.util.random.{BernoulliSampler, PoissonSampler, Bernoulli
  * 3、对其他的RDD的依赖列表，依赖还具体分为宽依赖和窄依赖，但并不是所有的RDD都有依赖。（分片可溯源 -- lineage）
  * 4、可选：key-value型的RDD是根据哈希来分区的，类似于mapreduce当中的Paritioner接口，控制key分到哪个reduce。(数据分片接口)
  * 5、可选：每一个分片的优先计算位置（preferred locations），比如HDFS的block的所在位置应该是优先计算的位置 (数据本地性)
+ *
+ * RDD的上述五个特性是由4个 final 方法来保障，这个四个方法是RDD的基石
+ *  dependencies
+ *  partitions
+ *  preferredLocations
+ *  iterator
  */
 abstract class RDD[T: ClassTag](
     @transient private var sc: SparkContext,
@@ -108,14 +114,14 @@ abstract class RDD[T: ClassTag](
    * Implemented by subclasses to return the set of partitions in this RDD. This method will only
    * be called once, so it is safe to implement a time-consuming computation in it.
    * 该方法有子类实现，返回当前RDD的分片集合
-   * 只计算一次
+   * 只能被调用一次，该函数可用于实现耗时的计算过程
    */
   protected def getPartitions: Array[Partition]
 
   /**
    * Implemented by subclasses to return how this RDD depends on parent RDDs. This method will only
    * be called once, so it is safe to implement a time-consuming computation in it.
-   * 只计算一次，计算RDD对父RDD的依赖
+   * 只能被调用一次，计算RDD对父RDD的依赖
    */
   protected def getDependencies: Seq[Dependency[_]] = deps
 
@@ -214,6 +220,8 @@ abstract class RDD[T: ClassTag](
   /**
    * Get the array of partitions of this RDD, taking into account whether the
    * RDD is checkpointed or not.
+   * 获取当前RDD的partition，需要考虑RDD是否执行过checkpoint
+   * 该方法是RDD 4个 final 方法之一，直接体现RDD的可分片特性
    */
   final def partitions: Array[Partition] = {
     checkpointRDD.map(_.partitions).getOrElse {
@@ -227,6 +235,7 @@ abstract class RDD[T: ClassTag](
   /**
    * Get the preferred locations of a partition, taking into account whether the
    * RDD is checkpointed.
+   * 获取partition的
    */
   final def preferredLocations(split: Partition): Seq[String] = {
     checkpointRDD.map(_.getPreferredLocations(split)).getOrElse {
@@ -238,6 +247,10 @@ abstract class RDD[T: ClassTag](
    * Internal method to this RDD; will read from cache if applicable, or otherwise compute it.
    * This should ''not'' be called by users directly, but is available for implementors of custom
    * subclasses of RDD.
+   * Rdd 内部方法。如果split的cache数据可用，就从cache正读取，否则计算该split
+   * 该方法 不应该 由用户直接调用，但自定义的RDD子类实现代码中可以调用
+   * 该方法是一个 final 方法，是RDD 4个final方法之一（4个final方法是RDD的基石），体现了可分片、可计算特性
+   * 是RDD与存储系统的接口。
    */
   /**
    * add by yay(598775508) at 2015/1/7-22:48

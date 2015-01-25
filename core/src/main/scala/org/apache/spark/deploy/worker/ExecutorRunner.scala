@@ -33,8 +33,6 @@ import org.apache.spark.util.logging.FileAppender
 /**
  * Manages the execution of one executor process.
  * This is currently only used in standalone mode.
- */
-/**
  * 管理这个executor进程的执行.
  * 这个类当前仅仅用在standalone模式.
  */
@@ -150,7 +148,7 @@ private[spark] class ExecutorRunner(
       builder.directory(executorDir)
       // In case we are running this from within the Spark Shell, avoid creating a "scala"
       // parent process for the executor command
-      // 一旦我们再Spark Shell中运行这个类, 避免为executor命令创建一个"scala"父进程
+      // 在Spark Shell中运行这个类时, 避免为executor命令创建一个"scala"父进程
       builder.environment.put("SPARK_LAUNCH_WITH_SCALA", "0")
       process = builder.start()
       val header = "Spark Executor Command: %s\n%s\n\n".format(
