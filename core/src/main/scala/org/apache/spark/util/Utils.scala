@@ -1024,6 +1024,11 @@ private[spark] object Utils extends Logging {
    *
    * @param skipClass Function that is used to exclude non-user-code classes.
    */
+  /**
+   * add by yay(598775508) at 2015/1/21-17:54
+   * 其主要原理是获得调用栈，找到栈中是 spark core包(更具体的是符合正则SPARK_CLASS_REGEX的package)的最外层调用作为分界，该调用的方法为lastSparkMethod，然后找到下一个调用，即调用了lastSparkMethod的记录，从而得到firstUserFile、firstUserLine。
+   * 总的说来就是找到调用 满足SPARK_CLASS_REGEX正则的package 中的方法的入口，该方法即为lastSparkMethod， 而该入口所在的类以及行就是firstUserFile, firstUserLine。
+   */
   def getCallSite(skipClass: String => Boolean = coreExclusionFunction): CallSite = {
     val trace = Thread.currentThread.getStackTrace().filterNot { ste: StackTraceElement =>
       // When running under some profilers, the current stack trace might contain some bogus

@@ -552,14 +552,19 @@ private[spark] class Master(
     // spreadOutApps是由spark.deploy.spreadOut参数来决定的，默认是true
     if (spreadOutApps) {
       // Try to spread out each app among all the nodes, until it has all its cores
+      //app.coresLeft表示的是该app还有cpu资源没申请到
       for (app <- waitingApps if app.coresLeft > 0) {
+        ////根据core Free对可用Worker进行降序排序
         val usableWorkers = workers.toArray.filter(_.state == WorkerState.ALIVE)
           .filter(canUse(app, _)).sortBy(_.coresFree).reverse
         val numUsable = usableWorkers.length
+        //记录在每个worker上分配的core的个数的数组
         val assigned = new Array[Int](numUsable) // Number of cores to give on each node
+        //App本次将要分配的cores =min( 集群中可用Worker的可用cores总和，app还需要分配的core的数量)
         var toAssign = math.min(app.coresLeft, usableWorkers.map(_.coresFree).sum)
         var pos = 0
         while (toAssign > 0) {
+          ////以轮询方式在所有可用Worker里判断当前worker空闲cpu是否大于当前数组已经分配core值
           if (usableWorkers(pos).coresFree - assigned(pos) > 0) {
             toAssign -= 1
             assigned(pos) += 1
@@ -568,8 +573,11 @@ private[spark] class Master(
         }
         // Now that we've decided how many cores to give on each node, let's actually give them
         for (pos <- 0 until numUsable) {
+          //如果当前下标的worker有分配core给app
           if (assigned(pos) > 0) {
+            //更新app里的Executor信息
             val exec = app.addExecutor(usableWorkers(pos), assigned(pos))
+            //通知可用Worker去启动Executor
             launchExecutor(usableWorkers(pos), exec)
             app.state = ApplicationState.RUNNING
           }
@@ -663,7 +671,7 @@ private[spark] class Master(
     waitingDrivers += driver
     schedule()
   }
-
+//这个函数中的driver就是ClientActor
   def createApplication(desc: ApplicationDescription, driver: ActorRef): ApplicationInfo = {
     val now = System.currentTimeMillis()
     val date = new Date(now)

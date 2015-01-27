@@ -48,11 +48,13 @@ private[spark] class TaskResultGetter(sparkEnv: SparkEnv, scheduler: TaskSchedul
       override def run(): Unit = Utils.logUncaughtExceptions {
         try {
           val (result, size) = serializer.get().deserialize[TaskResult[_]](serializedData) match {
+              //如果是ResultTask运行结果
             case directResult: DirectTaskResult[_] =>
               if (!taskSetManager.canFetchMoreResults(serializedData.limit())) {
                 return
               }
               (directResult, serializedData.limit())
+              //如果是ShuffleMapTask的运行结果
             case IndirectTaskResult(blockId, size) =>
               if (!taskSetManager.canFetchMoreResults(size)) {
                 // dropped by executor if size is larger than maxResultSize

@@ -1259,6 +1259,11 @@ class SparkContext(config: SparkConf) extends Logging {
    * Capture the current user callsite and return a formatted version for printing. If the user
    * has overridden the call site using `setCallSite()`, this will return the user's version.
    */
+  /**
+   * add by yay(598775508) at 2015/1/21-18:16
+   * 捕获当前用户代码调用的堆栈信息，也就是在哪个用户类的多少行开始调用sparkCore包中的相关方法，比如：count at StageNameTest:12
+   * 具体可以参考：http://dataknocker.github.io/2014/09/11/spark-stage命名/
+   */
   private[spark] def getCallSite(): CallSite = {
     Option(getLocalProperty(CallSite.SHORT_FORM)).map { case shortCallSite =>
       val longCallSite = Option(getLocalProperty(CallSite.LONG_FORM)).getOrElse("")
@@ -1281,6 +1286,7 @@ class SparkContext(config: SparkConf) extends Logging {
     if (dagScheduler == null) {
       throw new SparkException("SparkContext has been shutdown")
     }
+    //callSite表示用户代码调用SparkCore包中类的堆栈信息
     val callSite = getCallSite
     val cleanedFunc = clean(func)
     logInfo("Starting job: " + callSite.shortForm)
@@ -1310,6 +1316,10 @@ class SparkContext(config: SparkConf) extends Logging {
    * Run a job on a given set of partitions of an RDD, but take a function of type
    * `Iterator[T] => U` instead of `(TaskContext, Iterator[T]) => U`.
    */
+  /**
+   * add by yay(598775508) at 2015/1/14-22:38
+   * 注意的是下面的func实际上就是交给executor执行task的代码，它必须要能被序列化和反序列化
+   */
   def runJob[T, U: ClassTag](
       rdd: RDD[T],
       func: Iterator[T] => U,
@@ -1321,6 +1331,15 @@ class SparkContext(config: SparkConf) extends Logging {
 
   /**
    * Run a job on all partitions in an RDD and return the results in an array.
+   */
+  /**
+   * 在RDD的所有partition上执行job，然后返回结果集
+   * 比如：runJob(self, writeToFile)
+   * @param rdd
+   * @param func 在RDD的partition上要执行的操作函数，比如writeToFile
+   * @tparam T RDD的类型
+   * @tparam U 结果集的类型
+   * @return
    */
   def runJob[T, U: ClassTag](rdd: RDD[T], func: (TaskContext, Iterator[T]) => U): Array[U] = {
     runJob(rdd, func, 0 until rdd.partitions.size, false)
@@ -1380,6 +1399,18 @@ class SparkContext(config: SparkConf) extends Logging {
    * :: Experimental ::
    * Submit a job for execution and return a FutureJob holding the result.
    */
+  /**
+   * add by yay(598775508) at 2015/1/22-16:05
+   * @param rdd
+   * @param processPartition 定义如何计算 partition 中的 records 得到 result
+   * @param partitions
+   * @param resultHandler 定义如何对从各个 partition 收集来的 results 进行计算来得到最终结果
+   * @param resultFunc 对最终结果做进一步处理的函数，比如：count, collect, reduce
+   * @tparam T RDD的类型
+   * @tparam U processPartition返回的结果类型
+   * @tparam R resultFunc返回的结果类型
+   * @return
+   */
   @Experimental
   def submitJob[T, U, R](
       rdd: RDD[T],
@@ -1388,6 +1419,8 @@ class SparkContext(config: SparkConf) extends Logging {
       resultHandler: (Int, U) => Unit,
       resultFunc: => R): SimpleFutureAction[R] =
   {
+    //cleanF 是 processParittion 经过闭包清理后的结果，
+    // 这样可以被序列化后传递给不同节点的 task。
     val cleanF = clean(processPartition)
     val callSite = getCallSite
     val waiter = dagScheduler.submitJob(
@@ -1435,6 +1468,10 @@ class SparkContext(config: SparkConf) extends Logging {
    * @param checkSerializable whether or not to immediately check <tt>f</tt> for serializability
    * @throws <tt>SparkException<tt> if <tt>checkSerializable</tt> is set but <tt>f</tt> is not
    *   serializable
+   */
+  /**
+   * add by yay(598775508) at 2015/1/14-22:30
+   * TODO：清理一个闭包？没看懂这个clean做了什么，有清楚的朋友还请指教
    */
   private[spark] def clean[F <: AnyRef](f: F, checkSerializable: Boolean = true): F = {
     ClosureCleaner.clean(f, checkSerializable)
