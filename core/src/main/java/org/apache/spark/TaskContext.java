@@ -17,14 +17,15 @@
 
 package org.apache.spark;
 
-import org.apache.spark.annotation.DeveloperApi;
-import org.apache.spark.executor.TaskMetrics;
-import org.apache.spark.util.TaskCompletionListener;
+import java.io.Serializable;
+
 import scala.Function0;
 import scala.Function1;
 import scala.Unit;
 
-import java.io.Serializable;
+import org.apache.spark.annotation.DeveloperApi;
+import org.apache.spark.executor.TaskMetrics;
+import org.apache.spark.util.TaskCompletionListener;
 
 /**
  * Contextual information about a task which can be read or mutated during
