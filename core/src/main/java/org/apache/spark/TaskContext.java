@@ -32,15 +32,25 @@ import org.apache.spark.util.TaskCompletionListener;
  * execution. To access the TaskContext for a running task use
  * TaskContext.get().
  */
+/**
+ * 关于task的上下文信息，可以在task执行的过程中被读取或者修改
+ */
 public abstract class TaskContext implements Serializable {
   /**
    * Return the currently active TaskContext. This can be called inside of
    * user functions to access contextual information about running tasks.
    */
+  /**
+   * 返回当前激活的TaskContext
+   * @return
+   */
   public static TaskContext get() {
     return taskContext.get();
   }
 
+  /**
+   * 创建一个基于线程变量的taskContext
+   */
   private static ThreadLocal<TaskContext> taskContext =
     new ThreadLocal<TaskContext>();
 
