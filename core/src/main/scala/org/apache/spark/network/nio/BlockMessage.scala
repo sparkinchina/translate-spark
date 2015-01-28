@@ -24,6 +24,7 @@ import org.apache.spark.storage.{BlockId, StorageLevel, TestBlockId}
 import scala.collection.mutable.{ArrayBuffer, StringBuilder}
 
 // private[spark] because we need to register them in Kryo
+// private[spark] 是因为我们需要在Kryo中注册它们
 private[spark] case class GetBlock(id: BlockId)
 private[spark] case class GotBlock(id: BlockId, data: ByteBuffer)
 private[spark] case class PutBlock(id: BlockId, data: ByteBuffer, level: StorageLevel)
