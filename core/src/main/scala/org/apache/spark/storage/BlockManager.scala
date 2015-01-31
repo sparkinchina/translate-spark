@@ -62,6 +62,11 @@ private[spark] class BlockResult(
  * retrieving blocks both locally and remotely into various stores (memory, disk, and off-heap).
  *
  * Note that #initialize() must be called before the BlockManager is usable.
+ *
+ * BlockManager运行在每一个节点上（Master和所有的Executor)，
+ * 提供了提供了存、取本地及远程数据块道各种存储(内存，磁盘及 tackyon)的接口
+ *
+ * 注意：BlockManager在使用前必须调用 #initialize()方法
  */
 /**
  * add by yay(598775508) at 2015/1/9-14:09
@@ -194,6 +199,12 @@ private[spark] class BlockManager(
    * This method initializes the BlockTransferService and ShuffleClient, registers with the
    * BlockManagerMaster, starts the BlockManagerWorker actor, and registers with a local shuffle
    * service if configured.
+   *
+   * 使用给定的appId初始化BlockManager。 这个过程没有在构造函数完成，是因为在实例化BlockManager的时候，
+   * appId可嫩还无法获取。
+   *
+   * 该方法初始化了BlockTransferService 和 ShuffleClient，并注册了BlockManagerMaster，启动了BlockManagerWorker
+   * Actor(1.2版后改名为BlockManagerSlaveActor），并根据配置文件，注册一个本地的shuffle service。
    */
   /**
    * add by yay(598775508) at 2015/1/8-21:53
