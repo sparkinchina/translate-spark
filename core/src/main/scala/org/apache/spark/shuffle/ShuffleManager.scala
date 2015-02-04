@@ -30,9 +30,8 @@ import org.apache.spark.{TaskContext, ShuffleDependency}
 private[spark] trait ShuffleManager {
   /**
    * Register a shuffle with the manager and obtain a handle for it to pass to tasks.
-   */
-  /**
-   * 通过这个管理者注册一个shuffle 并且为他获取一个处理器来传给任务.
+   *
+   * 向manager注册一个shuffle 并且获取一个handle，用来传递给后续的任务.
    */
   def registerShuffle[K, V, C](
       shuffleId: Int,
@@ -40,7 +39,7 @@ private[spark] trait ShuffleManager {
       dependency: ShuffleDependency[K, V, C]): ShuffleHandle
 
   /** Get a writer for a given partition. Called on executors by map tasks. */
-  /** 给一个给定的分区获取一个writer. 由Executor上的map任务调用. */
+  /** 给一个给定的分区获取一个writer. 该方法由Executor上的map任务调用. */
   def getWriter[K, V](handle: ShuffleHandle, mapId: Int, context: TaskContext): ShuffleWriter[K, V]
 
   /**
@@ -48,7 +47,7 @@ private[spark] trait ShuffleManager {
    * Called on executors by reduce tasks.
    *
    *  为reduce分区的一个范围获取一个reader (从startPartition 到 endPartition-1, 包括后者).
-   *  由Executor上的reduce任务调用.
+   *  该方法由Executor上的reduce任务调用.
    */
   def getReader[K, C](
       handle: ShuffleHandle,

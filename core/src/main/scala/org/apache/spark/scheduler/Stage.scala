@@ -115,7 +115,7 @@ private[spark] class Stage(
    * outputs which are served by an external shuffle server (if one exists), as they are still
    * registered with this execId.
    *
-   *
+   * 删除当前Executor上所有的Shuffle。注意：该过程会同时删除注册到外部 shuffle server的Shuffle output
    */
   def removeOutputsOnExecutor(execId: String) {
     var becameUnavailable = false
