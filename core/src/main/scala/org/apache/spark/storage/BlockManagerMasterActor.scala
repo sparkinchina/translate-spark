@@ -36,6 +36,8 @@ import org.apache.spark.util.{ActorLogReceive, AkkaUtils, Utils}
 /**
  * BlockManagerMasterActor is an actor on the master node to track statuses of
  * all slaves' block managers.
+ *
+ * BlockManagerMasterActor是一个位于Master节点上的Actor，用于跟踪所有 Slave BlockManager的状态
  */
 private[spark]
 class BlockManagerMasterActor(val isLocal: Boolean, conf: SparkConf, listenerBus: LiveListenerBus)

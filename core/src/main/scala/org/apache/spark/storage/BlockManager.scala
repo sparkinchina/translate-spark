@@ -62,6 +62,11 @@ private[spark] class BlockResult(
  * retrieving blocks both locally and remotely into various stores (memory, disk, and off-heap).
  *
  * Note that #initialize() must be called before the BlockManager is usable.
+ *
+ * BlockManager运行在每一个节点上（Master和所有的Executor)，
+ * 提供了提供了存、取本地及远程数据块道各种存储(内存，磁盘及 tackyon)的接口
+ *
+ * 注意：BlockManager在使用前必须调用 #initialize()方法
  */
 /**
  * add by yay(598775508) at 2015/1/9-14:09
@@ -194,6 +199,12 @@ private[spark] class BlockManager(
    * This method initializes the BlockTransferService and ShuffleClient, registers with the
    * BlockManagerMaster, starts the BlockManagerWorker actor, and registers with a local shuffle
    * service if configured.
+   *
+   * 使用给定的appId初始化BlockManager。 这个过程没有在构造函数完成，是因为在实例化BlockManager的时候，
+   * appId可嫩还无法获取。
+   *
+   * 该方法初始化了BlockTransferService 和 ShuffleClient，并注册了BlockManagerMaster，启动了BlockManagerWorker
+   * Actor(1.2版后改名为BlockManagerSlaveActor），并根据配置文件，注册一个本地的shuffle service。
    */
   /**
    * add by yay(598775508) at 2015/1/8-21:53
@@ -449,9 +460,6 @@ private[spark] class BlockManager(
   /**
    * Get block from local block manager.
    */
-  /**
-   * 先后查找Memory，Tachyon,disk
-   */
   def getLocal(blockId: BlockId): Option[BlockResult] = {
     logDebug(s"Getting local block $blockId")
     doGetLocal(blockId, asBlockResult = true).asInstanceOf[Option[BlockResult]]
@@ -487,6 +495,9 @@ private[spark] class BlockManager(
         // Note that this only checks metadata tracking. If user intentionally deleted the block
         // on disk or from off heap storage without using removeBlock, this conditional check will
         // still pass but eventually we will get an exception because we can't find the block.
+        // 两次检查确保数据块的存在。存在一个很小的几率，数据在获取前被移除。
+        // 注 这里仅仅是检查跟踪的元数据。如果用户没有使用 removeBlock 方法，而是蓄意删除掉磁盘上的文件，
+        // 这种情况是无法检查到的，最终我们会因无法找到数据块而引发一个异常。
         if (blockInfo.get(blockId).isEmpty) {
           logWarning(s"Block $blockId had been removed")
           return None
@@ -504,7 +515,8 @@ private[spark] class BlockManager(
         /**
          * add by yay(598775508) at 2015/1/9-13:28
          * 1.level.useMemory == true：从memory中取出block并返回，若没有取到则进入分支2。
-         * 2.level.useDisk == true: level.useMemory == true: 将block从disk中读出并写入内存以便下次使用时直接从内存中获得，同时返回该block；level.useMemory == false: 将block从disk中读出并返回
+         * 2.level.useDisk == true: level.useMemory == true: 将block从disk中读出并写入内存以便下次使用时直接从内存中获得，
+         *       同时返回该block；level.useMemory == false: 将block从disk中读出并返回
          * 3.level.useDisk == false: 没有在本地找到block，返回None
          * */
         // Look for the block in memory
@@ -723,6 +735,8 @@ private[spark] class BlockManager(
    * The effective storage level refers to the level according to which the block will actually be
    * handled. This allows the caller to specify an alternate behavior of doPut while preserving
    * the original level specified by the user.
+   *
+   * 根据给定的存储level，保存数据，如果需要，制作数据的副本。
    */
   private def doPut(
       blockId: BlockId,
@@ -743,9 +757,9 @@ private[spark] class BlockManager(
 
     /* Remember the block's storage level so that we can correctly drop it to disk if it needs
      * to be dropped right after it got put into memory. Note, however, that other threads will
-     * not be able to get() this block until we call markReady on its BlockInfo. */
-     /* 记录当前Storage Level，以便我们在它加载进内存之后，还可以按需写入硬盘
-     *  此外，在我们调用BlockInfo的markReay方法之前，其他线程都没法通过get方法获得该Block内容 */
+     * not be able to get() this block until we call markReady on its BlockInfo.
+     *  记录当前Storage Level，以便我们在将数据复制到内存之后，还可以按需要复制到硬盘上
+     *  注：在我们调用BlockInfo的 markReady 方法之前，其他线程都没法通过get方法获得该Block内容 */
      val putBlockInfo = {
       val tinfo = new BlockInfo(level, tellMaster)
       // Do atomically !

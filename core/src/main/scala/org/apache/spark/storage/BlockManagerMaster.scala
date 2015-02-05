@@ -57,7 +57,7 @@ class BlockManagerMaster(
   /** Register the BlockManager's id with the driver. */
   def registerBlockManager(blockManagerId: BlockManagerId, maxMemSize: Long, slaveActor: ActorRef) {
     logInfo("Trying to register BlockManager")
-//    RegisterBlockManager表示的消息，由BlockManagerMasterActor接招，可以看它的receiveWithLogging函数
+    // RegisterBlockManager表示的消息，由BlockManagerMasterActor接招，可以看它的receiveWithLogging函数
     tell(RegisterBlockManager(blockManagerId, maxMemSize, slaveActor))
     logInfo("Registered BlockManager")
   }

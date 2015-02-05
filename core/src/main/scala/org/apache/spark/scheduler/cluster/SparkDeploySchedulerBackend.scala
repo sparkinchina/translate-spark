@@ -54,6 +54,7 @@ private[spark] class SparkDeploySchedulerBackend(
     super.start()
 
     // The endpoint for executors to talk to us
+    // 和我们通讯的执行器endpoint
     val driverUrl = "akka.tcp://%s@%s:%s/user/%s".format(
       SparkEnv.driverActorSystemName,
       conf.get("spark.driver.host"),

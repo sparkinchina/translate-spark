@@ -127,7 +127,7 @@ abstract class RDD[T: ClassTag](
 
   /**
    * Optionally overridden by subclasses to specify placement preferences.
-   * 可选的，指定优先位置，输入参数是split分片，输出结果是一组优先的节点位置  */
+   * 可选的，获取优先位置，输入参数是split分片，输出结果是一组优先的节点位置  */
   protected def getPreferredLocations(split: Partition): Seq[String] = Nil
 
   /** Optionally overridden by subclasses to specify how they are partitioned.
@@ -183,7 +183,8 @@ abstract class RDD[T: ClassTag](
 
   /**
    * Mark the RDD as non-persistent, and remove all blocks for it from memory and disk.
-   *
+   * 将当前RDD标记为 non-persistent，并从内存和磁盘删除所有的数据块
+   * 注：persist()是延后执行(异步方式), 而unpersist一般是立即执行(同步方式)
    * @param blocking Whether to block until all blocks are deleted.
    * @return This RDD.
    */
@@ -236,7 +237,8 @@ abstract class RDD[T: ClassTag](
   /**
    * Get the preferred locations of a partition, taking into account whether the
    * RDD is checkpointed.
-   * 获取partition的
+   *
+   * 获取partition的优先存储位置，同时要考虑RDD是否 checkpointed
    */
   final def preferredLocations(split: Partition): Seq[String] = {
     checkpointRDD.map(_.getPreferredLocations(split)).getOrElse {
@@ -248,10 +250,11 @@ abstract class RDD[T: ClassTag](
    * Internal method to this RDD; will read from cache if applicable, or otherwise compute it.
    * This should ''not'' be called by users directly, but is available for implementors of custom
    * subclasses of RDD.
+   *
    * Rdd 内部方法。如果split的cache数据可用，就从cache正读取，否则计算该split
    * 该方法 不应该 由用户直接调用，但自定义的RDD子类实现代码中可以调用
    * 该方法是一个 final 方法，是RDD 4个final方法之一（4个final方法是RDD的基石），体现了可分片、可计算特性
-   * 是RDD与存储系统的接口。
+   * 是RDD与存储系统的接口。(storage模块里面所有的操作都是和block相关, RDD里面所有的运算都是基于partition的)
    */
   /**
    * add by yay(598775508) at 2015/1/7-22:48

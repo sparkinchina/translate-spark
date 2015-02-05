@@ -27,7 +27,9 @@ import org.apache.spark.util.Utils
 /**
  * Result returned by a ShuffleMapTask to a scheduler. Includes the block manager address that the
  * task ran on as well as the sizes of outputs for each reducer, for passing on to the reduce tasks.
+ *
  * ShuffleMapTask 返回给调度器的结果。包括了block manager 的位置及输出结果的size（用于传递给reduce task）。
+ * (通过 MapStatus，后续的Reduce task可以查询Map task的输出结果是否有自己需要的数据）
  */
 private[spark] sealed trait MapStatus {
   /** Location where this task was run. */
@@ -38,6 +40,11 @@ private[spark] sealed trait MapStatus {
    *
    * If a block is non-empty, then this method MUST return a non-zero size.  This invariant is
    * necessary for correctness, since block fetchers are allowed to skip zero-size blocks.
+   *
+   * 块的大小，估计值（单位：byte）
+   * 如果该block是非空的，那么该函数一定返回一个非 0 值。
+   * （block的具体大小可以有出入，但非空的block返回非0值）这一点是必须的保证的，因为读取block时允许跳过
+   *  size = 0 的block
    */
   def getSizeForBlock(reduceId: Int): Long
 }
@@ -45,6 +52,11 @@ private[spark] sealed trait MapStatus {
 
 private[spark] object MapStatus {
 
+  /**
+   * 根据输出结果的大小，进行分类处理：依据2000个byte分界
+   * 对于的，直接返回结果(由 CompressedMapStatus处理）
+   * 对于的，返回结果所存储的Block id (HighlyCompressedMapStatus)
+   */
   def apply(loc: BlockManagerId, uncompressedSizes: Array[Long]): MapStatus = {
     if (uncompressedSizes.length > 2000) {
       HighlyCompressedMapStatus(loc, uncompressedSizes)
@@ -59,6 +71,9 @@ private[spark] object MapStatus {
    * Compress a size in bytes to 8 bits for efficient reporting of map output sizes.
    * We do this by encoding the log base 1.1 of the size as an integer, which can support
    * sizes up to 35 GB with at most 10% error.
+   *
+   * 为了提高效率，将map output size的值压缩为一个字节
+   * 我们是通过将size的值取对数（基于1.1），这种方法可以支持高达35GB的容量，至多10%的误差
    */
   def compressSize(size: Long): Byte = {
     if (size == 0) {

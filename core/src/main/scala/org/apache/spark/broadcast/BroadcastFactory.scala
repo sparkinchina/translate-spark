@@ -38,7 +38,7 @@ trait BroadcastFactory {
 
   /**
    * Creates a new broadcast variable.
-   *
+   * 创建一个新的广播变量值
    * @param value value to broadcast
    * @param isLocal whether we are in local mode (single JVM process)
    * @param id unique id representing this broadcast variable
