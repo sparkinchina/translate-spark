@@ -135,6 +135,7 @@ private[spark] class ExecutorRunner(
    */
   /**
    * 下载并运行我们ApplicationDescription描述的executor
+   * 实际就是创建ExecutorBackend
    */
   def fetchAndRunExecutor() {
     try {

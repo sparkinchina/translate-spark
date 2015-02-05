@@ -178,6 +178,7 @@ abstract class RDD[T: ClassTag](
   def persist(): this.type = persist(StorageLevel.MEMORY_ONLY)
 
   /** Persist this RDD with the default storage level (`MEMORY_ONLY`). */
+  //cache 只使用 memory，写磁盘的话那就叫 checkpoint 了。
   def cache(): this.type = persist()
 
   /**

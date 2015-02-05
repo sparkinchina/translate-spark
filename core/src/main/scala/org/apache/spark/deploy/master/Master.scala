@@ -608,8 +608,10 @@ private[spark] class Master(
   def launchExecutor(worker: WorkerInfo, exec: ExecutorInfo) {
     logInfo("Launching executor " + exec.fullId + " on worker " + worker.id)
     worker.addExecutor(exec)
+    //通知worker去启动ExecutorRunner
     worker.actor ! LaunchExecutor(masterUrl,
       exec.application.id, exec.id, exec.application.desc, exec.cores, exec.memory)
+    //通知ClientActor，已经启动Executor了
     exec.application.driver ! ExecutorAdded(
       exec.id, worker.id, worker.hostPort, exec.cores, exec.memory)
   }

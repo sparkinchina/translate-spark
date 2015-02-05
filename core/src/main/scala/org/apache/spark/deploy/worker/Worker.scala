@@ -345,6 +345,7 @@ private[spark] class Worker(
             throw new IOException("Failed to create directory " + executorDir)
           }
 
+          //启动Worker上的ExecutorRunner
           val manager = new ExecutorRunner(appId, execId, appDesc, cores_, memory_,
             self, workerId, host, sparkHome, executorDir, akkaUrl, conf, ExecutorState.LOADING)
           executors(appId + "/" + execId) = manager

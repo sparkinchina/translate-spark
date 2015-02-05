@@ -31,7 +31,8 @@ import org.apache.spark.util.AkkaUtils
  * 1、对于master和slave，BlockManager的创建有所不同（虽然是同一个类）
  * 2、对于Driver而言，BlockManagerMaster直接拥有BlockManagerMasterActor的actor和间接拥有所有BlockManagerSlaveActor的ref（在BlockManagerMasterActor的blockManagerInfo中查看BlockManagerSlaveActor）
  * 3、对于slave而言，BlockManagerMaster则拥有BlockManagerMasterActor的ref和自身BlockManagerSlaveActor的actor。
- * 4、actor类似于网络服务中的server端，它保存所有的状态信息，接收client端的请求执行并返回给客户端；ref类似于网络服务中的client端，通过向server端发起请求获取结果。
+ * 4、actor类似于网络服务中的server端，它保存所有的状态信息，接收client端的请求执行并返回给客户端；
+ * ref类似于网络服务中的client端，通过向server端发起请求获取结果。
  */
 private[spark]
 class BlockManagerMaster(

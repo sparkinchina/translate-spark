@@ -35,6 +35,7 @@ private[spark] class HashShuffleReader[K, C](
   private val dep = handle.dependency
 
   /** Read the combined key-values for this reduce task */
+  /** 为reduce任务读取合并后的键值对**/
   override def read(): Iterator[Product2[K, C]] = {
     val ser = Serializer.getSerializer(dep.serializer)
     val iter = BlockStoreShuffleFetcher.fetch(handle.shuffleId, startPartition, context, ser)
