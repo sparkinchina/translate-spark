@@ -30,6 +30,8 @@ import org.apache.spark.annotation.DeveloperApi
  * BroadcastFactory implementation to instantiate a particular broadcast for the
  * entire Spark job.
  *
+ *  广播工厂，封装了Spark中使用的全部广播实现类。SparkContext 使用用户指定的
+ *  BroadcastFactory 的实现类为整个 Spark job 实例化一个特定的广播类。
  */
 @DeveloperApi
 trait BroadcastFactory {
