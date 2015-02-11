@@ -33,6 +33,7 @@ class JavaHadoopRDD[K, V](rdd: HadoopRDD[K, V])
   extends JavaPairRDD[K, V](rdd) {
 
   /** Maps over a partition, providing the InputSplit that was used as the base of the partition. */
+  /** 在一个分区之上Map操作,提供InputSplit作为分区的基础. */
   @DeveloperApi
   def mapPartitionsWithInputSplit[R](
       f: JFunction2[InputSplit, java.util.Iterator[(K, V)], java.util.Iterator[R]],
