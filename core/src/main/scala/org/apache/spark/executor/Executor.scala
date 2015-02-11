@@ -38,7 +38,7 @@ import org.apache.spark.util.{SparkUncaughtExceptionHandler, AkkaUtils, Utils}
 /**
  * Spark executor used with Mesos, YARN, and the standalone scheduler.
  * In coarse-grained mode, an existing actor system is provided.
- * Executor的职责：向Driver发送心跳，2. updateDependencies   3. launchTask/killTask
+ * Executor的职责：1. 向Driver发送心跳(BlockId信息)，2. updateDependencies   3. launchTask/killTask
  */
 private[spark] class Executor(
     executorId: String,
@@ -224,11 +224,14 @@ private[spark] class Executor(
         // directSend = sending directly back to the driver
         val serializedResult = {
           if (maxResultSize > 0 && resultSize > maxResultSize) {
+            //如果结果太大，超过了maxResultSize（默认1G），那么直接丢弃
             logWarning(s"Finished $taskName (TID $taskId). Result is larger than maxResultSize " +
               s"(${Utils.bytesToString(resultSize)} > ${Utils.bytesToString(maxResultSize)}), " +
               s"dropping it.")
             ser.serialize(new IndirectTaskResult[Any](TaskResultBlockId(taskId), resultSize))
           } else if (resultSize >= akkaFrameSize - AkkaUtils.reservedSizeBytes) {
+            //如果结果太大，但是还没有超过maxResultSize，那么把结果存入本节点的BlockManager，
+            // 然后把信息告诉Driver
             val blockId = TaskResultBlockId(taskId)
             env.blockManager.putBytes(
               blockId, serializedDirectResult, StorageLevel.MEMORY_AND_DISK_SER)
@@ -236,6 +239,7 @@ private[spark] class Executor(
               s"Finished $taskName (TID $taskId). $resultSize bytes result sent via BlockManager)")
             ser.serialize(new IndirectTaskResult[Any](blockId, resultSize))
           } else {
+            //结果直接发给Driver
             logInfo(s"Finished $taskName (TID $taskId). $resultSize bytes result sent to driver")
             serializedDirectResult
           }

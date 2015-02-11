@@ -25,6 +25,9 @@ import org.apache.spark.{SecurityManager, SparkConf}
  * A [[org.apache.spark.broadcast.Broadcast]] implementation that uses a BitTorrent-like
  * protocol to do a distributed transfer of the broadcasted data to the executors. Refer to
  * [[org.apache.spark.broadcast.TorrentBroadcast]] for more details.
+ *
+ * 一个 [[org.apache.spark.broadcast.Broadcast]] 实现，使用类似于比特流的协议来将广播数据
+ * 分布式地传输到 executors。
  */
 class TorrentBroadcastFactory extends BroadcastFactory {
 
@@ -40,6 +43,8 @@ class TorrentBroadcastFactory extends BroadcastFactory {
    * Remove all persisted state associated with the torrent broadcast with the given ID.
    * @param removeFromDriver Whether to remove state from the driver.
    * @param blocking Whether to block until unbroadcasted
+   *
+   * 移除所有与指定 ID 关联的 torrent broadcast 的持久化状态。
    */
   override def unbroadcast(id: Long, removeFromDriver: Boolean, blocking: Boolean) {
     TorrentBroadcast.unpersist(id, removeFromDriver, blocking)

@@ -30,6 +30,10 @@ import org.apache.spark.executor.ShuffleWriteMetrics
  * as it allows the caller to revert partial writes.
  *
  * This interface does not support concurrent writes.
+ *
+ * Block写入接口，将JVM对象写入某种底层的存储介质。该接口允许将数据追加到已有数据块中，并能保证写入的原子性，
+ * 在写入出错时能让调用者进行部分回滚
+ * 该接口不支持并发操作
  */
 private[spark] abstract class BlockObjectWriter(val blockId: BlockId) {
 

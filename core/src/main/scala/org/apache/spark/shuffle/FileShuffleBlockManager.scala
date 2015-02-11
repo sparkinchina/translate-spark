@@ -176,6 +176,12 @@ class FileShuffleBlockManager(conf: SparkConf)
     Some(segment.nioByteBuffer())
   }
 
+  /**
+   * add by yay(598775508) at 2015/1/27-12:51
+   * 如果开启了consolidate话需要根据Map ID和 Reduce ID首先获得FileGroup的一个文件，
+   * 然后根据在文件中的offset和size来获取需要的数据；
+   * 如果是没有File consolidate，那么直接根据Shuffle Block ID直接读取整个文件就可以。
+   */
   override def getBlockData(blockId: ShuffleBlockId): ManagedBuffer = {
     if (consolidateShuffleFiles) {
       // Search all file groups associated with this shuffle.

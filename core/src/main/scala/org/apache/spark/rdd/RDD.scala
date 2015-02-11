@@ -74,12 +74,19 @@ import org.apache.spark.util.random.{BernoulliSampler, PoissonSampler, Bernoulli
  * [[http://www.cs.berkeley.edu/~matei/papers/2012/nsdi_spark.pdf Spark paper]] for more details
  * on RDD internals.
  *
+ *
  * RDD都会有5个特征：
  * 1、有一个分片列表。就是能被切分，和hadoop一样的，能够切分的数据才能并行计算。（数据可分片）
  * 2、有一个函数计算每一个分片，这里指的是下面会提到的compute函数。 （分片可计算）
  * 3、对其他的RDD的依赖列表，依赖还具体分为宽依赖和窄依赖，但并不是所有的RDD都有依赖。（分片可溯源 -- lineage）
  * 4、可选：key-value型的RDD是根据哈希来分区的，类似于mapreduce当中的Paritioner接口，控制key分到哪个reduce。(数据分片接口)
  * 5、可选：每一个分片的优先计算位置（preferred locations），比如HDFS的block的所在位置应该是优先计算的位置 (数据本地性)
+ *
+ * RDD的上述五个特性是由4个 final 方法来保障，这个四个方法是RDD的基石
+ *  dependencies
+ *  partitions
+ *  preferredLocations
+ *  iterator
  */
 abstract class RDD[T: ClassTag](
     @transient private var sc: SparkContext,
@@ -107,20 +114,20 @@ abstract class RDD[T: ClassTag](
    * Implemented by subclasses to return the set of partitions in this RDD. This method will only
    * be called once, so it is safe to implement a time-consuming computation in it.
    * 该方法有子类实现，返回当前RDD的分片集合
-   * 只计算一次
+   * 只能被调用一次，该函数可用于实现耗时的计算过程
    */
   protected def getPartitions: Array[Partition]
 
   /**
    * Implemented by subclasses to return how this RDD depends on parent RDDs. This method will only
    * be called once, so it is safe to implement a time-consuming computation in it.
-   * 只计算一次，计算RDD对父RDD的依赖
+   * 只能被调用一次，计算RDD对父RDD的依赖
    */
   protected def getDependencies: Seq[Dependency[_]] = deps
 
   /**
    * Optionally overridden by subclasses to specify placement preferences.
-   * 可选的，指定优先位置，输入参数是split分片，输出结果是一组优先的节点位置  */
+   * 可选的，获取优先位置，输入参数是split分片，输出结果是一组优先的节点位置  */
   protected def getPreferredLocations(split: Partition): Seq[String] = Nil
 
   /** Optionally overridden by subclasses to specify how they are partitioned.
@@ -154,7 +161,7 @@ abstract class RDD[T: ClassTag](
    */
   def persist(newLevel: StorageLevel): this.type = {
     // TODO: Handle changes of StorageLevel
-    // StorageLevel不能随意更改，仅仅运行没有物化的RDD进行该操作
+    // StorageLevel不能随意更改，仅仅允许对没有物化的RDD进行该操作
     if (storageLevel != StorageLevel.NONE && newLevel != storageLevel) {
       throw new UnsupportedOperationException(
         "Cannot change storage level of an RDD after it was already assigned a level")
@@ -171,11 +178,13 @@ abstract class RDD[T: ClassTag](
   def persist(): this.type = persist(StorageLevel.MEMORY_ONLY)
 
   /** Persist this RDD with the default storage level (`MEMORY_ONLY`). */
+  //cache 只使用 memory，写磁盘的话那就叫 checkpoint 了。
   def cache(): this.type = persist()
 
   /**
    * Mark the RDD as non-persistent, and remove all blocks for it from memory and disk.
-   *
+   * 将当前RDD标记为 non-persistent，并从内存和磁盘删除所有的数据块
+   * 注：persist()是延后执行(异步方式), 而unpersist一般是立即执行(同步方式)
    * @param blocking Whether to block until all blocks are deleted.
    * @return This RDD.
    */
@@ -213,6 +222,8 @@ abstract class RDD[T: ClassTag](
   /**
    * Get the array of partitions of this RDD, taking into account whether the
    * RDD is checkpointed or not.
+   * 获取当前RDD的partition，需要考虑RDD是否执行过checkpoint
+   * 该方法是RDD 4个 final 方法之一，直接体现RDD的可分片特性
    */
   final def partitions: Array[Partition] = {
     checkpointRDD.map(_.partitions).getOrElse {
@@ -226,6 +237,8 @@ abstract class RDD[T: ClassTag](
   /**
    * Get the preferred locations of a partition, taking into account whether the
    * RDD is checkpointed.
+   *
+   * 获取partition的优先存储位置，同时要考虑RDD是否 checkpointed
    */
   final def preferredLocations(split: Partition): Seq[String] = {
     checkpointRDD.map(_.getPreferredLocations(split)).getOrElse {
@@ -237,6 +250,11 @@ abstract class RDD[T: ClassTag](
    * Internal method to this RDD; will read from cache if applicable, or otherwise compute it.
    * This should ''not'' be called by users directly, but is available for implementors of custom
    * subclasses of RDD.
+   *
+   * Rdd 内部方法。如果split的cache数据可用，就从cache正读取，否则计算该split
+   * 该方法 不应该 由用户直接调用，但自定义的RDD子类实现代码中可以调用
+   * 该方法是一个 final 方法，是RDD 4个final方法之一（4个final方法是RDD的基石），体现了可分片、可计算特性
+   * 是RDD与存储系统的接口。(storage模块里面所有的操作都是和block相关, RDD里面所有的运算都是基于partition的)
    */
   /**
    * add by yay(598775508) at 2015/1/7-22:48

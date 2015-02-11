@@ -93,6 +93,7 @@ private[spark] class RDDCheckpointData[T: ClassTag](@transient rdd: RDD[T])
     val broadcastedConf = rdd.context.broadcast(
       new SerializableWritable(rdd.context.hadoopConfiguration))
     rdd.context.runJob(rdd, CheckpointRDD.writeToFile[T](path.toString, broadcastedConf) _)
+    //新建一个CheckpointRDD，将作为该rdd的唯一父依赖
     val newRDD = new CheckpointRDD[T](rdd.context, path.toString)
     if (newRDD.partitions.size != rdd.partitions.size) {
       throw new SparkException(
@@ -101,6 +102,13 @@ private[spark] class RDDCheckpointData[T: ClassTag](@transient rdd: RDD[T])
     }
 
     // Change the dependencies and partitions of the RDD
+    /**
+     * add by yay(598775508) at 2015/1/27-18:19
+     *
+     * job 完成 checkpoint 后，将该 rdd 的 dependency 全部清掉，并设定该 rdd 状态为 checkpointed;
+     * 然后，为该 rdd 强加一个依赖，设置该 rdd 的 parent rdd 为 cpRDD，
+     * cpRDD负责以后读取在文件系统上的 checkpoint 文件，生成该 rdd 的 partition。
+     */
     RDDCheckpointData.synchronized {
       cpFile = Some(path.toString)
       cpRDD = Some(newRDD)

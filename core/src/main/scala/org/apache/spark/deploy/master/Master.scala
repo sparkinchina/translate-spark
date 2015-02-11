@@ -186,6 +186,7 @@ private[spark] class Master(
 
   override def receiveWithLogging = {
     case ElectedLeader => {
+      // 被选为Master，首先判断是否该Master原来为active，如果是那么进行Recovery。
       val (storedApps, storedDrivers, storedWorkers) = persistenceEngine.readPersistedData()
       state = if (storedApps.isEmpty && storedDrivers.isEmpty && storedWorkers.isEmpty) {
         RecoveryState.ALIVE
@@ -199,7 +200,7 @@ private[spark] class Master(
           CompleteRecovery)
       }
     }
-
+    // 删除没有响应的worker和app，并且将所有没有worker的Driver分配worker
     case CompleteRecovery => completeRecovery()
 
     case RevokedLeadership => {
@@ -213,7 +214,9 @@ private[spark] class Master(
         workerHost, workerPort, cores, Utils.megabytesToString(memory)))
       if (state == RecoveryState.STANDBY) {
         // ignore, don't send response
+        // 如果该Master不是active，不做任何操作，返回
       } else if (idToWorker.contains(id)) {
+        // 如果注册过该worker id，向sender返回错误
         sender ! RegisterWorkerFailed("Duplicate worker ID")
       } else {
         val worker = new WorkerInfo(id, workerHost, workerPort, cores, memory,
@@ -384,6 +387,9 @@ private[spark] class Master(
 
     case WorkerSchedulerStateResponse(workerId, executors, driverIds) => {
       idToWorker.get(workerId) match {
+        // 通过workerId查找到worker，那么worker的state置为ALIVE，
+        // 并且查找状态为idDefined的executors，并且将这些executors都加入到app中，
+        // 然后保存这些app到worker中。可以理解为Worker在Master端的Recovery
         case Some(worker) =>
           logInfo("Worker has been re-registered: " + workerId)
           worker.state = WorkerState.ALIVE
@@ -395,7 +401,7 @@ private[spark] class Master(
             worker.addExecutor(execInfo)
             execInfo.copyState(exec)
           }
-
+          // 将所有的driver设置为RUNNING然后加入到worker中。
           for (driverId <- driverIds) {
             drivers.find(_.id == driverId).foreach { driver =>
               driver.worker = Some(worker)
@@ -412,6 +418,8 @@ private[spark] class Master(
 
     case DisassociatedEvent(_, address, _) => {
       // The disconnected client could've been either a worker or an app; remove whichever it was
+      // 这个请求是Worker或者是App发送的。删除address对应的Worker和App
+      // 如果Recovery可以结束，那么结束Recovery
       logInfo(s"$address got disassociated, removing it.")
       addressToWorker.get(address).foreach(removeWorker)
       addressToApp.get(address).foreach(finishApplication)
@@ -546,15 +554,20 @@ private[spark] class Master(
     // spreadOutApps是由spark.deploy.spreadOut参数来决定的，默认是true
     if (spreadOutApps) {
       // Try to spread out each app among all the nodes, until it has all its cores
+      //app.coresLeft表示的是该app还有cpu资源没申请到
       for (app <- waitingApps if app.coresLeft > 0) {
+        ////根据core Free对可用Worker进行降序排序
         val usableWorkers = workers.toArray.filter(_.state == WorkerState.ALIVE)
           // canUse里面判断了worker的内存是否够用，并且该worker是否已经包含了该app的Executor
           .filter(canUse(app, _)).sortBy(_.coresFree).reverse
         val numUsable = usableWorkers.length
+        //记录在每个worker上分配的core的个数的数组
         val assigned = new Array[Int](numUsable) // Number of cores to give on each node
+        //App本次将要分配的cores =min( 集群中可用Worker的可用cores总和，app还需要分配的core的数量)
         var toAssign = math.min(app.coresLeft, usableWorkers.map(_.coresFree).sum)
         var pos = 0
         while (toAssign > 0) {
+          ////以轮询方式在所有可用Worker里判断当前worker空闲cpu是否大于当前数组已经分配core值
           if (usableWorkers(pos).coresFree - assigned(pos) > 0) {
             toAssign -= 1
             assigned(pos) += 1
@@ -563,8 +576,11 @@ private[spark] class Master(
         }
         // Now that we've decided how many cores to give on each node, let's actually give them
         for (pos <- 0 until numUsable) {
+          //如果当前下标的worker有分配core给app
           if (assigned(pos) > 0) {
+            //更新app里的Executor信息
             val exec = app.addExecutor(usableWorkers(pos), assigned(pos))
+            //通知可用Worker去启动Executor
             launchExecutor(usableWorkers(pos), exec)
             app.state = ApplicationState.RUNNING
           }
@@ -595,8 +611,10 @@ private[spark] class Master(
   def launchExecutor(worker: WorkerInfo, exec: ExecutorInfo) {
     logInfo("Launching executor " + exec.fullId + " on worker " + worker.id)
     worker.addExecutor(exec)
+    //通知worker去启动ExecutorRunner
     worker.actor ! LaunchExecutor(masterUrl,
       exec.application.id, exec.id, exec.application.desc, exec.cores, exec.memory)
+    //通知ClientActor，已经启动Executor了
     exec.application.driver ! ExecutorAdded(
       exec.id, worker.id, worker.hostPort, exec.cores, exec.memory)
   }
@@ -658,7 +676,7 @@ private[spark] class Master(
     waitingDrivers += driver
     schedule()
   }
-
+//这个函数中的driver就是ClientActor
   def createApplication(desc: ApplicationDescription, driver: ActorRef): ApplicationInfo = {
     val now = System.currentTimeMillis()
     val date = new Date(now)

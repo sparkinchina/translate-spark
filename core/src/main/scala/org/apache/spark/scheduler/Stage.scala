@@ -46,6 +46,14 @@ import org.apache.spark.util.CallSite
  * A single stage can consist of multiple attempts. In that case, the latestInfo field will
  * be updated for each attempt.
  *
+ * stage是一个独立任务的集合。这些任务是Spark Job的一部分，拥有相同的shuffle依赖，执行相同计算过程。
+ * DAG调度器根据是否发生shuffle为边界，将DAG任务划分为多个stage，并按照这些stage的拓扑顺序执行stage。
+ *
+ * 每个stage要么是一个shuffle map stage（其输出作为下个stage的输入)，要么是一个result stage（
+ * ）
+ * 扩展： 在创建Stage的时候，在构造函数的入参中必须明确从多少Partition读取数据，
+ * 如果是ShuffleStage，则必须指明要生成的Partition有多少。
+ * (读取的分区数目由RDD.partitions.size决定，输出的partitions由shuffleDep决定)。
  */
 private[spark] class Stage(
     val id: Int,
@@ -106,6 +114,8 @@ private[spark] class Stage(
    * Removes all shuffle outputs associated with this executor. Note that this will also remove
    * outputs which are served by an external shuffle server (if one exists), as they are still
    * registered with this execId.
+   *
+   * 删除当前Executor上所有的Shuffle。注意：该过程会同时删除注册到外部 shuffle server的Shuffle output
    */
   def removeOutputsOnExecutor(execId: String) {
     var becameUnavailable = false

@@ -183,8 +183,10 @@ final class ShuffleBlockFetcherIterator(
 
     // Tracks total number of blocks (including zero sized blocks)
     var totalBlocks = 0
+    //address就是BlockManagerId，blockInfos为Seq[(BlockId, Long)]
     for ((address, blockInfos) <- blocksByAddress) {
       totalBlocks += blockInfos.size
+      //如果给定的address.executorId等于本Node的executorId,那么就是local的Blocks
       if (address.executorId == blockManager.blockManagerId.executorId) {
         // Filter out zero-sized blocks
         localBlocks ++= blockInfos.filter(_._2 != 0).map(_._1)
@@ -204,6 +206,7 @@ final class ShuffleBlockFetcherIterator(
           } else if (size < 0) {
             throw new BlockException(blockId, "Negative block size " + size)
           }
+          // 当前总的size已经可以批量放入一次request中
           if (curRequestSize >= targetRequestSize) {
             // Add this FetchRequest
             remoteRequests += new FetchRequest(address, curBlocks)
@@ -213,6 +216,7 @@ final class ShuffleBlockFetcherIterator(
           }
         }
         // Add in the final request
+        // 剩余的请求组成一次request   
         if (curBlocks.nonEmpty) {
           remoteRequests += new FetchRequest(address, curBlocks)
         }
@@ -256,6 +260,7 @@ final class ShuffleBlockFetcherIterator(
     fetchRequests ++= Utils.randomize(remoteRequests)
 
     // Send out initial requests for blocks, up to our maxBytesInFlight
+    //保证占用内存不超过设定的值spark.reducer.maxMbInFlight，默认值是48M
     while (fetchRequests.nonEmpty &&
       (bytesInFlight == 0 || bytesInFlight + fetchRequests.front.size <= maxBytesInFlight)) {
       sendRequest(fetchRequests.dequeue())
@@ -321,6 +326,12 @@ object ShuffleBlockFetcherIterator {
    * @param address remote BlockManager to fetch from.
    * @param blocks Sequence of tuple, where the first element is the block id,
    *               and the second element is the estimated size, used to calculate bytesInFlight.
+   */
+  /**
+   * add by yay(598775508) at 2015/1/20-18:06
+   * 代表一个从远程BlockManager获取blocks数据的请求
+   * @param address 远程的BlockManager
+   * @param blocks 一个元组序列，元祖的第一个元素是blockId，第二个元素是block文件的评估大小
    */
   case class FetchRequest(address: BlockManagerId, blocks: Seq[(BlockId, Long)]) {
     val size = blocks.map(_._2).sum

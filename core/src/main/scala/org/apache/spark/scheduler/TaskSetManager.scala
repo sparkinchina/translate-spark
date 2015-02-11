@@ -555,6 +555,9 @@ private[spark] class TaskSetManager(
   /**
    * Marks the task as successful and notifies the DAGScheduler that a task has ended.
    */
+  /**
+   *标识这个task已经成功执行，同时通知DAGScheduler此task结束
+   */
   def handleSuccessfulTask(tid: Long, result: DirectTaskResult[_]) = {
     val info = taskInfos(tid)
     val index = info.index

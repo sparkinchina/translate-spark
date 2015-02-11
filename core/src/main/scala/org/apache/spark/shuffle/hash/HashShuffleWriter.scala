@@ -63,6 +63,7 @@ private[spark] class HashShuffleWriter[K, V](
     }
 
     for (elem <- iter) {
+//      找到该MapTask的结果record（elem)将要输出到哪个bucket
       val bucketId = dep.partitioner.getPartition(elem._1)
       shuffle.writers(bucketId).write(elem)
     }

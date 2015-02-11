@@ -59,6 +59,9 @@ import org.apache.spark.executor.ShuffleWriteMetrics
  *   `spark.shuffle.safetyFraction` specifies an additional margin of safety as a fraction of
  *   this threshold, in case map size estimation is not sufficiently accurate.
  */
+/**
+ * 同时使用内存+磁盘存储
+ */
 @DeveloperApi
 class ExternalAppendOnlyMap[K, V, C](
     createCombiner: V => C,

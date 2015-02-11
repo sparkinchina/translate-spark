@@ -199,7 +199,7 @@ private[spark] class Worker(
    * Note that for thread-safety this should only be called from the actor.
    * 由于网络失败或者Master的失败导致的Worker重新向Master的注册。如果重新注册尝试测试超过门限值，则
    * 认为Worker自身存在问题。 注意: 为了保证线程的安全，该方法只能由Actor调用
-   */ // TODO @QQ:10697840  Master使用HashSet管理注册信息，没有看出重复注册有什么严重问题
+   */
   private def reregisterWithMaster(): Unit = {
     Utils.tryOrExit {
       connectionAttemptCount += 1
@@ -345,6 +345,7 @@ private[spark] class Worker(
             throw new IOException("Failed to create directory " + executorDir)
           }
 
+          //启动Worker上的ExecutorRunner
           val manager = new ExecutorRunner(appId, execId, appDesc, cores_, memory_,
             self, workerId, host, sparkHome, executorDir, akkaUrl, conf, ExecutorState.LOADING)
           executors(appId + "/" + execId) = manager

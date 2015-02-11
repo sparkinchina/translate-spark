@@ -28,6 +28,9 @@ import org.apache.spark.util.ActorLogReceive
 /**
  * An actor to take commands from the master to execute options. For example,
  * this is used to remove blocks from the slave's BlockManager.
+ * 一个Actor，接受从BlockManagerMaster发送给Executor的命令。
+ * 例如：接受到删除数据块的命令。
+ * 该Actor负责完成与BlockManagerMaster的通信功能，具体的执行，由BlockManager完成
  */
 private[storage]
 class BlockManagerSlaveActor(

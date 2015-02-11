@@ -34,6 +34,10 @@ import org.apache.spark.annotation.DeveloperApi
  *
  * TODO: Cache the hash values of each key? java.util.HashMap does that.
  */
+/**
+ * 全部使用内存来存储
+ * 如果data的利用率达到 70%，那么就扩张一倍，并对所有 key 进行 rehash 后，重新排列每个 key 的位置
+ */
 @DeveloperApi
 class AppendOnlyMap[K, V](initialCapacity: Int = 64)
   extends Iterable[(K, V)] with Serializable {

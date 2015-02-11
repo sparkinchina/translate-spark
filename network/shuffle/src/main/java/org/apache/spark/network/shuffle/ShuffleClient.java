@@ -20,6 +20,7 @@ package org.apache.spark.network.shuffle;
 import java.io.Closeable;
 
 /** Provides an interface for reading shuffle files, either from an Executor or external service. */
+/** 提供一个接口用来从Executor或其他服务读取shuffle文件**/
 public abstract class ShuffleClient implements Closeable {
 
   /**

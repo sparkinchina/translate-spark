@@ -40,8 +40,8 @@ private[spark] class ServerStateException(message: String) extends Exception(mes
  * An HTTP server for static content used to allow worker nodes to access JARs added to SparkContext
  * as well as classes created by the interpreter when the user types in code. This is just a wrapper
  * around a Jetty server.
- * 应该静态内容的Http Server, 用来让Wor节点访问SparkContext中的Jar文件和用户自定义类型。该Server其实是对Jetty
- * Server的包装。
+ * 一个静态内容的Http Server, 用来让Worker节点访问SparkContext中的Jar文件和用户代码中使用到的由interpreter创建的类型。
+ * 该Server其实是对Jetty Server的简单包装。
  */
 private[spark] class HttpServer(
     resourceBase: File,
@@ -70,6 +70,10 @@ private[spark] class HttpServer(
    *
    * Note that this is only best effort in the sense that we may end up binding to a nearby port
    * in the event of port collision. Return the bound server and the actual port used.
+   *
+   * 在指定的端口上启动HTTP Server
+   * 注意：在某种程度上，这只是期望最好的结果，因为在端口冲突时我们可能会绑定到一个邻近的端口上。
+   * 函数返回Server和时间使用的端口
    */
   private def doStart(startPort: Int): (Server, Int) = {
     val server = new Server()
