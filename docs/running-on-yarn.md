@@ -139,21 +139,6 @@ Most of the configs are the same for Spark on YARN as for other deployment modes
     The maximum number of threads to use in the application master for launching executor containers.
   </td>
 </tr>
-<tr>
-  <td><code>spark.yarn.datanucleus.dir</code></td>
-  <td>$SPARK_HOME/lib</td>
-  <td>
-     The location of the DataNucleus jars, in case overriding the default location is desired.
-     By default, Spark on YARN will use the DataNucleus jars installed at
-     <code>$SPARK_HOME/lib</code>, but the jars can also be in a world-readable location on HDFS.
-     This allows YARN to cache it on nodes so that it doesn't need to be distributed each time an
-     application runs. To point to a directory on HDFS, for example, set this configuration to
-     "hdfs:///some/path".
-
-     This is required because the datanucleus jars cannot be packaged into the
-     assembly jar due to metadata conflicts (involving <code>plugin.xml</code>.)
-  </td>
-</tr>
 </table>
 
 # Launching Spark on YARN
@@ -216,18 +201,18 @@ settings and a restart of all node managers. Thus, this is not applicable to hos
 
 To use a custom log4j configuration for the application master or executors, there are two options:
 
-- upload a custom log4j.properties using spark-submit, by adding it to the "--files" list of files
+- upload a custom `log4j.properties` using `spark-submit`, by adding it to the `--files` list of files
   to be uploaded with the application.
-- add "-Dlog4j.configuration=<location of configuration file>" to "spark.driver.extraJavaOptions"
-  (for the driver) or "spark.executor.extraJavaOptions" (for executors). Note that if using a file,
-  the "file:" protocol should be explicitly provided, and the file needs to exist locally on all
+- add `-Dlog4j.configuration=<location of configuration file>` to `spark.driver.extraJavaOptions`
+  (for the driver) or `spark.executor.extraJavaOptions` (for executors). Note that if using a file,
+  the `file:` protocol should be explicitly provided, and the file needs to exist locally on all
   the nodes.
 
 Note that for the first option, both executors and the application master will share the same
 log4j configuration, which may cause issues when they run on the same node (e.g. trying to write
 to the same log file).
 
-If you need a reference to the proper location to put log files in the YARN so that YARN can properly display and aggregate them, use "${spark.yarn.app.container.log.dir}" in your log4j.properties. For example, log4j.appender.file_appender.File=${spark.yarn.app.container.log.dir}/spark.log. For streaming application, configuring RollingFileAppender and setting file location to YARN's log directory will avoid disk overflow caused by large log file, and logs can be accessed using YARN's log utility.
+If you need a reference to the proper location to put log files in the YARN so that YARN can properly display and aggregate them, use `spark.yarn.app.container.log.dir` in your log4j.properties. For example, `log4j.appender.file_appender.File=${spark.yarn.app.container.log.dir}/spark.log`. For streaming application, configuring `RollingFileAppender` and setting file location to YARN's log directory will avoid disk overflow caused by large log file, and logs can be accessed using YARN's log utility.
 
 # Important notes
 

@@ -24,12 +24,17 @@ set ORIG_ARGS=%*
 
 rem Reset the values of all variables used
 set SPARK_SUBMIT_DEPLOY_MODE=client
-set SPARK_SUBMIT_PROPERTIES_FILE=%SPARK_HOME%\conf\spark-defaults.conf
 set SPARK_SUBMIT_DRIVER_MEMORY=
 set SPARK_SUBMIT_LIBRARY_PATH=
 set SPARK_SUBMIT_CLASSPATH=
 set SPARK_SUBMIT_OPTS=
 set SPARK_SUBMIT_BOOTSTRAP_DRIVER=
+
+if not "x%SPARK_CONF_DIR%"=="x" (
+  set SPARK_SUBMIT_PROPERTIES_FILE=%SPARK_CONF_DIR%\spark-defaults.conf
+) else (
+  set SPARK_SUBMIT_PROPERTIES_FILE=%SPARK_HOME%\conf\spark-defaults.conf
+)
 
 :loop
 if [%1] == [] goto continue
@@ -45,10 +50,16 @@ if [%1] == [] goto continue
     set SPARK_SUBMIT_CLASSPATH=%2
   ) else if [%1] == [--driver-java-options] (
     set SPARK_SUBMIT_OPTS=%2
+  ) else if [%1] == [--master] (
+    set MASTER=%2
   )
   shift
 goto loop
 :continue
+
+if [%MASTER%] == [yarn-cluster] (
+  set SPARK_SUBMIT_DEPLOY_MODE=cluster
+)
 
 rem For client mode, the driver will be launched in the same JVM that launches
 rem SparkSubmit, so we may need to read the properties file for any extra class

@@ -760,7 +760,7 @@ private[spark] class BlockManager(
      * not be able to get() this block until we call markReady on its BlockInfo.
      *  记录当前Storage Level，以便我们在将数据复制到内存之后，还可以按需要复制到硬盘上
      *  注：在我们调用BlockInfo的 markReady 方法之前，其他线程都没法通过get方法获得该Block内容 */
-     val putBlockInfo = {
+    val putBlockInfo = {
       val tinfo = new BlockInfo(level, tellMaster)
       // Do atomically !
       val oldBlockOpt = blockInfo.putIfAbsent(blockId, tinfo)
@@ -1071,8 +1071,10 @@ private[spark] class BlockManager(
           // If we get here, the block write failed.
           logWarning(s"Block $blockId was marked as failure. Nothing to drop")
           return None
+        } else if (blockInfo.get(blockId).isEmpty) {
+          logWarning(s"Block $blockId was already dropped.")
+          return None
         }
-
         var blockIsUpdated = false
         val level = info.level
 

@@ -44,6 +44,7 @@ private[spark] class ServerStateException(message: String) extends Exception(mes
  * 该Server其实是对Jetty Server的简单包装。
  */
 private[spark] class HttpServer(
+    conf: SparkConf,
     resourceBase: File,
     securityManager: SecurityManager,
     requestedPort: Int = 0,
@@ -59,7 +60,7 @@ private[spark] class HttpServer(
     } else {
       logInfo("Starting HTTP Server")
       val (actualServer, actualPort) =
-        Utils.startServiceOnPort[Server](requestedPort, doStart, serverName)
+        Utils.startServiceOnPort[Server](requestedPort, doStart, conf, serverName)
       server = actualServer
       port = actualPort
     }

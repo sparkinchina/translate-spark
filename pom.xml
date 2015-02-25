@@ -26,7 +26,7 @@
   </parent>
   <groupId>org.apache.spark</groupId>
   <artifactId>spark-parent</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <packaging>pom</packaging>
   <name>Spark Project Parent POM</name>
   <url>http://spark.apache.org/</url>
@@ -278,8 +278,8 @@
       <artifactId>unused</artifactId>
       <version>1.0.0</version>
     </dependency>
-    <!-- 
-         This depndency has been added to provided scope as it is needed for excuting build
+    <!--
+         This depndency has been added to provided scope as it is needed for executing build
          specific groovy scripts using gmaven+ and not required for downstream project building
          with spark.
     -->
@@ -970,7 +970,7 @@
             <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
             <junitxml>.</junitxml>
             <filereports>SparkTestSuite.txt</filereports>
-            <argLine>-Xmx3g -XX:MaxPermSize=${MaxPermGen} -XX:ReservedCodeCacheSize=512m</argLine>
+            <argLine>-ea -Xmx3g -XX:MaxPermSize=${MaxPermGen} -XX:ReservedCodeCacheSize=512m</argLine>
             <stderr/>
             <systemProperties>
               <java.awt.headless>true</java.awt.headless>
@@ -1033,6 +1033,9 @@
               </fileset>
               <fileset>
                 <directory>checkpoint</directory>
+              </fileset>
+              <fileset>
+                <directory>lib_managed</directory>
               </fileset>
             </filesets>
           </configuration>
@@ -1324,7 +1327,7 @@
       <id>mapr3</id>
       <properties>
         <hadoop.version>1.0.3-mapr-3.0.3</hadoop.version>
-        <yarn.version>2.3.0-mapr-4.0.0-FCS</yarn.version>
+        <yarn.version>2.4.1-mapr-1408</yarn.version>
         <hbase.version>0.94.17-mapr-1405</hbase.version>
         <zookeeper.version>3.4.5-mapr-1406</zookeeper.version>
       </properties>
@@ -1333,8 +1336,8 @@
     <profile>
       <id>mapr4</id>
       <properties>
-        <hadoop.version>2.3.0-mapr-4.0.0-FCS</hadoop.version>
-        <yarn.version>2.3.0-mapr-4.0.0-FCS</yarn.version>
+        <hadoop.version>2.4.1-mapr-1408</hadoop.version>
+        <yarn.version>2.4.1-mapr-1408</yarn.version>
         <hbase.version>0.94.17-mapr-1405-4.0.0-FCS</hbase.version>
         <zookeeper.version>3.4.5-mapr-1406</zookeeper.version>
       </properties>

@@ -39,7 +39,7 @@ import boto
 from boto.ec2.blockdevicemapping import BlockDeviceMapping, BlockDeviceType, EBSBlockDeviceType
 from boto import ec2
 
-DEFAULT_SPARK_VERSION = "1.2.0"
+DEFAULT_SPARK_VERSION = "1.2.1"
 SPARK_EC2_DIR = os.path.dirname(os.path.realpath(__file__))
 
 MESOS_SPARK_EC2_BRANCH = "v4"
@@ -217,6 +217,7 @@ def get_spark_shark_version(opts):
         "1.1.0": "1.1.0",
         "1.1.1": "1.1.1",
         "1.2.0": "1.2.0",
+        "1.2.1": "1.2.1",
     }
     version = opts.spark_version.replace("v", "")
     if version not in spark_shark_map:
@@ -506,9 +507,9 @@ def get_existing_cluster(conn, opts, cluster_name, die_on_error=True):
         active = [i for i in res.instances if is_active(i)]
         for inst in active:
             group_names = [g.name for g in inst.groups]
-            if group_names == [cluster_name + "-master"]:
+            if (cluster_name + "-master") in group_names:
                 master_nodes.append(inst)
-            elif group_names == [cluster_name + "-slaves"]:
+            elif (cluster_name + "-slaves") in group_names:
                 slave_nodes.append(inst)
     if any((master_nodes, slave_nodes)):
         print "Found %d master(s), %d slaves" % (len(master_nodes), len(slave_nodes))

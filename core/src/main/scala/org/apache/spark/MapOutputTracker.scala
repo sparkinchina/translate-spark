@@ -72,7 +72,7 @@ private[spark] class MapOutputTrackerMasterActor(tracker: MapOutputTrackerMaster
 /**
  * Class that keeps track of the location of the map output of
  * a stage. This is abstract because different versions of MapOutputTracker
- * (driver and worker) use different HashMap to store its metadata.
+ * (driver and executor) use different HashMap to store its metadata.
  * 用于跟踪一个stage的map输出位置
  * 该类为抽象类。Driver和Worker保存元数据使用不同的的HashMap
  */
@@ -83,11 +83,11 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
   var trackerActor: ActorRef = _
 
   /**
-   * This HashMap has different behavior for the master and the workers.
+   * This HashMap has different behavior for the driver and the executors.
    *
-   * On the master, it serves as the source of map outputs recorded from ShuffleMapTasks.
-   * On the workers, it simply serves as a cache, in which a miss triggers a fetch from the
-   * master's corresponding HashMap.
+   * On the driver, it serves as the source of map outputs recorded from ShuffleMapTasks.
+   * On the executors, it simply serves as a cache, in which a miss triggers a fetch from the
+   * driver's corresponding HashMap.
    *
    * 这个HashMap在Master和Worker上有不同的行为
    * 在Master上，它负责保存着map输出记录的原始数据，这些数据由ShuffleMapTasks产生
@@ -106,7 +106,7 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
   protected var epoch: Long = 0
   protected val epochLock = new AnyRef
 
-  /** Remembers which map output locations are currently being fetched on a worker. */
+  /** Remembers which map output locations are currently being fetched on an executor. */
   private val fetching = new HashSet[Int]
 
   /**
@@ -143,14 +143,12 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
       logInfo("Don't have map outputs for shuffle " + shuffleId + ", fetching them")
       var fetchedStatuses: Array[MapStatus] = null
       fetching.synchronized {
-        if (fetching.contains(shuffleId)) {
-          // Someone else is fetching it; wait for them to be done
-          while (fetching.contains(shuffleId)) {
-            try {
-              fetching.wait()
-            } catch {
-              case e: InterruptedException =>
-            }
+        // Someone else is fetching it; wait for them to be done
+        while (fetching.contains(shuffleId)) {
+          try {
+            fetching.wait()
+          } catch {
+            case e: InterruptedException =>
           }
         }
 
@@ -205,8 +203,8 @@ private[spark] abstract class MapOutputTracker(conf: SparkConf) extends Logging 
 
   /**
    * Called from executors to update the epoch number, potentially clearing old outputs
-   * because of a fetch failure. Each worker task calls this with the latest epoch
-   * number on the master at the time it was created.
+   * because of a fetch failure. Each executor task calls this with the latest epoch
+   * number on the driver at the time it was created.
    * 该函数由Executor调用，用来更新时间戳。
    * Worker上的任务在调用该函数时会回传一个Worker上的时间戳
    */
@@ -240,7 +238,7 @@ private[spark] class MapOutputTrackerMaster(conf: SparkConf)
   private var cacheEpoch = epoch
 
   /**
-   * Timestamp based HashMap for storing mapStatuses and cached serialized statuses in the master,
+   * Timestamp based HashMap for storing mapStatuses and cached serialized statuses in the driver,
    * so that statuses are dropped only by explicit de-registering or by TTL-based cleaning (if set).
    * Other than these two scenarios, nothing should be dropped from this HashMap.
    */
@@ -350,7 +348,7 @@ private[spark] class MapOutputTrackerMaster(conf: SparkConf)
 }
 
 /**
- * MapOutputTracker for the workers, which fetches map output information from the driver's
+ * MapOutputTracker for the executors, which fetches map output information from the driver's
  * MapOutputTrackerMaster.
  */
 private[spark] class MapOutputTrackerWorker(conf: SparkConf) extends MapOutputTracker(conf) {

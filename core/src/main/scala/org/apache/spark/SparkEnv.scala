@@ -162,7 +162,15 @@ object SparkEnv extends Logging {
     assert(conf.contains("spark.driver.port"), "spark.driver.port is not set on the driver!")
     val hostname = conf.get("spark.driver.host")
     val port = conf.get("spark.driver.port").toInt
-    create(conf, SparkContext.DRIVER_IDENTIFIER, hostname, port, true, isLocal, listenerBus)
+    create(
+      conf,
+      SparkContext.DRIVER_IDENTIFIER,
+      hostname,
+      port,
+      isDriver = true,
+      isLocal = isLocal,
+      listenerBus = listenerBus
+    )
   }
 
   /**
@@ -178,8 +186,16 @@ object SparkEnv extends Logging {
       numCores: Int,
       isLocal: Boolean,
       actorSystem: ActorSystem = null): SparkEnv = {
-    create(conf, executorId, hostname, port, false, isLocal, defaultActorSystem = actorSystem,
-      numUsableCores = numCores)
+    create(
+      conf,
+      executorId,
+      hostname,
+      port,
+      isDriver = false,
+      isLocal = isLocal,
+      defaultActorSystem = actorSystem,
+      numUsableCores = numCores
+    )
   }
 
   /**
@@ -325,7 +341,7 @@ object SparkEnv extends Logging {
     val httpFileServer =
       if (isDriver) {
         val fileServerPort = conf.getInt("spark.fileserver.port", 0)
-        val server = new HttpFileServer(securityManager, fileServerPort)
+        val server = new HttpFileServer(conf, securityManager, fileServerPort)
         server.initialize()
         conf.set("spark.fileserver.uri",  server.serverUri)
         server
@@ -339,6 +355,10 @@ object SparkEnv extends Logging {
       // Then we can start the metrics system.
       MetricsSystem.createMetricsSystem("driver", conf, securityManager)
     } else {
+      // We need to set the executor ID before the MetricsSystem is created because sources and
+      // sinks specified in the metrics configuration file will want to incorporate this executor's
+      // ID into the metrics they report.
+      conf.set("spark.executor.id", executorId)
       val ms = MetricsSystem.createMetricsSystem("executor", conf, securityManager)
       ms.start()
       ms
@@ -348,7 +368,7 @@ object SparkEnv extends Logging {
     // this is a temporary directory; in distributed mode, this is the executor's current working
     // directory.
     val sparkFilesDir: String = if (isDriver) {
-      Utils.createTempDir().getAbsolutePath
+      Utils.createTempDir(Utils.getLocalDir(conf), "userFiles").getAbsolutePath
     } else {
       "."
     }
@@ -408,7 +428,7 @@ object SparkEnv extends Logging {
     val sparkProperties = (conf.getAll ++ schedulerMode).sorted
 
     // System properties that are not java classpaths
-    val systemProperties = System.getProperties.iterator.toSeq
+    val systemProperties = Utils.getSystemProperties.toSeq
     val otherProperties = systemProperties.filter { case (k, _) =>
       k != "java.class.path" && !k.startsWith("spark.")
     }.sorted

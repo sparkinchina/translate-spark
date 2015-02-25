@@ -42,13 +42,16 @@ import org.apache.spark.util.{SparkUncaughtExceptionHandler, AkkaUtils, Utils}
  */
 private[spark] class Executor(
     executorId: String,
-    slaveHostname: String,
+    executorHostname: String,
     properties: Seq[(String, String)],
     numCores: Int,
     isLocal: Boolean = false,
     actorSystem: ActorSystem = null)
   extends Logging
 {
+
+  logInfo(s"Starting executor ID $executorId on host $executorHostname")
+
   // Application dependencies (added through SparkContext) that we've fetched so far on this node.
   // Each map holds the master's timestamp for the version of that file or JAR we got.
   private val currentFiles: HashMap[String, Long] = new HashMap[String, Long]()
@@ -59,12 +62,12 @@ private[spark] class Executor(
   @volatile private var isStopped = false
 
   // No ip or host:port - just hostname
-  Utils.checkHost(slaveHostname, "Expected executed slave to be a hostname")
+  Utils.checkHost(executorHostname, "Expected executed slave to be a hostname")
   // must not have port specified.
-  assert (0 == Utils.parseHostPort(slaveHostname)._2)
+  assert (0 == Utils.parseHostPort(executorHostname)._2)
 
   // Make sure the local hostname we report matches the cluster scheduler's name for this host
-  Utils.setCustomHostname(slaveHostname)
+  Utils.setCustomHostname(executorHostname)
 
   // Set spark.* properties from executor arg
   val conf = new SparkConf(true)
@@ -85,7 +88,7 @@ private[spark] class Executor(
     if (!isLocal) {
       val port = conf.getInt("spark.executor.port", 0)
       val _env = SparkEnv.createExecutorEnv(
-        conf, executorId, slaveHostname, port, numCores, isLocal, actorSystem)
+        conf, executorId, executorHostname, port, numCores, isLocal, actorSystem)
       SparkEnv.set(_env)
       _env.metricsSystem.registerSource(executorSource)
       _env.blockManager.initialize(conf.getAppId)
@@ -147,6 +150,8 @@ private[spark] class Executor(
     }
   }
 
+  private def gcTime = ManagementFactory.getGarbageCollectorMXBeans.map(_.getCollectionTime).sum
+
   class TaskRunner(
       execBackend: ExecutorBackend, val taskId: Long, taskName: String, serializedTask: ByteBuffer)
     extends Runnable {
@@ -154,6 +159,7 @@ private[spark] class Executor(
     @volatile private var killed = false
     @volatile var task: Task[Any] = _
     @volatile var attemptedTask: Option[Task[Any]] = None
+    @volatile var startGCTime: Long = _
 
     def kill(interruptThread: Boolean) {
       logInfo(s"Executor is trying to kill $taskName (TID $taskId)")
@@ -170,11 +176,9 @@ private[spark] class Executor(
       logInfo(s"Running $taskName (TID $taskId)")
       execBackend.statusUpdate(taskId, TaskState.RUNNING, EMPTY_BYTE_BUFFER)
       var taskStart: Long = 0
-      def gcTime = ManagementFactory.getGarbageCollectorMXBeans.map(_.getCollectionTime).sum
-      val startGCTime = gcTime
+      startGCTime = gcTime
 
       try {
-        Accumulators.clear()
         val (taskFiles, taskJars, taskBytes) = Task.deserializeWithDependencies(serializedTask)
         updateDependencies(taskFiles, taskJars)
         task = ser.deserialize[Task[Any]](taskBytes, Thread.currentThread.getContextClassLoader)
@@ -284,6 +288,8 @@ private[spark] class Executor(
         env.shuffleMemoryManager.releaseMemoryForThisThread()
         // Release memory used by this thread for unrolling blocks
         env.blockManager.memoryStore.releaseUnrollMemoryForThisThread()
+        // Release memory used by this thread for accumulators
+        Accumulators.clear()
         runningTasks.remove(taskId)
       }
     }
@@ -382,10 +388,13 @@ private[spark] class Executor(
 
         while (!isStopped) {
           val tasksMetrics = new ArrayBuffer[(Long, TaskMetrics)]()
+          val curGCTime = gcTime
+
           for (taskRunner <- runningTasks.values()) {
             if (!taskRunner.attemptedTask.isEmpty) {
               Option(taskRunner.task).flatMap(_.metrics).foreach { metrics =>
                 metrics.updateShuffleReadMetrics
+                metrics.jvmGCTime = curGCTime - taskRunner.startGCTime
                 if (isLocal) {
                   // JobProgressListener will hold an reference of it during
                   // onExecutorMetricsUpdate(), then JobProgressListener can not see
