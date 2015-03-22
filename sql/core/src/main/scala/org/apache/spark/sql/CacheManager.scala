@@ -32,6 +32,10 @@ private case class CachedData(plan: LogicalPlan, cachedRepresentation: InMemoryR
  * results when subsequent queries are executed.  Data is cached using byte buffers stored in an
  * InMemoryRelation.  This relation is automatically substituted query plans that return the
  * `sameResult` as the originally cached query.
+ *
+ * 为 SQLContext 提供支持，可以缓存查询的结果，并在后续查询执行时自动使用这些缓存结果。
+ * 数据使用存储在 InMemoryRelation 中的 byte buffers进行缓存。
+ * 该 relation 会自动替换为返回和原始缓存的查询“相同结果”的查询计划，
  */
 private[sql] trait CacheManager {
   self: SQLContext =>
@@ -78,6 +82,9 @@ private[sql] trait CacheManager {
    * Caches the data produced by the logical representation of the given schema rdd.  Unlike
    * `RDD.cache()`, the default storage level is set to be `MEMORY_AND_DISK` because recomputing
    * the in-memory columnar representation of the underlying table is expensive.
+   *
+   * 缓存指定 schema rdd 的逻辑表达式所构建的数据。和 `RDD.cache()` 不同，
+   * 由于底层表的内存列式表示的重计算代价很高，默认的存储级别被设置为 `MEMORY_AND_DISK`。
    */
   private[sql] def cacheQuery(
       query: SchemaRDD,

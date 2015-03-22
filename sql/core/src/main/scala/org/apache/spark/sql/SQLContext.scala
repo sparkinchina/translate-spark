@@ -45,6 +45,9 @@ import org.apache.spark.sql.sources.{DataSourceStrategy, BaseRelation, DDLParser
  *
  * @groupname userf Spark SQL Functions
  * @groupname Ungrouped Support functions for language integrated queries.
+ *
+ * 用 Spark 进行关系查询的入口点。 允许创建 [[SchemaRDD]] 对象，以及执行 SQL 的查询。
+ *
  */
 @AlphaComponent
 class SQLContext(@transient val sparkContext: SparkContext)
@@ -97,6 +100,9 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * Allows catalyst LogicalPlans to be executed as a SchemaRDD.  Note that the LogicalPlan
    * interface is considered internal, and thus not guaranteed to be stable.  As a result, using
    * them directly is not recommended.
+   *
+   * 通过隐式转换，允许 catalyst 的逻辑计划像一个 SchemaRDD那样来执行。注意： 逻辑机会是作为内部的
+   * 接口的，因此不能保证其稳定性。 所以我们不推荐直接使用它们。
    */
   @DeveloperApi
   implicit def logicalPlanToSparkQuery(plan: LogicalPlan): SchemaRDD = new SchemaRDD(this, plan)
@@ -105,6 +111,9 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * Creates a SchemaRDD from an RDD of case classes.
    *
    * @group userf
+   *
+   * 从样本类的 RDD 创建出一个 SchemaRDD。
+   * 补充：注意RDD元素的类型。
    */
   implicit def createSchemaRDD[A <: Product: TypeTag](rdd: RDD[A]) = {
     SparkPlan.currentContext.set(self)
@@ -147,6 +156,10 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * }}}
    *
    * @group userf
+   *
+   * 应用一个对应该RDD的 schema，从一个包含 [[Row]]s 的RDD 创建出一个  [[SchemaRDD]]。
+   * 重要的是必须确保提供的 RDD 中每个 [[Row]] 的结构都必须和提供的 schema 匹配。 否则， 会出现
+   * 运行时异常。
    */
   @DeveloperApi
   def applySchema(rowRDD: RDD[Row], schema: StructType): SchemaRDD = {
@@ -274,6 +287,8 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * during the lifetime of this instance of SQLContext.
    *
    * @group userf
+   *
+   * 将给定的 RDD 注册为一个 catalog 中的临时表。 临时表仅仅存在于 SQLContext 生命周期中。
    */
   def registerRDDAsTable(rdd: SchemaRDD, tableName: String): Unit = {
     catalog.registerTable(Seq(tableName), rdd.queryExecution.logical)
@@ -286,6 +301,9 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * @param tableName the name of the table to be unregistered.
    *
    * @group userf
+   *
+   * 删除 catalog 中指定表名的的临时表。如果表已经被缓存/持久化的话，也会进行 unpersisted。
+   * @param tableName 要注销的表的名字。
    */
   def dropTempTable(tableName: String): Unit = {
     tryUncacheQuery(table(tableName))
@@ -297,6 +315,9 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * used for SQL parsing can be configured with 'spark.sql.dialect'.
    *
    * @group userf
+   *
+   * 使用 Spark 执行一条 SQL 查询， 返回结果作为一个 SchemaRDD。用于 SQL 解析的参数 dialect 可以通过
+   * 'spark.sql.dialect' 进行配置。
    */
   def sql(sqlText: String): SchemaRDD = {
     if (dialect == "sql") {
@@ -314,6 +335,8 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * :: DeveloperApi ::
    * Allows extra strategies to be injected into the query planner at runtime.  Note this API
    * should be consider experimental and is not intended to be stable across releases.
+   *
+   * 运行在运行时将额外的策略注入到查询计划中。 注意该 API 应该作为一个实验性质的，在 releases 中还不是稳定的。
    */
   @DeveloperApi
   var extraStrategies: Seq[Strategy] = Nil
@@ -403,6 +426,8 @@ class SQLContext(@transient val sparkContext: SparkContext)
    * :: DeveloperApi ::
    * The primary workflow for executing relational queries using Spark.  Designed to allow easy
    * access to the intermediate phases of query execution for developers.
+   *
+   * 执行关系型查询的主要工作流使用了 Spark。 为开发者设计了易于访问查询执行的中间阶段的接口。
    */
   @DeveloperApi
   protected abstract class QueryExecution {
@@ -419,6 +444,7 @@ class SQLContext(@transient val sparkContext: SparkContext)
     }
     // executedPlan should not be used to initialize any SparkPlan. It should be
     // only used for execution.
+    // executedPlan 不可以用于初始化任何 SparkPlan。 它应该仅仅用于执行。
     lazy val executedPlan: SparkPlan = prepareForExecution(sparkPlan)
 
     /** Internal version of the RDD. Avoids copies and has no schema */

@@ -28,6 +28,9 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
  *
  * Before analysis, all operators that include this trait will be asked to produce a new version
  * of itself with globally unique expression ids.
+ *
+ * 一个应该被混入某种查询操作中的特质，在该查询操作中，单个实例可能会在一个逻辑查询计划中多次出现。
+ * 在一个查询树中，如果不同操作具有同一属性的不同拷贝，这是
  */
 trait MultiInstanceRelation {
   def newInstance(): this.type

@@ -37,6 +37,8 @@ import org.apache.spark.sql.catalyst.trees
  *
  * @param sizeInBytes Physical size in bytes. For leaf operators this defaults to 1, otherwise it
  *                    defaults to the product of children's `sizeInBytes`.
+ *
+ * 各种统计数据的评估。 默认的评估逻辑
  */
 private[sql] case class Statistics(sizeInBytes: BigInt)
 

@@ -23,6 +23,8 @@ import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Subquery}
 
 /**
  * An interface for looking up relations by name.  Used by an [[Analyzer]].
+ *
+ * 一个用于通过名字来查找关系的接口。 被一个 [[Analyzer]] 使用。
  */
 trait Catalog {
 
@@ -108,6 +110,9 @@ class SimpleCatalog(val caseSensitive: Boolean) extends Catalog {
  * new logical plans.  This can be used to bind query result to virtual tables, or replace tables
  * with in-memory cached versions.  Note that the set of overrides is stored in memory and thus
  * lost when the JVM exits.
+ *
+ * 可被其他 Catalogs 混入的一个特质， 允许使用新的逻辑计划来覆写指定表。 可以用于绑定查询结果到虚拟表，
+ * 或用内存缓存版本替换表。 注意这些覆写是存储在内存中的，因此当JVM退出时会丢失。
  */
 trait OverrideCatalog extends Catalog {
 
@@ -157,6 +162,8 @@ trait OverrideCatalog extends Catalog {
 /**
  * A trivial catalog that returns an error when a relation is requested.  Used for testing when all
  * relations are already filled in and the analyser needs only to resolve attribute references.
+ *
+ * 一个简单的 catalog， 当请求一个关系时返回一个错误。
  */
 object EmptyCatalog extends Catalog {
 
