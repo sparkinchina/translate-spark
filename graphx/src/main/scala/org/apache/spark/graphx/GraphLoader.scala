@@ -23,8 +23,6 @@ import org.apache.spark.graphx.impl.{EdgePartitionBuilder, GraphImpl}
 
 /**
  * Provides utilities for loading [[Graph]]s from files.
- *
- * 提供从文件中加载数据并生成Graph对象的实用工具
  */
 object GraphLoader extends Logging {
 
