@@ -23,8 +23,11 @@ import sys
 import time
 import socket
 import traceback
+<<<<<<< HEAD
 import cProfile
 import pstats
+=======
+>>>>>>> githubspark/branch-1.3
 
 from pyspark.accumulators import _accumulatorRegistry
 from pyspark.broadcast import Broadcast, _broadcastRegistry
@@ -90,19 +93,28 @@ def main(infile, outfile):
         command = pickleSer._read_with_length(infile)
         if isinstance(command, Broadcast):
             command = pickleSer.loads(command.value)
+<<<<<<< HEAD
         (func, stats, deserializer, serializer) = command
+=======
+        (func, profiler, deserializer, serializer) = command
+>>>>>>> githubspark/branch-1.3
         init_time = time.time()
 
         def process():
             iterator = deserializer.load_stream(infile)
             serializer.dump_stream(func(split_index, iterator), outfile)
 
+<<<<<<< HEAD
         if stats:
             p = cProfile.Profile()
             p.runcall(process)
             st = pstats.Stats(p)
             st.stream = None  # make it picklable
             stats.add(st.strip_dirs())
+=======
+        if profiler:
+            profiler.profile(process)
+>>>>>>> githubspark/branch-1.3
         else:
             process()
     except Exception:

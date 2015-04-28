@@ -21,13 +21,15 @@ import scala.collection.mutable
 
 import akka.actor.ActorRef
 
-import org.apache.spark.util.Utils
 
 /**
  * Worker资源收支平衡账面表
  *   Worker.UserdMem = Driver.mem + Executor.mem
  *   Worker.UserCore = Driver.Core  + Executor.Core
  */
+import org.apache.spark.annotation.DeveloperApi
+import org.apache.spark.util.Utils
+
 private[spark] class WorkerInfo(
     val id: String,
     val host: String,
@@ -42,7 +44,7 @@ private[spark] class WorkerInfo(
   Utils.checkHost(host, "Expected hostname")
   assert (port > 0)
 
-  @transient var executors: mutable.HashMap[String, ExecutorInfo] = _ // executorId => info
+  @transient var executors: mutable.HashMap[String, ExecutorDesc] = _ // executorId => info
   @transient var drivers: mutable.HashMap[String, DriverInfo] = _ // driverId => info
   @transient var state: WorkerState.Value = _
   @transient var coresUsed: Int = _
@@ -74,13 +76,13 @@ private[spark] class WorkerInfo(
     host + ":" + port
   }
 
-  def addExecutor(exec: ExecutorInfo) {
+  def addExecutor(exec: ExecutorDesc) {
     executors(exec.fullId) = exec
     coresUsed += exec.cores
     memoryUsed += exec.memory
   }
 
-  def removeExecutor(exec: ExecutorInfo) {
+  def removeExecutor(exec: ExecutorDesc) {
     if (executors.contains(exec.fullId)) {
       executors -= exec.fullId
       coresUsed -= exec.cores

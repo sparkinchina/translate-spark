@@ -53,7 +53,7 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
   }
   private val subDirs = Array.fill(localDirs.length)(new Array[File](subDirsPerLocalDir))
 
-  addShutdownHook()
+  private val shutdownHook = addShutdownHook()
 
   /** Looks up a file by hashing it into one of our local subdirectories. */
   // This method should be kept in sync with
@@ -66,7 +66,6 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
    */
   def getFile(filename: String): File = {
     // Figure out which local directory it hashes to, and which subdirectory in that
-//    filename=blockId.name
     val hash = Utils.nonNegativeHash(filename)
     val dirId = hash % localDirs.length
     val subDirId = (hash / localDirs.length) % subDirsPerLocalDir
@@ -81,7 +80,9 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
           old
         } else {
           val newDir = new File(localDirs(dirId), "%02x".format(subDirId))
-          newDir.mkdir()
+          if (!newDir.exists() && !newDir.mkdir()) {
+            throw new IOException(s"Failed to create local dir in $newDir.")
+          }
           subDirs(dirId)(subDirId) = newDir
           newDir
         }
@@ -144,17 +145,29 @@ private[spark] class DiskBlockManager(blockManager: BlockManager, conf: SparkCon
     }
   }
 
-  private def addShutdownHook() {
-    Runtime.getRuntime.addShutdownHook(new Thread("delete Spark local dirs") {
+  private def addShutdownHook(): Thread = {
+    val shutdownHook = new Thread("delete Spark local dirs") {
       override def run(): Unit = Utils.logUncaughtExceptions {
         logDebug("Shutdown hook called")
-        DiskBlockManager.this.stop()
+        DiskBlockManager.this.doStop()
       }
-    })
+    }
+    Runtime.getRuntime.addShutdownHook(shutdownHook)
+    shutdownHook
   }
 
   /** Cleanup local dirs and stop shuffle sender. */
   private[spark] def stop() {
+    // Remove the shutdown hook.  It causes memory leaks if we leave it around.
+    try {
+      Runtime.getRuntime.removeShutdownHook(shutdownHook)
+    } catch {
+      case e: IllegalStateException => None
+    }
+    doStop()
+  }
+
+  private def doStop(): Unit = {
     // Only perform cleanup if an external service is not serving our shuffle files.
     if (!blockManager.externalShuffleServiceEnabled || blockManager.blockManagerId.isDriver) {
       localDirs.foreach { localDir =>

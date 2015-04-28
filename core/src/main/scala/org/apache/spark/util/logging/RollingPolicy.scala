@@ -32,7 +32,6 @@ import org.apache.spark.Logging
 private[spark] trait RollingPolicy {
 
   /** Whether rollover should be initiated at this moment */
-  /** Whether rollover should be initiated at this moment */
   def shouldRollover(bytesToBeWritten: Long): Boolean
 
   /** Notify that rollover has occurred */

@@ -17,8 +17,12 @@
 
 package org.apache.spark.sql.catalyst.plans.logical
 
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference}
 import org.apache.spark.sql.catalyst.types.StringType
+=======
+import org.apache.spark.sql.catalyst.expressions.Attribute
+>>>>>>> githubspark/branch-1.3
 
 /**
  * A logical node that represents a non-query command to be executed by the system.  For example,
@@ -28,6 +32,7 @@ abstract class Command extends LeafNode {
   self: Product =>
   def output: Seq[Attribute] = Seq.empty
 }
+<<<<<<< HEAD
 
 /**
  * Returned for commands supported by a given parser, but not catalyst.  In general these are DDL
@@ -90,3 +95,5 @@ case class DescribeCommand(
     AttributeReference("data_type", StringType, nullable = false)(),
     AttributeReference("comment", StringType, nullable = false)())
 }
+=======
+>>>>>>> githubspark/branch-1.3

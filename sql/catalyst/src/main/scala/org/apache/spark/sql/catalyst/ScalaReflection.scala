@@ -17,6 +17,7 @@
 
 package org.apache.spark.sql.catalyst
 
+<<<<<<< HEAD
 import java.sql.{Date, Timestamp}
 
 import org.apache.spark.util.Utils
@@ -26,6 +27,14 @@ import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.sql.catalyst.types.decimal.Decimal
 
+=======
+import java.sql.Timestamp
+
+import org.apache.spark.util.Utils
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
+import org.apache.spark.sql.types._
+>>>>>>> githubspark/branch-1.3
 
 /**
  * A default version of ScalaReflection that uses the runtime universe.
@@ -59,6 +68,14 @@ trait ScalaReflection {
     case (obj, udt: UserDefinedType[_]) => udt.serialize(obj)
     case (o: Option[_], _) => o.map(convertToCatalyst(_, dataType)).orNull
     case (s: Seq[_], arrayType: ArrayType) => s.map(convertToCatalyst(_, arrayType.elementType))
+<<<<<<< HEAD
+=======
+    case (s: Array[_], arrayType: ArrayType) => if (arrayType.elementType.isPrimitive) {
+      s.toSeq
+    } else {
+      s.toSeq.map(convertToCatalyst(_, arrayType.elementType))
+    }
+>>>>>>> githubspark/branch-1.3
     case (m: Map[_, _], mapType: MapType) => m.map { case (k, v) =>
       convertToCatalyst(k, mapType.keyType) -> convertToCatalyst(v, mapType.valueType)
     }
@@ -68,6 +85,16 @@ trait ScalaReflection {
           convertToCatalyst(elem, field.dataType)
         }.toArray)
     case (d: BigDecimal, _) => Decimal(d)
+<<<<<<< HEAD
+=======
+    case (d: java.math.BigDecimal, _) => Decimal(d)
+    case (d: java.sql.Date, _) => DateUtils.fromJavaDate(d)
+    case (r: Row, structType: StructType) =>
+      new GenericRow(
+        r.toSeq.zip(structType.fields).map { case (elem, field) =>
+          convertToCatalyst(elem, field.dataType)
+        }.toArray)
+>>>>>>> githubspark/branch-1.3
     case (other, _) => other
   }
 
@@ -80,19 +107,32 @@ trait ScalaReflection {
       convertToScala(k, mapType.keyType) -> convertToScala(v, mapType.valueType)
     }
     case (r: Row, s: StructType) => convertRowToScala(r, s)
+<<<<<<< HEAD
     case (d: Decimal, _: DecimalType) => d.toBigDecimal
+=======
+    case (d: Decimal, _: DecimalType) => d.toJavaBigDecimal
+    case (i: Int, DateType) => DateUtils.toJavaDate(i)
+>>>>>>> githubspark/branch-1.3
     case (other, _) => other
   }
 
   def convertRowToScala(r: Row, schema: StructType): Row = {
+<<<<<<< HEAD
     new GenericRow(
       r.zip(schema.fields.map(_.dataType))
         .map(r_dt => convertToScala(r_dt._1, r_dt._2)).toArray)
+=======
+    // TODO: This is very slow!!!
+    new GenericRowWithSchema(
+      r.toSeq.zip(schema.fields.map(_.dataType))
+        .map(r_dt => convertToScala(r_dt._1, r_dt._2)).toArray, schema)
+>>>>>>> githubspark/branch-1.3
   }
 
   /** Returns a Sequence of attributes for the given case class type. */
   def attributesFor[T: TypeTag]: Seq[Attribute] = schemaFor[T] match {
     case Schema(s: StructType, _) =>
+<<<<<<< HEAD
       s.fields.map(f => AttributeReference(f.name, f.dataType, f.nullable, f.metadata)())
   }
 
@@ -101,6 +141,17 @@ trait ScalaReflection {
 
   /** Returns a catalyst DataType and its nullability for the given Scala Type using reflection. */
   def schemaFor(tpe: `Type`): Schema = {
+=======
+      s.toAttributes
+  }
+
+  /** Returns a catalyst DataType and its nullability for the given Scala Type using reflection. */
+  def schemaFor[T: TypeTag]: Schema =
+    ScalaReflectionLock.synchronized { schemaFor(typeOf[T]) }
+
+  /** Returns a catalyst DataType and its nullability for the given Scala Type using reflection. */
+  def schemaFor(tpe: `Type`): Schema = ScalaReflectionLock.synchronized {
+>>>>>>> githubspark/branch-1.3
     val className: String = tpe.erasure.typeSymbol.asClass.fullName
     tpe match {
       case t if Utils.classIsLoadable(className) &&
@@ -115,6 +166,7 @@ trait ScalaReflection {
       case t if t <:< typeOf[Option[_]] =>
         val TypeRef(_, _, Seq(optType)) = t
         Schema(schemaFor(optType).dataType, nullable = true)
+<<<<<<< HEAD
       case t if t <:< typeOf[Product] =>
         val formalTypeArgs = t.typeSymbol.asClass.typeParams
         val TypeRef(_, _, actualTypeArgs) = t
@@ -129,6 +181,14 @@ trait ScalaReflection {
       case t if t <:< typeOf[Array[Byte]] => Schema(BinaryType, nullable = true)
       case t if t <:< typeOf[Array[_]] =>
         sys.error(s"Only Array[Byte] supported now, use Seq instead of $t")
+=======
+      // Need to decide if we actually need a special type here.
+      case t if t <:< typeOf[Array[Byte]] => Schema(BinaryType, nullable = true)
+      case t if t <:< typeOf[Array[_]] =>
+        val TypeRef(_, _, Seq(elementType)) = t
+        val Schema(dataType, nullable) = schemaFor(elementType)
+        Schema(ArrayType(dataType, containsNull = nullable), nullable = true)
+>>>>>>> githubspark/branch-1.3
       case t if t <:< typeOf[Seq[_]] =>
         val TypeRef(_, _, Seq(elementType)) = t
         val Schema(dataType, nullable) = schemaFor(elementType)
@@ -138,10 +198,40 @@ trait ScalaReflection {
         val Schema(valueDataType, valueNullable) = schemaFor(valueType)
         Schema(MapType(schemaFor(keyType).dataType,
           valueDataType, valueContainsNull = valueNullable), nullable = true)
+<<<<<<< HEAD
       case t if t <:< typeOf[String] => Schema(StringType, nullable = true)
       case t if t <:< typeOf[Timestamp] => Schema(TimestampType, nullable = true)
       case t if t <:< typeOf[Date] => Schema(DateType, nullable = true)
       case t if t <:< typeOf[BigDecimal] => Schema(DecimalType.Unlimited, nullable = true)
+=======
+      case t if t <:< typeOf[Product] =>
+        val formalTypeArgs = t.typeSymbol.asClass.typeParams
+        val TypeRef(_, _, actualTypeArgs) = t
+        val constructorSymbol = t.member(nme.CONSTRUCTOR)
+        val params = if (constructorSymbol.isMethod) {
+          constructorSymbol.asMethod.paramss
+        } else {
+          // Find the primary constructor, and use its parameter ordering.
+          val primaryConstructorSymbol: Option[Symbol] = constructorSymbol.asTerm.alternatives.find(
+            s => s.isMethod && s.asMethod.isPrimaryConstructor)
+          if (primaryConstructorSymbol.isEmpty) {
+            sys.error("Internal SQL error: Product object did not have a primary constructor.")
+          } else {
+            primaryConstructorSymbol.get.asMethod.paramss
+          }
+        }
+        Schema(StructType(
+          params.head.map { p =>
+            val Schema(dataType, nullable) =
+              schemaFor(p.typeSignature.substituteTypes(formalTypeArgs, actualTypeArgs))
+            StructField(p.name.toString, dataType, nullable)
+          }), nullable = true)
+      case t if t <:< typeOf[String] => Schema(StringType, nullable = true)
+      case t if t <:< typeOf[Timestamp] => Schema(TimestampType, nullable = true)
+      case t if t <:< typeOf[java.sql.Date] => Schema(DateType, nullable = true)
+      case t if t <:< typeOf[BigDecimal] => Schema(DecimalType.Unlimited, nullable = true)
+      case t if t <:< typeOf[java.math.BigDecimal] => Schema(DecimalType.Unlimited, nullable = true)
+>>>>>>> githubspark/branch-1.3
       case t if t <:< typeOf[Decimal] => Schema(DecimalType.Unlimited, nullable = true)
       case t if t <:< typeOf[java.lang.Integer] => Schema(IntegerType, nullable = true)
       case t if t <:< typeOf[java.lang.Long] => Schema(LongType, nullable = true)
@@ -157,6 +247,11 @@ trait ScalaReflection {
       case t if t <:< definitions.ShortTpe => Schema(ShortType, nullable = false)
       case t if t <:< definitions.ByteTpe => Schema(ByteType, nullable = false)
       case t if t <:< definitions.BooleanTpe => Schema(BooleanType, nullable = false)
+<<<<<<< HEAD
+=======
+      case other =>
+        throw new UnsupportedOperationException(s"Schema for type $other is not supported")
+>>>>>>> githubspark/branch-1.3
     }
   }
 
@@ -171,8 +266,13 @@ trait ScalaReflection {
     case obj: LongType.JvmType => LongType
     case obj: FloatType.JvmType => FloatType
     case obj: DoubleType.JvmType => DoubleType
+<<<<<<< HEAD
     case obj: DateType.JvmType => DateType
     case obj: BigDecimal => DecimalType.Unlimited
+=======
+    case obj: java.sql.Date => DateType
+    case obj: java.math.BigDecimal => DecimalType.Unlimited
+>>>>>>> githubspark/branch-1.3
     case obj: Decimal => DecimalType.Unlimited
     case obj: TimestampType.JvmType => TimestampType
     case null => NullType
@@ -190,7 +290,11 @@ trait ScalaReflection {
      */
     def asRelation: LocalRelation = {
       val output = attributesFor[A]
+<<<<<<< HEAD
       LocalRelation(output, data)
+=======
+      LocalRelation.fromProduct(output, data)
+>>>>>>> githubspark/branch-1.3
     }
   }
 }

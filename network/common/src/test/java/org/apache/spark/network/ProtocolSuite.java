@@ -17,11 +17,23 @@
 
 package org.apache.spark.network;
 
+<<<<<<< HEAD
 import io.netty.channel.embedded.EmbeddedChannel;
+=======
+import java.util.List;
+
+import com.google.common.primitives.Ints;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.FileRegion;
+import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.handler.codec.MessageToMessageEncoder;
+>>>>>>> githubspark/branch-1.3
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+<<<<<<< HEAD
 import org.apache.spark.network.protocol.Message;
 import org.apache.spark.network.protocol.StreamChunkId;
 import org.apache.spark.network.protocol.ChunkFetchRequest;
@@ -32,11 +44,28 @@ import org.apache.spark.network.protocol.RpcFailure;
 import org.apache.spark.network.protocol.RpcResponse;
 import org.apache.spark.network.protocol.MessageDecoder;
 import org.apache.spark.network.protocol.MessageEncoder;
+=======
+import org.apache.spark.network.protocol.ChunkFetchFailure;
+import org.apache.spark.network.protocol.ChunkFetchRequest;
+import org.apache.spark.network.protocol.ChunkFetchSuccess;
+import org.apache.spark.network.protocol.Message;
+import org.apache.spark.network.protocol.MessageDecoder;
+import org.apache.spark.network.protocol.MessageEncoder;
+import org.apache.spark.network.protocol.RpcFailure;
+import org.apache.spark.network.protocol.RpcRequest;
+import org.apache.spark.network.protocol.RpcResponse;
+import org.apache.spark.network.protocol.StreamChunkId;
+>>>>>>> githubspark/branch-1.3
 import org.apache.spark.network.util.NettyUtils;
 
 public class ProtocolSuite {
   private void testServerToClient(Message msg) {
+<<<<<<< HEAD
     EmbeddedChannel serverChannel = new EmbeddedChannel(new MessageEncoder());
+=======
+    EmbeddedChannel serverChannel = new EmbeddedChannel(new FileRegionEncoder(),
+      new MessageEncoder());
+>>>>>>> githubspark/branch-1.3
     serverChannel.writeOutbound(msg);
 
     EmbeddedChannel clientChannel = new EmbeddedChannel(
@@ -51,7 +80,12 @@ public class ProtocolSuite {
   }
 
   private void testClientToServer(Message msg) {
+<<<<<<< HEAD
     EmbeddedChannel clientChannel = new EmbeddedChannel(new MessageEncoder());
+=======
+    EmbeddedChannel clientChannel = new EmbeddedChannel(new FileRegionEncoder(),
+      new MessageEncoder());
+>>>>>>> githubspark/branch-1.3
     clientChannel.writeOutbound(msg);
 
     EmbeddedChannel serverChannel = new EmbeddedChannel(
@@ -83,4 +117,28 @@ public class ProtocolSuite {
     testServerToClient(new RpcFailure(0, "this is an error"));
     testServerToClient(new RpcFailure(0, ""));
   }
+<<<<<<< HEAD
+=======
+
+  /**
+   * Handler to transform a FileRegion into a byte buffer. EmbeddedChannel doesn't actually transfer
+   * bytes, but messages, so this is needed so that the frame decoder on the receiving side can
+   * understand what MessageWithHeader actually contains.
+   */
+  private static class FileRegionEncoder extends MessageToMessageEncoder<FileRegion> {
+
+    @Override
+    public void encode(ChannelHandlerContext ctx, FileRegion in, List<Object> out)
+      throws Exception {
+
+      ByteArrayWritableChannel channel = new ByteArrayWritableChannel(Ints.checkedCast(in.count()));
+      while (in.transfered() < in.count()) {
+        in.transferTo(channel, in.transfered());
+      }
+      out.add(Unpooled.wrappedBuffer(channel.getData()));
+    }
+
+  }
+
+>>>>>>> githubspark/branch-1.3
 }

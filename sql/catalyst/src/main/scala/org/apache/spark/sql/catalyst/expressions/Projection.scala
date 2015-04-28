@@ -40,7 +40,11 @@ class InterpretedProjection(expressions: Seq[Expression]) extends Projection {
     new GenericRow(outputArray)
   }
 
+<<<<<<< HEAD
   override def toString = s"Row => [${exprArray.mkString(",")}]"
+=======
+  override def toString: String = s"Row => [${exprArray.mkString(",")}]"
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -105,6 +109,7 @@ class JoinedRow extends Row {
     this
   }
 
+<<<<<<< HEAD
   def iterator = row1.iterator ++ row2.iterator
 
   def length = row1.length + row2.length
@@ -144,6 +149,47 @@ class JoinedRow extends Row {
 
   def copy() = {
     val totalSize = row1.size + row2.size
+=======
+  override def toSeq: Seq[Any] = row1.toSeq ++ row2.toSeq
+
+  override def length: Int = row1.length + row2.length
+
+  override def apply(i: Int): Any =
+    if (i < row1.length) row1(i) else row2(i - row1.length)
+
+  override def isNullAt(i: Int): Boolean =
+    if (i < row1.length) row1.isNullAt(i) else row2.isNullAt(i - row1.length)
+
+  override def getInt(i: Int): Int =
+    if (i < row1.length) row1.getInt(i) else row2.getInt(i - row1.length)
+
+  override def getLong(i: Int): Long =
+    if (i < row1.length) row1.getLong(i) else row2.getLong(i - row1.length)
+
+  override def getDouble(i: Int): Double =
+    if (i < row1.length) row1.getDouble(i) else row2.getDouble(i - row1.length)
+
+  override def getBoolean(i: Int): Boolean =
+    if (i < row1.length) row1.getBoolean(i) else row2.getBoolean(i - row1.length)
+
+  override def getShort(i: Int): Short =
+    if (i < row1.length) row1.getShort(i) else row2.getShort(i - row1.length)
+
+  override def getByte(i: Int): Byte =
+    if (i < row1.length) row1.getByte(i) else row2.getByte(i - row1.length)
+
+  override def getFloat(i: Int): Float =
+    if (i < row1.length) row1.getFloat(i) else row2.getFloat(i - row1.length)
+
+  override def getString(i: Int): String =
+    if (i < row1.length) row1.getString(i) else row2.getString(i - row1.length)
+
+  override def getAs[T](i: Int): T =
+    if (i < row1.length) row1.getAs[T](i) else row2.getAs[T](i - row1.length)
+
+  override def copy(): Row = {
+    val totalSize = row1.length + row2.length
+>>>>>>> githubspark/branch-1.3
     val copiedValues = new Array[Any](totalSize)
     var i = 0
     while(i < totalSize) {
@@ -153,9 +199,23 @@ class JoinedRow extends Row {
     new GenericRow(copiedValues)
   }
 
+<<<<<<< HEAD
   override def toString() = {
     val row = (if (row1 != null) row1 else Seq[Any]()) ++ (if (row2 != null) row2 else Seq[Any]())
     s"[${row.mkString(",")}]"
+=======
+  override def toString: String = {
+    // Make sure toString never throws NullPointerException.
+    if ((row1 eq null) && (row2 eq null)) {
+      "[ empty row ]"
+    } else if (row1 eq null) {
+      row2.mkString("[", ",", "]")
+    } else if (row2 eq null) {
+      row1.mkString("[", ",", "]")
+    } else {
+      mkString("[", ",", "]")
+    }
+>>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -197,6 +257,7 @@ class JoinedRow2 extends Row {
     this
   }
 
+<<<<<<< HEAD
   def iterator = row1.iterator ++ row2.iterator
 
   def length = row1.length + row2.length
@@ -236,6 +297,47 @@ class JoinedRow2 extends Row {
 
   def copy() = {
     val totalSize = row1.size + row2.size
+=======
+  override def toSeq: Seq[Any] = row1.toSeq ++ row2.toSeq
+
+  override def length: Int = row1.length + row2.length
+
+  override def apply(i: Int): Any =
+    if (i < row1.length) row1(i) else row2(i - row1.length)
+
+  override def isNullAt(i: Int): Boolean =
+    if (i < row1.length) row1.isNullAt(i) else row2.isNullAt(i - row1.length)
+
+  override def getInt(i: Int): Int =
+    if (i < row1.length) row1.getInt(i) else row2.getInt(i - row1.length)
+
+  override def getLong(i: Int): Long =
+    if (i < row1.length) row1.getLong(i) else row2.getLong(i - row1.length)
+
+  override def getDouble(i: Int): Double =
+    if (i < row1.length) row1.getDouble(i) else row2.getDouble(i - row1.length)
+
+  override def getBoolean(i: Int): Boolean =
+    if (i < row1.length) row1.getBoolean(i) else row2.getBoolean(i - row1.length)
+
+  override def getShort(i: Int): Short =
+    if (i < row1.length) row1.getShort(i) else row2.getShort(i - row1.length)
+
+  override def getByte(i: Int): Byte =
+    if (i < row1.length) row1.getByte(i) else row2.getByte(i - row1.length)
+
+  override def getFloat(i: Int): Float =
+    if (i < row1.length) row1.getFloat(i) else row2.getFloat(i - row1.length)
+
+  override def getString(i: Int): String =
+    if (i < row1.length) row1.getString(i) else row2.getString(i - row1.length)
+
+  override def getAs[T](i: Int): T =
+    if (i < row1.length) row1.getAs[T](i) else row2.getAs[T](i - row1.length)
+
+  override def copy(): Row = {
+    val totalSize = row1.length + row2.length
+>>>>>>> githubspark/branch-1.3
     val copiedValues = new Array[Any](totalSize)
     var i = 0
     while(i < totalSize) {
@@ -245,9 +347,23 @@ class JoinedRow2 extends Row {
     new GenericRow(copiedValues)
   }
 
+<<<<<<< HEAD
   override def toString() = {
     val row = (if (row1 != null) row1 else Seq[Any]()) ++ (if (row2 != null) row2 else Seq[Any]())
     s"[${row.mkString(",")}]"
+=======
+  override def toString: String = {
+    // Make sure toString never throws NullPointerException.
+    if ((row1 eq null) && (row2 eq null)) {
+      "[ empty row ]"
+    } else if (row1 eq null) {
+      row2.mkString("[", ",", "]")
+    } else if (row2 eq null) {
+      row1.mkString("[", ",", "]")
+    } else {
+      mkString("[", ",", "]")
+    }
+>>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -283,6 +399,7 @@ class JoinedRow3 extends Row {
     this
   }
 
+<<<<<<< HEAD
   def iterator = row1.iterator ++ row2.iterator
 
   def length = row1.length + row2.length
@@ -322,6 +439,47 @@ class JoinedRow3 extends Row {
 
   def copy() = {
     val totalSize = row1.size + row2.size
+=======
+  override def toSeq: Seq[Any] = row1.toSeq ++ row2.toSeq
+
+  override def length: Int = row1.length + row2.length
+
+  override def apply(i: Int): Any =
+    if (i < row1.length) row1(i) else row2(i - row1.length)
+
+  override def isNullAt(i: Int): Boolean =
+    if (i < row1.length) row1.isNullAt(i) else row2.isNullAt(i - row1.length)
+
+  override def getInt(i: Int): Int =
+    if (i < row1.length) row1.getInt(i) else row2.getInt(i - row1.length)
+
+  override def getLong(i: Int): Long =
+    if (i < row1.length) row1.getLong(i) else row2.getLong(i - row1.length)
+
+  override def getDouble(i: Int): Double =
+    if (i < row1.length) row1.getDouble(i) else row2.getDouble(i - row1.length)
+
+  override def getBoolean(i: Int): Boolean =
+    if (i < row1.length) row1.getBoolean(i) else row2.getBoolean(i - row1.length)
+
+  override def getShort(i: Int): Short =
+    if (i < row1.length) row1.getShort(i) else row2.getShort(i - row1.length)
+
+  override def getByte(i: Int): Byte =
+    if (i < row1.length) row1.getByte(i) else row2.getByte(i - row1.length)
+
+  override def getFloat(i: Int): Float =
+    if (i < row1.length) row1.getFloat(i) else row2.getFloat(i - row1.length)
+
+  override def getString(i: Int): String =
+    if (i < row1.length) row1.getString(i) else row2.getString(i - row1.length)
+
+  override def getAs[T](i: Int): T =
+    if (i < row1.length) row1.getAs[T](i) else row2.getAs[T](i - row1.length)
+
+  override def copy(): Row = {
+    val totalSize = row1.length + row2.length
+>>>>>>> githubspark/branch-1.3
     val copiedValues = new Array[Any](totalSize)
     var i = 0
     while(i < totalSize) {
@@ -331,9 +489,23 @@ class JoinedRow3 extends Row {
     new GenericRow(copiedValues)
   }
 
+<<<<<<< HEAD
   override def toString() = {
     val row = (if (row1 != null) row1 else Seq[Any]()) ++ (if (row2 != null) row2 else Seq[Any]())
     s"[${row.mkString(",")}]"
+=======
+  override def toString: String = {
+    // Make sure toString never throws NullPointerException.
+    if ((row1 eq null) && (row2 eq null)) {
+      "[ empty row ]"
+    } else if (row1 eq null) {
+      row2.mkString("[", ",", "]")
+    } else if (row2 eq null) {
+      row1.mkString("[", ",", "]")
+    } else {
+      mkString("[", ",", "]")
+    }
+>>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -369,6 +541,7 @@ class JoinedRow4 extends Row {
     this
   }
 
+<<<<<<< HEAD
   def iterator = row1.iterator ++ row2.iterator
 
   def length = row1.length + row2.length
@@ -408,6 +581,47 @@ class JoinedRow4 extends Row {
 
   def copy() = {
     val totalSize = row1.size + row2.size
+=======
+  override def toSeq: Seq[Any] = row1.toSeq ++ row2.toSeq
+
+  override def length: Int = row1.length + row2.length
+
+  override def apply(i: Int): Any =
+    if (i < row1.length) row1(i) else row2(i - row1.length)
+
+  override def isNullAt(i: Int): Boolean =
+    if (i < row1.length) row1.isNullAt(i) else row2.isNullAt(i - row1.length)
+
+  override def getInt(i: Int): Int =
+    if (i < row1.length) row1.getInt(i) else row2.getInt(i - row1.length)
+
+  override def getLong(i: Int): Long =
+    if (i < row1.length) row1.getLong(i) else row2.getLong(i - row1.length)
+
+  override def getDouble(i: Int): Double =
+    if (i < row1.length) row1.getDouble(i) else row2.getDouble(i - row1.length)
+
+  override def getBoolean(i: Int): Boolean =
+    if (i < row1.length) row1.getBoolean(i) else row2.getBoolean(i - row1.length)
+
+  override def getShort(i: Int): Short =
+    if (i < row1.length) row1.getShort(i) else row2.getShort(i - row1.length)
+
+  override def getByte(i: Int): Byte =
+    if (i < row1.length) row1.getByte(i) else row2.getByte(i - row1.length)
+
+  override def getFloat(i: Int): Float =
+    if (i < row1.length) row1.getFloat(i) else row2.getFloat(i - row1.length)
+
+  override def getString(i: Int): String =
+    if (i < row1.length) row1.getString(i) else row2.getString(i - row1.length)
+
+  override def getAs[T](i: Int): T =
+    if (i < row1.length) row1.getAs[T](i) else row2.getAs[T](i - row1.length)
+
+  override def copy(): Row = {
+    val totalSize = row1.length + row2.length
+>>>>>>> githubspark/branch-1.3
     val copiedValues = new Array[Any](totalSize)
     var i = 0
     while(i < totalSize) {
@@ -417,9 +631,23 @@ class JoinedRow4 extends Row {
     new GenericRow(copiedValues)
   }
 
+<<<<<<< HEAD
   override def toString() = {
     val row = (if (row1 != null) row1 else Seq[Any]()) ++ (if (row2 != null) row2 else Seq[Any]())
     s"[${row.mkString(",")}]"
+=======
+  override def toString: String = {
+    // Make sure toString never throws NullPointerException.
+    if ((row1 eq null) && (row2 eq null)) {
+      "[ empty row ]"
+    } else if (row1 eq null) {
+      row2.mkString("[", ",", "]")
+    } else if (row2 eq null) {
+      row1.mkString("[", ",", "]")
+    } else {
+      mkString("[", ",", "]")
+    }
+>>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -455,6 +683,7 @@ class JoinedRow5 extends Row {
     this
   }
 
+<<<<<<< HEAD
   def iterator = row1.iterator ++ row2.iterator
 
   def length = row1.length + row2.length
@@ -494,6 +723,47 @@ class JoinedRow5 extends Row {
 
   def copy() = {
     val totalSize = row1.size + row2.size
+=======
+  override def toSeq: Seq[Any] = row1.toSeq ++ row2.toSeq
+
+  override def length: Int = row1.length + row2.length
+
+  override def apply(i: Int): Any =
+    if (i < row1.length) row1(i) else row2(i - row1.length)
+
+  override def isNullAt(i: Int): Boolean =
+    if (i < row1.length) row1.isNullAt(i) else row2.isNullAt(i - row1.length)
+
+  override def getInt(i: Int): Int =
+    if (i < row1.length) row1.getInt(i) else row2.getInt(i - row1.length)
+
+  override def getLong(i: Int): Long =
+    if (i < row1.length) row1.getLong(i) else row2.getLong(i - row1.length)
+
+  override def getDouble(i: Int): Double =
+    if (i < row1.length) row1.getDouble(i) else row2.getDouble(i - row1.length)
+
+  override def getBoolean(i: Int): Boolean =
+    if (i < row1.length) row1.getBoolean(i) else row2.getBoolean(i - row1.length)
+
+  override def getShort(i: Int): Short =
+    if (i < row1.length) row1.getShort(i) else row2.getShort(i - row1.length)
+
+  override def getByte(i: Int): Byte =
+    if (i < row1.length) row1.getByte(i) else row2.getByte(i - row1.length)
+
+  override def getFloat(i: Int): Float =
+    if (i < row1.length) row1.getFloat(i) else row2.getFloat(i - row1.length)
+
+  override def getString(i: Int): String =
+    if (i < row1.length) row1.getString(i) else row2.getString(i - row1.length)
+
+  override def getAs[T](i: Int): T =
+    if (i < row1.length) row1.getAs[T](i) else row2.getAs[T](i - row1.length)
+
+  override def copy(): Row = {
+    val totalSize = row1.length + row2.length
+>>>>>>> githubspark/branch-1.3
     val copiedValues = new Array[Any](totalSize)
     var i = 0
     while(i < totalSize) {
@@ -503,8 +773,22 @@ class JoinedRow5 extends Row {
     new GenericRow(copiedValues)
   }
 
+<<<<<<< HEAD
   override def toString() = {
     val row = (if (row1 != null) row1 else Seq[Any]()) ++ (if (row2 != null) row2 else Seq[Any]())
     s"[${row.mkString(",")}]"
+=======
+  override def toString: String = {
+    // Make sure toString never throws NullPointerException.
+    if ((row1 eq null) && (row2 eq null)) {
+      "[ empty row ]"
+    } else if (row1 eq null) {
+      row2.mkString("[", ",", "]")
+    } else if (row2 eq null) {
+      row1.mkString("[", ",", "]")
+    } else {
+      mkString("[", ",", "]")
+    }
+>>>>>>> githubspark/branch-1.3
   }
 }

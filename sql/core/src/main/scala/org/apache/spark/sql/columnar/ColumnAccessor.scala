@@ -17,11 +17,11 @@
 
 package org.apache.spark.sql.columnar
 
-import java.nio.{ByteOrder, ByteBuffer}
+import java.nio.{ByteBuffer, ByteOrder}
 
-import org.apache.spark.sql.catalyst.types.{BinaryType, NativeType, DataType}
 import org.apache.spark.sql.catalyst.expressions.MutableRow
 import org.apache.spark.sql.columnar.compression.CompressibleColumnAccessor
+import org.apache.spark.sql.types.{BinaryType, DataType, NativeType}
 
 /**
  * An `Iterator` like trait used to extract values from columnar byte buffer. When a value is
@@ -48,9 +48,9 @@ private[sql] abstract class BasicColumnAccessor[T <: DataType, JvmType](
 
   protected def initialize() {}
 
-  def hasNext = buffer.hasRemaining
+  override def hasNext: Boolean = buffer.hasRemaining
 
-  def extractTo(row: MutableRow, ordinal: Int): Unit = {
+  override def extractTo(row: MutableRow, ordinal: Int): Unit = {
     extractSingle(row, ordinal)
   }
 

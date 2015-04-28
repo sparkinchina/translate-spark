@@ -18,7 +18,11 @@
 package org.apache.spark.sql.catalyst.expressions.codegen
 
 import org.apache.spark.sql.catalyst.expressions._
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types._
+=======
+import org.apache.spark.sql.types._
+>>>>>>> githubspark/branch-1.3
 
 
 /**
@@ -77,6 +81,7 @@ object GenerateProjection extends CodeGenerator[Seq[Expression], Projection] {
         """.children : Seq[Tree]
     }
 
+<<<<<<< HEAD
     val iteratorFunction = {
       val allColumns = (0 until expressions.size).map { i =>
         val iLit = ru.Literal(Constant(i))
@@ -85,6 +90,8 @@ object GenerateProjection extends CodeGenerator[Seq[Expression], Projection] {
       q"override def iterator = Iterator[Any](..$allColumns)"
     }
 
+=======
+>>>>>>> githubspark/branch-1.3
     val accessorFailure = q"""scala.sys.error("Invalid ordinal:" + i)"""
     val applyFunction = {
       val cases = (0 until expressions.size).map { i =>
@@ -191,20 +198,40 @@ object GenerateProjection extends CodeGenerator[Seq[Expression], Projection] {
         }
       """
 
+<<<<<<< HEAD
     val copyFunction =
       q"""
         override def copy() = new $genericRowType(this.toArray)
       """
+=======
+    val allColumns = (0 until expressions.size).map { i =>
+      val iLit = ru.Literal(Constant(i))
+      q"if(isNullAt($iLit)) { null } else { ${newTermName(s"c$i")} }"
+    }
+
+    val copyFunction =
+      q"override def copy() = new $genericRowType(Array[Any](..$allColumns))"
+
+    val toSeqFunction =
+      q"override def toSeq: Seq[Any] = Seq(..$allColumns)"
+>>>>>>> githubspark/branch-1.3
 
     val classBody =
       nullFunctions ++ (
         lengthDef +:
+<<<<<<< HEAD
         iteratorFunction +:
+=======
+>>>>>>> githubspark/branch-1.3
         applyFunction +:
         updateFunction +:
         equalsFunction +:
         hashCodeFunction +:
         copyFunction +:
+<<<<<<< HEAD
+=======
+        toSeqFunction +:
+>>>>>>> githubspark/branch-1.3
         (tupleElements ++ specificAccessorFunctions ++ specificMutatorFunctions))
 
     val code = q"""

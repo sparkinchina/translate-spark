@@ -17,11 +17,19 @@
 
 package org.apache.spark.sql.catalyst.expressions
 
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.sql.catalyst.trees
 import org.apache.spark.sql.catalyst.trees.TreeNode
 import org.apache.spark.sql.catalyst.types.{DataType, FractionalType, IntegralType, NumericType, NativeType}
 import org.apache.spark.sql.catalyst.util.Metadata
+=======
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.errors.TreeNodeException
+import org.apache.spark.sql.catalyst.trees
+import org.apache.spark.sql.catalyst.trees.TreeNode
+import org.apache.spark.sql.types._
+>>>>>>> githubspark/branch-1.3
 
 abstract class Expression extends TreeNode[Expression] {
   self: Product =>
@@ -65,6 +73,7 @@ abstract class Expression extends TreeNode[Expression] {
    * Returns true if  all the children of this expression have been resolved to a specific schema
    * and false if any still contains any unresolved placeholders.
    */
+<<<<<<< HEAD
   def childrenResolved = !children.exists(!_.resolved)
 
   /**
@@ -265,6 +274,19 @@ abstract class Expression extends TreeNode[Expression] {
         }
       }
     }
+=======
+  def childrenResolved: Boolean = !children.exists(!_.resolved)
+
+  /**
+   * Returns a string representation of this expression that does not have developer centric
+   * debugging information like the expression id.
+   */
+  def prettyString: String = {
+    transform {
+      case a: AttributeReference => PrettyAttribute(a.name)
+      case u: UnresolvedAttribute => PrettyAttribute(u.name)
+    }.toString
+>>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -273,9 +295,15 @@ abstract class BinaryExpression extends Expression with trees.BinaryNode[Express
 
   def symbol: String
 
+<<<<<<< HEAD
   override def foldable = left.foldable && right.foldable
 
   override def toString = s"($left $symbol $right)"
+=======
+  override def foldable: Boolean = left.foldable && right.foldable
+
+  override def toString: String = s"($left $symbol $right)"
+>>>>>>> githubspark/branch-1.3
 }
 
 abstract class LeafExpression extends Expression with trees.LeafNode[Expression] {
@@ -284,6 +312,22 @@ abstract class LeafExpression extends Expression with trees.LeafNode[Expression]
 
 abstract class UnaryExpression extends Expression with trees.UnaryNode[Expression] {
   self: Product =>
+<<<<<<< HEAD
 
 
+=======
+}
+
+// TODO Semantically we probably not need GroupExpression
+// All we need is holding the Seq[Expression], and ONLY used in doing the
+// expressions transformation correctly. Probably will be removed since it's
+// not like a real expressions.
+case class GroupExpression(children: Seq[Expression]) extends Expression {
+  self: Product =>
+  type EvaluatedType = Seq[Any]
+  override def eval(input: Row): EvaluatedType = throw new UnsupportedOperationException
+  override def nullable: Boolean = false
+  override def foldable: Boolean = false
+  override def dataType: DataType = throw new UnsupportedOperationException
+>>>>>>> githubspark/branch-1.3
 }

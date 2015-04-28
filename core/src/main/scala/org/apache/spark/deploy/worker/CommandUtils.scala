@@ -29,9 +29,12 @@ import org.apache.spark.util.Utils
 /**
  ** Utilities for running commands with the spark classpath.
  */
+<<<<<<< HEAD
 /**
  ** 运行spark的classpath下命令的工具类.
  */
+=======
+>>>>>>> githubspark/branch-1.3
 private[spark]
 object CommandUtils extends Logging {
 
@@ -39,10 +42,13 @@ object CommandUtils extends Logging {
    * Build a ProcessBuilder based on the given parameters.
    * The `env` argument is exposed for testing.
    */
+<<<<<<< HEAD
   /**
    * 基于给定的参数构建一个ProcessBuilder对象.
    * `env` 参数是为了测试目的而暴露的.
    */
+=======
+>>>>>>> githubspark/branch-1.3
   def buildProcessBuilder(
       command: Command,
       memory: Int,
@@ -65,8 +71,11 @@ object CommandUtils extends Logging {
 
     // SPARK-698: do not call the run.cmd script, as process.destroy()
     // fails to kill a process tree on Windows
+<<<<<<< HEAD
     // SPARK-698: 不要调用这个run.cmd脚本,
     // 在windows系统上process.destroy()未能杀死进程树
+=======
+>>>>>>> githubspark/branch-1.3
     Seq(runner) ++ buildJavaOpts(command, memory, sparkHome) ++ Seq(command.mainClass) ++
       command.arguments
   }
@@ -76,10 +85,13 @@ object CommandUtils extends Logging {
    * of where this command is expected to run, substitute any placeholders, and append
    * any extra class paths.
    */
+<<<<<<< HEAD
   /**
    * 构建一个基于给定的一个命令的command对象,考虑本地环境,这个命令预期会运行,同时
    * 替代任何占位符并且附加任何额外的类路径。
    */
+=======
+>>>>>>> githubspark/branch-1.3
   private def buildLocalCommand(
       command: Command,
       substituteArguments: String => String,
@@ -109,15 +121,21 @@ object CommandUtils extends Logging {
    * Attention: this must always be aligned with the environment variables in the run scripts and
    * the way the JAVA_OPTS are assembled there.
    */
+<<<<<<< HEAD
 
   /**
    * 注意: 这个方法总是匹配这个在运行脚本中的环境变量并且采用拼装JAVA_OPTS变量的方式.
    */
+=======
+>>>>>>> githubspark/branch-1.3
   private def buildJavaOpts(command: Command, memory: Int, sparkHome: String): Seq[String] = {
     val memoryOpts = Seq(s"-Xms${memory}M", s"-Xmx${memory}M")
 
     // Exists for backwards compatibility with older Spark versions
+<<<<<<< HEAD
     // 存在为了对老的Spark版本的向后兼容性
+=======
+>>>>>>> githubspark/branch-1.3
     val workerLocalOpts = Option(getenv("SPARK_JAVA_OPTS")).map(Utils.splitCommandString)
       .getOrElse(Nil)
     if (workerLocalOpts.length > 0) {
@@ -126,7 +144,10 @@ object CommandUtils extends Logging {
     }
 
     // Figure out our classpath with the external compute-classpath script
+<<<<<<< HEAD
     // 找出我们与外部计算出的classpath脚本的类路径中
+=======
+>>>>>>> githubspark/branch-1.3
     val ext = if (System.getProperty("os.name").startsWith("Windows")) ".cmd" else ".sh"
     val classPath = Utils.executeAndGetOutput(
       Seq(sparkHome + "/bin/compute-classpath" + ext),
@@ -140,13 +161,19 @@ object CommandUtils extends Logging {
   }
 
   /** Spawn a thread that will redirect a given stream to a file */
+<<<<<<< HEAD
   /** 产生一个线程将给定流重定向到一个文件 */
+=======
+>>>>>>> githubspark/branch-1.3
   def redirectStream(in: InputStream, file: File) {
     val out = new FileOutputStream(file, true)
     // TODO: It would be nice to add a shutdown hook here that explains why the output is
     //       terminating. Otherwise if the worker dies the executor logs will silently stop.
+<<<<<<< HEAD
     // TODO: 在这儿添加一个解释为什么这个输出终结的shutdown回调将会比较好一些，否则如果这个worker
     //        死掉这个executor日志将会静默关闭.
+=======
+>>>>>>> githubspark/branch-1.3
     new Thread("redirect output to " + file) {
       override def run() {
         try {

@@ -35,8 +35,13 @@ from pyspark.resultiterable import ResultIterable
 
 
 def _do_python_join(rdd, other, numPartitions, dispatch):
+<<<<<<< HEAD
     vs = rdd.map(lambda (k, v): (k, (1, v)))
     ws = other.map(lambda (k, v): (k, (2, v)))
+=======
+    vs = rdd.mapValues(lambda v: (1, v))
+    ws = other.mapValues(lambda v: (2, v))
+>>>>>>> githubspark/branch-1.3
     return vs.union(ws).groupByKey(numPartitions).flatMapValues(lambda x: dispatch(x.__iter__()))
 
 
@@ -98,8 +103,13 @@ def python_full_outer_join(rdd, other, numPartitions):
 
 def python_cogroup(rdds, numPartitions):
     def make_mapper(i):
+<<<<<<< HEAD
         return lambda (k, v): (k, (i, v))
     vrdds = [rdd.map(make_mapper(i)) for i, rdd in enumerate(rdds)]
+=======
+        return lambda v: (i, v)
+    vrdds = [rdd.mapValues(make_mapper(i)) for i, rdd in enumerate(rdds)]
+>>>>>>> githubspark/branch-1.3
     union_vrdds = reduce(lambda acc, other: acc.union(other), vrdds)
     rdd_len = len(vrdds)
 

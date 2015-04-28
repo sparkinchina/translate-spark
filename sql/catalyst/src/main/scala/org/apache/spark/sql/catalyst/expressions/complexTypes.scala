@@ -19,7 +19,11 @@ package org.apache.spark.sql.catalyst.expressions
 
 import scala.collection.Map
 
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types._
+=======
+import org.apache.spark.sql.types._
+>>>>>>> githubspark/branch-1.3
 
 /**
  * Returns the item at `ordinal` in the Array `child` or the Key `ordinal` in Map `child`.
@@ -27,12 +31,21 @@ import org.apache.spark.sql.catalyst.types._
 case class GetItem(child: Expression, ordinal: Expression) extends Expression {
   type EvaluatedType = Any
 
+<<<<<<< HEAD
   val children = child :: ordinal :: Nil
   /** `Null` is returned for invalid ordinals. */
   override def nullable = true
   override def foldable = child.foldable && ordinal.foldable
 
   def dataType = child.dataType match {
+=======
+  val children: Seq[Expression] = child :: ordinal :: Nil
+  /** `Null` is returned for invalid ordinals. */
+  override def nullable: Boolean = true
+  override def foldable: Boolean = child.foldable && ordinal.foldable
+
+  override def dataType: DataType = child.dataType match {
+>>>>>>> githubspark/branch-1.3
     case ArrayType(dt, _) => dt
     case MapType(_, vt, _) => vt
   }
@@ -40,7 +53,11 @@ case class GetItem(child: Expression, ordinal: Expression) extends Expression {
     childrenResolved &&
     (child.dataType.isInstanceOf[ArrayType] || child.dataType.isInstanceOf[MapType])
 
+<<<<<<< HEAD
   override def toString = s"$child[$ordinal]"
+=======
+  override def toString: String = s"$child[$ordinal]"
+>>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     val value = child.eval(input)
@@ -70,6 +87,7 @@ case class GetItem(child: Expression, ordinal: Expression) extends Expression {
   }
 }
 
+<<<<<<< HEAD
 /**
  * Returns the value of fields in the Struct `child`.
  */
@@ -93,13 +111,55 @@ case class GetField(child: Expression, fieldName: String) extends UnaryExpressio
   lazy val ordinal = structType.fields.indexOf(field)
 
   override lazy val resolved = childrenResolved && child.dataType.isInstanceOf[StructType]
+=======
+
+trait GetField extends UnaryExpression {
+  self: Product =>
+
+  type EvaluatedType = Any
+  override def foldable: Boolean = child.foldable
+  override def toString: String = s"$child.${field.name}"
+
+  def field: StructField
+}
+
+/**
+ * Returns the value of fields in the Struct `child`.
+ */
+case class StructGetField(child: Expression, field: StructField, ordinal: Int) extends GetField {
+
+  override def dataType: DataType = field.dataType
+  override def nullable: Boolean = child.nullable || field.nullable
+>>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     val baseValue = child.eval(input).asInstanceOf[Row]
     if (baseValue == null) null else baseValue(ordinal)
   }
+<<<<<<< HEAD
 
   override def toString = s"$child.$fieldName"
+=======
+}
+
+/**
+ * Returns the array of value of fields in the Array of Struct `child`.
+ */
+case class ArrayGetField(child: Expression, field: StructField, ordinal: Int, containsNull: Boolean)
+  extends GetField {
+
+  override def dataType: DataType = ArrayType(field.dataType, containsNull)
+  override def nullable: Boolean = child.nullable
+
+  override def eval(input: Row): Any = {
+    val baseValue = child.eval(input).asInstanceOf[Seq[Row]]
+    if (baseValue == null) null else {
+      baseValue.map { row =>
+        if (row == null) null else row(ordinal)
+      }
+    }
+  }
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -107,7 +167,13 @@ case class GetField(child: Expression, fieldName: String) extends UnaryExpressio
  */
 case class CreateArray(children: Seq[Expression]) extends Expression {
   override type EvaluatedType = Any
+<<<<<<< HEAD
 
+=======
+  
+  override def foldable: Boolean = !children.exists(!_.foldable)
+  
+>>>>>>> githubspark/branch-1.3
   lazy val childTypes = children.map(_.dataType).distinct
 
   override lazy val resolved =
@@ -126,5 +192,9 @@ case class CreateArray(children: Seq[Expression]) extends Expression {
     children.map(_.eval(input))
   }
 
+<<<<<<< HEAD
   override def toString = s"Array(${children.mkString(",")})"
+=======
+  override def toString: String = s"Array(${children.mkString(",")})"
+>>>>>>> githubspark/branch-1.3
 }

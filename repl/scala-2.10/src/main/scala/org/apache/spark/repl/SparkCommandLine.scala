@@ -19,14 +19,31 @@ package org.apache.spark.repl
 
 import scala.tools.nsc.{Settings, CompilerCommand}
 import scala.Predef._
+<<<<<<< HEAD
+=======
+import org.apache.spark.annotation.DeveloperApi
+>>>>>>> githubspark/branch-1.3
 
 /**
  * Command class enabling Spark-specific command line options (provided by
  * <i>org.apache.spark.repl.SparkRunnerSettings</i>).
+<<<<<<< HEAD
  */
 class SparkCommandLine(args: List[String], override val settings: Settings)
     extends CompilerCommand(args, settings) {
 
+=======
+ *
+ * @example new SparkCommandLine(Nil).settings
+ *
+ * @param args The list of command line arguments
+ * @param settings The underlying settings to associate with this set of
+ *                 command-line options
+ */
+@DeveloperApi
+class SparkCommandLine(args: List[String], override val settings: Settings)
+    extends CompilerCommand(args, settings) {
+>>>>>>> githubspark/branch-1.3
   def this(args: List[String], error: String => Unit) {
     this(args, new SparkRunnerSettings(error))
   }

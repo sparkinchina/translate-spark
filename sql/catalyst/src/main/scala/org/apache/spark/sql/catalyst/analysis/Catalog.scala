@@ -22,9 +22,19 @@ import scala.collection.mutable
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Subquery}
 
 /**
+<<<<<<< HEAD
  * An interface for looking up relations by name.  Used by an [[Analyzer]].
  *
  * 一个用于通过名字来查找关系的接口。 被一个 [[Analyzer]] 使用。
+=======
+ * Thrown by a catalog when a table cannot be found.  The analzyer will rethrow the exception
+ * as an AnalysisException with the correct position information.
+ */
+class NoSuchTableException extends Exception
+
+/**
+ * An interface for looking up relations by name.  Used by an [[Analyzer]].
+>>>>>>> githubspark/branch-1.3
  */
 trait Catalog {
 
@@ -36,6 +46,17 @@ trait Catalog {
       tableIdentifier: Seq[String],
       alias: Option[String] = None): LogicalPlan
 
+<<<<<<< HEAD
+=======
+  /**
+   * Returns tuples of (tableName, isTemporary) for all tables in the given database.
+   * isTemporary is a Boolean value indicates if a table is a temporary or not.
+   */
+  def getTables(databaseName: Option[String]): Seq[(String, Boolean)]
+
+  def refreshTable(databaseName: String, tableName: String): Unit
+
+>>>>>>> githubspark/branch-1.3
   def registerTable(tableIdentifier: Seq[String], plan: LogicalPlan): Unit
 
   def unregisterTable(tableIdentifier: Seq[String]): Unit
@@ -74,12 +95,20 @@ class SimpleCatalog(val caseSensitive: Boolean) extends Catalog {
     tables += ((getDbTableName(tableIdent), plan))
   }
 
+<<<<<<< HEAD
   override def unregisterTable(tableIdentifier: Seq[String]) = {
+=======
+  override def unregisterTable(tableIdentifier: Seq[String]): Unit = {
+>>>>>>> githubspark/branch-1.3
     val tableIdent = processTableIdentifier(tableIdentifier)
     tables -= getDbTableName(tableIdent)
   }
 
+<<<<<<< HEAD
   override def unregisterAllTables() = {
+=======
+  override def unregisterAllTables(): Unit = {
+>>>>>>> githubspark/branch-1.3
     tables.clear()
   }
 
@@ -103,6 +132,19 @@ class SimpleCatalog(val caseSensitive: Boolean) extends Catalog {
     // properly qualified with this alias.
     alias.map(a => Subquery(a, tableWithQualifiers)).getOrElse(tableWithQualifiers)
   }
+<<<<<<< HEAD
+=======
+
+  override def getTables(databaseName: Option[String]): Seq[(String, Boolean)] = {
+    tables.map {
+      case (name, _) => (name, true)
+    }.toSeq
+  }
+
+  override def refreshTable(databaseName: String, tableName: String): Unit = {
+    throw new UnsupportedOperationException
+  }
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -110,9 +152,12 @@ class SimpleCatalog(val caseSensitive: Boolean) extends Catalog {
  * new logical plans.  This can be used to bind query result to virtual tables, or replace tables
  * with in-memory cached versions.  Note that the set of overrides is stored in memory and thus
  * lost when the JVM exits.
+<<<<<<< HEAD
  *
  * 可被其他 Catalogs 混入的一个特质， 允许使用新的逻辑计划来覆写指定表。 可以用于绑定查询结果到虚拟表，
  * 或用内存缓存版本替换表。 注意这些覆写是存储在内存中的，因此当JVM退出时会丢失。
+=======
+>>>>>>> githubspark/branch-1.3
  */
 trait OverrideCatalog extends Catalog {
 
@@ -128,8 +173,13 @@ trait OverrideCatalog extends Catalog {
   }
 
   abstract override def lookupRelation(
+<<<<<<< HEAD
     tableIdentifier: Seq[String],
     alias: Option[String] = None): LogicalPlan = {
+=======
+      tableIdentifier: Seq[String],
+      alias: Option[String] = None): LogicalPlan = {
+>>>>>>> githubspark/branch-1.3
     val tableIdent = processTableIdentifier(tableIdentifier)
     val overriddenTable = overrides.get(getDBTable(tableIdent))
     val tableWithQualifers = overriddenTable.map(r => Subquery(tableIdent.last, r))
@@ -142,6 +192,30 @@ trait OverrideCatalog extends Catalog {
     withAlias.getOrElse(super.lookupRelation(tableIdentifier, alias))
   }
 
+<<<<<<< HEAD
+=======
+  abstract override def getTables(databaseName: Option[String]): Seq[(String, Boolean)] = {
+    val dbName = if (!caseSensitive) {
+      if (databaseName.isDefined) Some(databaseName.get.toLowerCase) else None
+    } else {
+      databaseName
+    }
+
+    val temporaryTables = overrides.filter {
+      // If a temporary table does not have an associated database, we should return its name.
+      case ((None, _), _) => true
+      // If a temporary table does have an associated database, we should return it if the database
+      // matches the given database name.
+      case ((db: Some[String], _), _) if db == dbName => true
+      case _ => false
+    }.map {
+      case ((_, tableName), _) => (tableName, true)
+    }.toSeq
+
+    temporaryTables ++ super.getTables(databaseName)
+  }
+
+>>>>>>> githubspark/branch-1.3
   override def registerTable(
       tableIdentifier: Seq[String],
       plan: LogicalPlan): Unit = {
@@ -162,6 +236,7 @@ trait OverrideCatalog extends Catalog {
 /**
  * A trivial catalog that returns an error when a relation is requested.  Used for testing when all
  * relations are already filled in and the analyser needs only to resolve attribute references.
+<<<<<<< HEAD
  *
  * 一个简单的 catalog， 当请求一个关系时返回一个错误。
  */
@@ -184,8 +259,41 @@ object EmptyCatalog extends Catalog {
   }
 
   def unregisterTable(tableIdentifier: Seq[String]): Unit = {
+=======
+ */
+object EmptyCatalog extends Catalog {
+
+  override val caseSensitive: Boolean = true
+
+  override def tableExists(tableIdentifier: Seq[String]): Boolean = {
+    throw new UnsupportedOperationException
+  }
+
+  override def lookupRelation(
+      tableIdentifier: Seq[String],
+      alias: Option[String] = None): LogicalPlan = {
+    throw new UnsupportedOperationException
+  }
+
+  override def getTables(databaseName: Option[String]): Seq[(String, Boolean)] = {
+    throw new UnsupportedOperationException
+  }
+
+  override def registerTable(tableIdentifier: Seq[String], plan: LogicalPlan): Unit = {
+    throw new UnsupportedOperationException
+  }
+
+  override def unregisterTable(tableIdentifier: Seq[String]): Unit = {
+>>>>>>> githubspark/branch-1.3
     throw new UnsupportedOperationException
   }
 
   override def unregisterAllTables(): Unit = {}
+<<<<<<< HEAD
+=======
+
+  override def refreshTable(databaseName: String, tableName: String): Unit = {
+    throw new UnsupportedOperationException
+  }
+>>>>>>> githubspark/branch-1.3
 }

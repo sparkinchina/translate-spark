@@ -21,7 +21,11 @@ import java.lang.reflect.Method
 import java.security.PrivilegedExceptionAction
 
 import org.apache.hadoop.conf.Configuration
+<<<<<<< HEAD
 import org.apache.hadoop.fs.{FileSystem, Path}
+=======
+import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
+>>>>>>> githubspark/branch-1.3
 import org.apache.hadoop.fs.FileSystem.Statistics
 import org.apache.hadoop.mapred.JobConf
 import org.apache.hadoop.mapreduce.{JobContext, TaskAttemptContext}
@@ -52,6 +56,7 @@ class SparkHadoopUtil extends Logging {
    * do a FileSystem.closeAllForUGI in order to avoid leaking Filesystems
    */
   def runAsSparkUser(func: () => Unit) {
+<<<<<<< HEAD
     val user = Option(System.getenv("SPARK_USER")).getOrElse(SparkContext.SPARK_UNKNOWN_USER)
     if (user != SparkContext.SPARK_UNKNOWN_USER) {
       logDebug("running as user: " + user)
@@ -64,6 +69,15 @@ class SparkHadoopUtil extends Logging {
       logDebug("running as SPARK_UNKNOWN_USER")
       func()
     }
+=======
+    val user = Utils.getCurrentUserName()
+    logDebug("running as user: " + user)
+    val ugi = UserGroupInformation.createRemoteUser(user)
+    transferCredentials(UserGroupInformation.getCurrentUser(), ugi)
+    ugi.doAs(new PrivilegedExceptionAction[Unit] {
+      def run: Unit = func()
+    })
+>>>>>>> githubspark/branch-1.3
   }
 
   def transferCredentials(source: UserGroupInformation, dest: UserGroupInformation) {
@@ -133,16 +147,26 @@ class SparkHadoopUtil extends Logging {
    * statistics are only available as of Hadoop 2.5 (see HADOOP-10688).
    * Returns None if the required method can't be found.
    */
+<<<<<<< HEAD
   private[spark] def getFSBytesReadOnThreadCallback(path: Path, conf: Configuration)
     : Option[() => Long] = {
     try {
       val threadStats = getFileSystemThreadStatistics(path, conf)
+=======
+  private[spark] def getFSBytesReadOnThreadCallback(): Option[() => Long] = {
+    try {
+      val threadStats = getFileSystemThreadStatistics()
+>>>>>>> githubspark/branch-1.3
       val getBytesReadMethod = getFileSystemThreadStatisticsMethod("getBytesRead")
       val f = () => threadStats.map(getBytesReadMethod.invoke(_).asInstanceOf[Long]).sum
       val baselineBytesRead = f()
       Some(() => f() - baselineBytesRead)
     } catch {
+<<<<<<< HEAD
       case e: NoSuchMethodException => {
+=======
+      case e @ (_: NoSuchMethodException | _: ClassNotFoundException) => {
+>>>>>>> githubspark/branch-1.3
         logDebug("Couldn't find method for retrieving thread-level FileSystem input data", e)
         None
       }
@@ -156,26 +180,41 @@ class SparkHadoopUtil extends Logging {
    * statistics are only available as of Hadoop 2.5 (see HADOOP-10688).
    * Returns None if the required method can't be found.
    */
+<<<<<<< HEAD
   private[spark] def getFSBytesWrittenOnThreadCallback(path: Path, conf: Configuration)
     : Option[() => Long] = {
     try {
       val threadStats = getFileSystemThreadStatistics(path, conf)
+=======
+  private[spark] def getFSBytesWrittenOnThreadCallback(): Option[() => Long] = {
+    try {
+      val threadStats = getFileSystemThreadStatistics()
+>>>>>>> githubspark/branch-1.3
       val getBytesWrittenMethod = getFileSystemThreadStatisticsMethod("getBytesWritten")
       val f = () => threadStats.map(getBytesWrittenMethod.invoke(_).asInstanceOf[Long]).sum
       val baselineBytesWritten = f()
       Some(() => f() - baselineBytesWritten)
     } catch {
+<<<<<<< HEAD
       case e: NoSuchMethodException => {
+=======
+      case e @ (_: NoSuchMethodException | _: ClassNotFoundException) => {
+>>>>>>> githubspark/branch-1.3
         logDebug("Couldn't find method for retrieving thread-level FileSystem output data", e)
         None
       }
     }
   }
 
+<<<<<<< HEAD
   private def getFileSystemThreadStatistics(path: Path, conf: Configuration): Seq[AnyRef] = {
     val qualifiedPath = path.getFileSystem(conf).makeQualified(path)
     val scheme = qualifiedPath.toUri().getScheme()
     val stats = FileSystem.getAllStatistics().filter(_.getScheme().equals(scheme))
+=======
+  private def getFileSystemThreadStatistics(): Seq[AnyRef] = {
+    val stats = FileSystem.getAllStatistics()
+>>>>>>> githubspark/branch-1.3
     stats.map(Utils.invoke(classOf[Statistics], _, "getThreadStatistics"))
   }
 
@@ -195,6 +234,24 @@ class SparkHadoopUtil extends Logging {
     val method = context.getClass.getMethod("getConfiguration")
     method.invoke(context).asInstanceOf[Configuration]
   }
+<<<<<<< HEAD
+=======
+
+  /**
+   * Get [[FileStatus]] objects for all leaf children (files) under the given base path. If the
+   * given path points to a file, return a single-element collection containing [[FileStatus]] of
+   * that file.
+   */
+  def listLeafStatuses(fs: FileSystem, basePath: Path): Seq[FileStatus] = {
+    def recurse(path: Path) = {
+      val (directories, leaves) = fs.listStatus(path).partition(_.isDir)
+      leaves ++ directories.flatMap(f => listLeafStatuses(fs, f.getPath))
+    }
+
+    val baseStatus = fs.getFileStatus(basePath)
+    if (baseStatus.isDir) recurse(basePath) else Array(baseStatus)
+  }
+>>>>>>> githubspark/branch-1.3
 }
 
 object SparkHadoopUtil {

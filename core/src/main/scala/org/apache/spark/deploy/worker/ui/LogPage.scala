@@ -123,7 +123,10 @@ private[spark] class LogPage(parent: WorkerWebUI) extends WebUIPage("logPage") w
   }
 
   /** Get the part of the log files given the offset and desired length of bytes */
+<<<<<<< HEAD
   /** 根据设定的偏移量和要求的字节长度获取部分日志文件 */
+=======
+>>>>>>> githubspark/branch-1.3
   private def getLog(
       logDirectory: String,
       logType: String,

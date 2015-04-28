@@ -34,7 +34,8 @@ import org.apache.spark.metrics.MetricsSystem
 import org.apache.spark.network.BlockTransferService
 import org.apache.spark.network.netty.NettyBlockTransferService
 import org.apache.spark.network.nio.NioBlockTransferService
-import org.apache.spark.scheduler.LiveListenerBus
+import org.apache.spark.scheduler.{OutputCommitCoordinator, LiveListenerBus}
+import org.apache.spark.scheduler.OutputCommitCoordinator.OutputCommitCoordinatorActor
 import org.apache.spark.serializer.Serializer
 import org.apache.spark.shuffle.{ShuffleMemoryManager, ShuffleManager}
 import org.apache.spark.storage._
@@ -72,6 +73,7 @@ class SparkEnv (
     val sparkFilesDir: String,
     val metricsSystem: MetricsSystem,
     val shuffleMemoryManager: ShuffleMemoryManager,
+    val outputCommitCoordinator: OutputCommitCoordinator,
     val conf: SparkConf) extends Logging {
 
   private[spark] var isStopped = false
@@ -91,6 +93,7 @@ class SparkEnv (
     blockManager.stop()
     blockManager.master.stop()
     metricsSystem.stop()
+    outputCommitCoordinator.stop()
     actorSystem.shutdown()
     // Unfortunately Akka's awaitTermination doesn't actually wait for the Netty server to shut
     // down, but let's call it anyway in case it gets fixed in a later release
@@ -157,7 +160,8 @@ object SparkEnv extends Logging {
   private[spark] def createDriverEnv(
       conf: SparkConf,
       isLocal: Boolean,
-      listenerBus: LiveListenerBus): SparkEnv = {
+      listenerBus: LiveListenerBus,
+      mockOutputCommitCoordinator: Option[OutputCommitCoordinator] = None): SparkEnv = {
     assert(conf.contains("spark.driver.host"), "spark.driver.host is not set on the driver!")
     assert(conf.contains("spark.driver.port"), "spark.driver.port is not set on the driver!")
     val hostname = conf.get("spark.driver.host")
@@ -169,7 +173,8 @@ object SparkEnv extends Logging {
       port,
       isDriver = true,
       isLocal = isLocal,
-      listenerBus = listenerBus
+      listenerBus = listenerBus,
+      mockOutputCommitCoordinator = mockOutputCommitCoordinator
     )
   }
 
@@ -184,18 +189,18 @@ object SparkEnv extends Logging {
       hostname: String,
       port: Int,
       numCores: Int,
-      isLocal: Boolean,
-      actorSystem: ActorSystem = null): SparkEnv = {
-    create(
+      isLocal: Boolean): SparkEnv = {
+    val env = create(
       conf,
       executorId,
       hostname,
       port,
       isDriver = false,
       isLocal = isLocal,
-      defaultActorSystem = actorSystem,
       numUsableCores = numCores
     )
+    SparkEnv.set(env)
+    env
   }
 
   /**
@@ -209,8 +214,8 @@ object SparkEnv extends Logging {
       isDriver: Boolean,
       isLocal: Boolean,
       listenerBus: LiveListenerBus = null,
-      defaultActorSystem: ActorSystem = null,
-      numUsableCores: Int = 0): SparkEnv = {
+      numUsableCores: Int = 0,
+      mockOutputCommitCoordinator: Option[OutputCommitCoordinator] = None): SparkEnv = {
 
     // Listener bus is only used on the driver
     if (isDriver) {
@@ -219,20 +224,17 @@ object SparkEnv extends Logging {
 
     val securityManager = new SecurityManager(conf)
 
-    // If an existing actor system is already provided, use it.
-    // This is the case when an executor is launched in coarse-grained mode.
-    val (actorSystem, boundPort) =
-      Option(defaultActorSystem) match {
-        case Some(as) => (as, port)
-        case None =>
-          val actorSystemName = if (isDriver) driverActorSystemName else executorActorSystemName
-          AkkaUtils.createActorSystem(actorSystemName, hostname, port, conf, securityManager)
-      }
+    // Create the ActorSystem for Akka and get the port it binds to.
+    val (actorSystem, boundPort) = {
+      val actorSystemName = if (isDriver) driverActorSystemName else executorActorSystemName
+      AkkaUtils.createActorSystem(actorSystemName, hostname, port, conf, securityManager)
+    }
 
     // Figure out which port Akka actually bound to in case the original port is 0 or occupied.
-    // This is so that we tell the executors the correct port to connect to.
     if (isDriver) {
       conf.set("spark.driver.port", boundPort.toString)
+    } else {
+      conf.set("spark.executor.port", boundPort.toString)
     }
 
     // Create an instance of the class with the given name, possibly initializing it with our conf
@@ -379,6 +381,13 @@ object SparkEnv extends Logging {
         "levels using the RDD.persist() method instead.")
     }
 
+    val outputCommitCoordinator = mockOutputCommitCoordinator.getOrElse {
+      new OutputCommitCoordinator(conf)
+    }
+    val outputCommitCoordinatorActor = registerOrLookup("OutputCommitCoordinator",
+      new OutputCommitCoordinatorActor(outputCommitCoordinator))
+    outputCommitCoordinator.coordinatorActor = Some(outputCommitCoordinatorActor)
+
     new SparkEnv(
       executorId,
       actorSystem,
@@ -395,6 +404,7 @@ object SparkEnv extends Logging {
       sparkFilesDir,
       metricsSystem,
       shuffleMemoryManager,
+      outputCommitCoordinator,
       conf)
   }
 

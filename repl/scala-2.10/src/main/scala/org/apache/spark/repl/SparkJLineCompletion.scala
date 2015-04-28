@@ -7,6 +7,11 @@
 
 package org.apache.spark.repl
 
+<<<<<<< HEAD
+=======
+import org.apache.spark.annotation.DeveloperApi
+
+>>>>>>> githubspark/branch-1.3
 import scala.tools.nsc._
 import scala.tools.nsc.interpreter._
 
@@ -16,16 +21,34 @@ import Completion._
 import scala.collection.mutable.ListBuffer
 import org.apache.spark.Logging
 
+<<<<<<< HEAD
 // REPL completor - queries supplied interpreter for valid
 // completions based on current contents of buffer.
 class SparkJLineCompletion(val intp: SparkIMain) extends Completion with CompletionOutput with Logging {
   val global: intp.global.type = intp.global
+=======
+/**
+ * Represents an auto-completion tool for the supplied interpreter that
+ * utilizes supplied queries for valid completions based on the current
+ * contents of the internal buffer.
+ *
+ * @param intp The interpreter to use for information retrieval to do with
+ *             auto completion
+ */
+@DeveloperApi
+class SparkJLineCompletion(val intp: SparkIMain) extends Completion with CompletionOutput with Logging {
+  // NOTE: Exposed in package as used in quite a few classes
+  // NOTE: Must be public to override the global found in CompletionOutput
+  val global: intp.global.type = intp.global
+
+>>>>>>> githubspark/branch-1.3
   import global._
   import definitions.{ PredefModule, AnyClass, AnyRefClass, ScalaPackage, JavaLangPackage }
   import rootMirror.{ RootClass, getModuleIfDefined }
   type ExecResult = Any
   import intp.{ debugging }
 
+<<<<<<< HEAD
   // verbosity goes up with consecutive tabs
   private var verbosity: Int = 0
   def resetVerbosity() = verbosity = 0
@@ -37,6 +60,27 @@ class SparkJLineCompletion(val intp: SparkIMain) extends Completion with Complet
   def getType(name: String, isModule: Boolean) = getSymbol(name, isModule).tpe
   def typeOf(name: String)                     = getType(name, false)
   def moduleOf(name: String)                   = getType(name, true)
+=======
+  /**
+   * Represents the level of verbosity. Increments with consecutive tabs.
+   */
+  @DeveloperApi
+  var verbosity: Int = 0
+
+  /**
+   * Resets the level of verbosity to zero.
+   */
+  @DeveloperApi
+  def resetVerbosity() = verbosity = 0
+
+  private def getSymbol(name: String, isModule: Boolean) = (
+    if (isModule) getModuleIfDefined(name)
+    else getModuleIfDefined(name)
+  )
+  private def getType(name: String, isModule: Boolean) = getSymbol(name, isModule).tpe
+  private def typeOf(name: String)                     = getType(name, false)
+  private def moduleOf(name: String)                   = getType(name, true)
+>>>>>>> githubspark/branch-1.3
 
   trait CompilerCompletion {
     def tp: Type
@@ -258,12 +302,21 @@ class SparkJLineCompletion(val intp: SparkIMain) extends Completion with Complet
 
   // the list of completion aware objects which should be consulted
   // for top level unqualified, it's too noisy to let much in.
+<<<<<<< HEAD
   lazy val topLevelBase: List[CompletionAware] = List(ids, rootClass, predef, scalalang, javalang, literals)
   def topLevel = topLevelBase ++ imported
   def topLevelThreshold = 50
 
   // the first tier of top level objects (doesn't include file completion)
   def topLevelFor(parsed: Parsed): List[String] = {
+=======
+  private lazy val topLevelBase: List[CompletionAware] = List(ids, rootClass, predef, scalalang, javalang, literals)
+  private def topLevel = topLevelBase ++ imported
+  private def topLevelThreshold = 50
+
+  // the first tier of top level objects (doesn't include file completion)
+  private def topLevelFor(parsed: Parsed): List[String] = {
+>>>>>>> githubspark/branch-1.3
     val buf = new ListBuffer[String]
     topLevel foreach { ca =>
       buf ++= (ca completionsFor parsed)
@@ -275,9 +328,15 @@ class SparkJLineCompletion(val intp: SparkIMain) extends Completion with Complet
   }
 
   // the most recent result
+<<<<<<< HEAD
   def lastResult = Forwarder(() => ids follow intp.mostRecentVar)
 
   def lastResultFor(parsed: Parsed) = {
+=======
+  private def lastResult = Forwarder(() => ids follow intp.mostRecentVar)
+
+  private def lastResultFor(parsed: Parsed) = {
+>>>>>>> githubspark/branch-1.3
     /** The logic is a little tortured right now because normally '.' is
      *  ignored as a delimiter, but on .<tab> it needs to be propagated.
      */
@@ -286,9 +345,21 @@ class SparkJLineCompletion(val intp: SparkIMain) extends Completion with Complet
   }
 
   // generic interface for querying (e.g. interpreter loop, testing)
+<<<<<<< HEAD
   def completions(buf: String): List[String] =
     topLevelFor(Parsed.dotted(buf + ".", buf.length + 1))
 
+=======
+  private def completions(buf: String): List[String] =
+    topLevelFor(Parsed.dotted(buf + ".", buf.length + 1))
+
+  /**
+   * Constructs a new ScalaCompleter for auto completion.
+   *
+   * @return The new JLineTabCompletion instance
+   */
+  @DeveloperApi
+>>>>>>> githubspark/branch-1.3
   def completer(): ScalaCompleter = new JLineTabCompletion
 
   /** This gets a little bit hairy.  It's no small feat delegating everything

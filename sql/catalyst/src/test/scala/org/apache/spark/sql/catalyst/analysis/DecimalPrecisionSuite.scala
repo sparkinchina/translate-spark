@@ -19,7 +19,11 @@ package org.apache.spark.sql.catalyst.analysis
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.{Project, LocalRelation}
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types._
+=======
+import org.apache.spark.sql.types._
+>>>>>>> githubspark/branch-1.3
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class DecimalPrecisionSuite extends FunSuite with BeforeAndAfter {
@@ -49,6 +53,18 @@ class DecimalPrecisionSuite extends FunSuite with BeforeAndAfter {
     assert(analyzer(plan).schema.fields(0).dataType === expectedType)
   }
 
+<<<<<<< HEAD
+=======
+  private def checkComparison(expression: Expression, expectedType: DataType): Unit = {
+    val plan = Project(Alias(expression, "c")() :: Nil, relation)
+    val comparison = analyzer(plan).collect {
+      case Project(Alias(e: BinaryComparison, _) :: Nil, _) => e
+    }.head
+    assert(comparison.left.dataType === expectedType)
+    assert(comparison.right.dataType === expectedType)
+  }
+
+>>>>>>> githubspark/branch-1.3
   test("basic operations") {
     checkType(Add(d1, d2), DecimalType(6, 2))
     checkType(Subtract(d1, d2), DecimalType(6, 2))
@@ -65,6 +81,17 @@ class DecimalPrecisionSuite extends FunSuite with BeforeAndAfter {
     checkType(Add(Add(d1, d2), Add(d1, d2)), DecimalType(7, 2))
   }
 
+<<<<<<< HEAD
+=======
+  test("Comparison operations") {
+    checkComparison(LessThan(i, d1), DecimalType.Unlimited)
+    checkComparison(LessThanOrEqual(d1, d2), DecimalType.Unlimited)
+    checkComparison(GreaterThan(d2, u), DecimalType.Unlimited)
+    checkComparison(GreaterThanOrEqual(d1, f), DoubleType)
+    checkComparison(GreaterThan(d2, d2), DecimalType(5, 2))
+  }
+
+>>>>>>> githubspark/branch-1.3
   test("bringing in primitive types") {
     checkType(Add(d1, i), DecimalType(12, 1))
     checkType(Add(d1, f), DoubleType)

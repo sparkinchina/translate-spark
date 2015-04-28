@@ -17,10 +17,17 @@
 
 package org.apache.spark.sql.catalyst.expressions
 
+<<<<<<< HEAD
 import scala.collection.immutable.HashSet
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.types.BooleanType
+=======
+import org.apache.spark.sql.catalyst.analysis.UnresolvedException
+import org.apache.spark.sql.catalyst.errors.TreeNodeException
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.types.{DataType, BinaryType, BooleanType, NativeType}
+>>>>>>> githubspark/branch-1.3
 
 object InterpretedPredicate {
   def apply(expression: Expression, inputSchema: Seq[Attribute]): (Row => Boolean) =
@@ -34,7 +41,11 @@ object InterpretedPredicate {
 trait Predicate extends Expression {
   self: Product =>
 
+<<<<<<< HEAD
   def dataType = BooleanType
+=======
+  override def dataType: DataType = BooleanType
+>>>>>>> githubspark/branch-1.3
 
   type EvaluatedType = Any
 }
@@ -48,6 +59,17 @@ trait PredicateHelper {
     }
   }
 
+<<<<<<< HEAD
+=======
+  protected def splitDisjunctivePredicates(condition: Expression): Seq[Expression] = {
+    condition match {
+      case Or(cond1, cond2) =>
+        splitDisjunctivePredicates(cond1) ++ splitDisjunctivePredicates(cond2)
+      case other => other :: Nil
+    }
+  }
+
+>>>>>>> githubspark/branch-1.3
   /**
    * Returns true if `expr` can be evaluated using only the output of `plan`.  This method
    * can be used to determine when is is acceptable to move expression evaluation within a query
@@ -64,6 +86,7 @@ trait PredicateHelper {
 
 abstract class BinaryPredicate extends BinaryExpression with Predicate {
   self: Product =>
+<<<<<<< HEAD
   def nullable = left.nullable || right.nullable
 }
 
@@ -71,6 +94,15 @@ case class Not(child: Expression) extends UnaryExpression with Predicate {
   override def foldable = child.foldable
   def nullable = child.nullable
   override def toString = s"NOT $child"
+=======
+  override def nullable: Boolean = left.nullable || right.nullable
+}
+
+case class Not(child: Expression) extends UnaryExpression with Predicate {
+  override def foldable: Boolean = child.foldable
+  override def nullable: Boolean = child.nullable
+  override def toString: String = s"NOT $child"
+>>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     child.eval(input) match {
@@ -84,10 +116,17 @@ case class Not(child: Expression) extends UnaryExpression with Predicate {
  * Evaluates to `true` if `list` contains `value`.
  */
 case class In(value: Expression, list: Seq[Expression]) extends Predicate {
+<<<<<<< HEAD
   def children = value +: list
 
   def nullable = true // TODO: Figure out correct nullability semantics of IN.
   override def toString = s"$value IN ${list.mkString("(", ",", ")")}"
+=======
+  override def children: Seq[Expression] = value +: list
+
+  override def nullable: Boolean = true // TODO: Figure out correct nullability semantics of IN.
+  override def toString: String = s"$value IN ${list.mkString("(", ",", ")")}"
+>>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     val evaluatedValue = value.eval(input)
@@ -102,10 +141,17 @@ case class In(value: Expression, list: Seq[Expression]) extends Predicate {
 case class InSet(value: Expression, hset: Set[Any])
   extends Predicate {
 
+<<<<<<< HEAD
   def children = value :: Nil
 
   def nullable = true // TODO: Figure out correct nullability semantics of IN.
   override def toString = s"$value INSET ${hset.mkString("(", ",", ")")}"
+=======
+  override def children: Seq[Expression] = value :: Nil
+
+  override def nullable: Boolean = true // TODO: Figure out correct nullability semantics of IN.
+  override def toString: String = s"$value INSET ${hset.mkString("(", ",", ")")}"
+>>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     hset.contains(value.eval(input))
@@ -113,7 +159,11 @@ case class InSet(value: Expression, hset: Set[Any])
 }
 
 case class And(left: Expression, right: Expression) extends BinaryPredicate {
+<<<<<<< HEAD
   def symbol = "&&"
+=======
+  override def symbol: String = "&&"
+>>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     val l = left.eval(input)
@@ -135,7 +185,11 @@ case class And(left: Expression, right: Expression) extends BinaryPredicate {
 }
 
 case class Or(left: Expression, right: Expression) extends BinaryPredicate {
+<<<<<<< HEAD
   def symbol = "||"
+=======
+  override def symbol: String = "||"
+>>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     val l = left.eval(input)
@@ -161,21 +215,40 @@ abstract class BinaryComparison extends BinaryPredicate {
 }
 
 case class EqualTo(left: Expression, right: Expression) extends BinaryComparison {
+<<<<<<< HEAD
   def symbol = "="
+=======
+  override def symbol: String = "="
+
+>>>>>>> githubspark/branch-1.3
   override def eval(input: Row): Any = {
     val l = left.eval(input)
     if (l == null) {
       null
     } else {
       val r = right.eval(input)
+<<<<<<< HEAD
       if (r == null) null else l == r
+=======
+      if (r == null) null
+      else if (left.dataType != BinaryType) l == r
+      else BinaryType.ordering.compare(
+        l.asInstanceOf[Array[Byte]], r.asInstanceOf[Array[Byte]]) == 0
+>>>>>>> githubspark/branch-1.3
     }
   }
 }
 
 case class EqualNullSafe(left: Expression, right: Expression) extends BinaryComparison {
+<<<<<<< HEAD
   def symbol = "<=>"
   override def nullable = false
+=======
+  override def symbol: String = "<=>"
+
+  override def nullable: Boolean = false
+
+>>>>>>> githubspark/branch-1.3
   override def eval(input: Row): Any = {
     val l = left.eval(input)
     val r = right.eval(input)
@@ -190,6 +263,7 @@ case class EqualNullSafe(left: Expression, right: Expression) extends BinaryComp
 }
 
 case class LessThan(left: Expression, right: Expression) extends BinaryComparison {
+<<<<<<< HEAD
   def symbol = "<"
   override def eval(input: Row): Any = c2(input, left, right, _.lt(_, _))
 }
@@ -217,6 +291,131 @@ case class If(predicate: Expression, trueValue: Expression, falseValue: Expressi
 
   override lazy val resolved = childrenResolved && trueValue.dataType == falseValue.dataType
   def dataType = {
+=======
+  override def symbol: String = "<"
+
+  lazy val ordering: Ordering[Any] = {
+    if (left.dataType != right.dataType) {
+      throw new TreeNodeException(this,
+        s"Types do not match ${left.dataType} != ${right.dataType}")
+    }
+    left.dataType match {
+      case i: NativeType => i.ordering.asInstanceOf[Ordering[Any]]
+      case other => sys.error(s"Type $other does not support ordered operations")
+    }
+  }
+
+  override def eval(input: Row): Any = {
+    val evalE1 = left.eval(input)
+    if (evalE1 == null) {
+      null
+    } else {
+      val evalE2 = right.eval(input)
+      if (evalE2 == null) {
+        null
+      } else {
+        ordering.lt(evalE1, evalE2)
+      }
+    }
+  }
+}
+
+case class LessThanOrEqual(left: Expression, right: Expression) extends BinaryComparison {
+  override def symbol: String = "<="
+
+  lazy val ordering: Ordering[Any] = {
+    if (left.dataType != right.dataType) {
+      throw new TreeNodeException(this,
+        s"Types do not match ${left.dataType} != ${right.dataType}")
+    }
+    left.dataType match {
+      case i: NativeType => i.ordering.asInstanceOf[Ordering[Any]]
+      case other => sys.error(s"Type $other does not support ordered operations")
+    }
+  }
+
+  override def eval(input: Row): Any = {
+    val evalE1 = left.eval(input)
+    if (evalE1 == null) {
+      null
+    } else {
+      val evalE2 = right.eval(input)
+      if (evalE2 == null) {
+        null
+      } else {
+        ordering.lteq(evalE1, evalE2)
+      }
+    }
+  }
+}
+
+case class GreaterThan(left: Expression, right: Expression) extends BinaryComparison {
+  override def symbol: String = ">"
+
+  lazy val ordering: Ordering[Any] = {
+    if (left.dataType != right.dataType) {
+      throw new TreeNodeException(this,
+        s"Types do not match ${left.dataType} != ${right.dataType}")
+    }
+    left.dataType match {
+      case i: NativeType => i.ordering.asInstanceOf[Ordering[Any]]
+      case other => sys.error(s"Type $other does not support ordered operations")
+    }
+  }
+
+  override def eval(input: Row): Any = {
+    val evalE1 = left.eval(input)
+    if(evalE1 == null) {
+      null
+    } else {
+      val evalE2 = right.eval(input)
+      if (evalE2 == null) {
+        null
+      } else {
+        ordering.gt(evalE1, evalE2)
+      }
+    }
+  }
+}
+
+case class GreaterThanOrEqual(left: Expression, right: Expression) extends BinaryComparison {
+  override def symbol: String = ">="
+
+  lazy val ordering: Ordering[Any] = {
+    if (left.dataType != right.dataType) {
+      throw new TreeNodeException(this,
+        s"Types do not match ${left.dataType} != ${right.dataType}")
+    }
+    left.dataType match {
+      case i: NativeType => i.ordering.asInstanceOf[Ordering[Any]]
+      case other => sys.error(s"Type $other does not support ordered operations")
+    }
+  }
+
+  override def eval(input: Row): Any = {
+    val evalE1 = left.eval(input)
+    if (evalE1 == null) {
+      null
+    } else {
+      val evalE2 = right.eval(input)
+      if (evalE2 == null) {
+        null
+      } else {
+        ordering.gteq(evalE1, evalE2)
+      }
+    }
+  }
+}
+
+case class If(predicate: Expression, trueValue: Expression, falseValue: Expression)
+  extends Expression {
+
+  override def children: Seq[Expression] = predicate :: trueValue :: falseValue :: Nil
+  override def nullable: Boolean = trueValue.nullable || falseValue.nullable
+
+  override lazy val resolved = childrenResolved && trueValue.dataType == falseValue.dataType
+  override def dataType: DataType = {
+>>>>>>> githubspark/branch-1.3
     if (!resolved) {
       throw new UnresolvedException(
         this,
@@ -235,7 +434,11 @@ case class If(predicate: Expression, trueValue: Expression, falseValue: Expressi
     }
   }
 
+<<<<<<< HEAD
   override def toString = s"if ($predicate) $trueValue else $falseValue"
+=======
+  override def toString: String = s"if ($predicate) $trueValue else $falseValue"
+>>>>>>> githubspark/branch-1.3
 }
 
 // scalastyle:off
@@ -255,9 +458,16 @@ case class If(predicate: Expression, trueValue: Expression, falseValue: Expressi
 // scalastyle:on
 case class CaseWhen(branches: Seq[Expression]) extends Expression {
   type EvaluatedType = Any
+<<<<<<< HEAD
   def children = branches
 
   def dataType = {
+=======
+
+  override def children: Seq[Expression] = branches
+
+  override def dataType: DataType = {
+>>>>>>> githubspark/branch-1.3
     if (!resolved) {
       throw new UnresolvedException(this, "cannot resolve due to differing types in some branches")
     }
@@ -272,12 +482,20 @@ case class CaseWhen(branches: Seq[Expression]) extends Expression {
   @transient private[this] lazy val elseValue =
     if (branches.length % 2 == 0) None else Option(branches.last)
 
+<<<<<<< HEAD
   override def nullable = {
+=======
+  override def nullable: Boolean = {
+>>>>>>> githubspark/branch-1.3
     // If no value is nullable and no elseValue is provided, the whole statement defaults to null.
     values.exists(_.nullable) || (elseValue.map(_.nullable).getOrElse(true))
   }
 
+<<<<<<< HEAD
   override lazy val resolved = {
+=======
+  override lazy val resolved: Boolean = {
+>>>>>>> githubspark/branch-1.3
     if (!childrenResolved) {
       false
     } else {
@@ -308,7 +526,11 @@ case class CaseWhen(branches: Seq[Expression]) extends Expression {
     res
   }
 
+<<<<<<< HEAD
   override def toString = {
+=======
+  override def toString: String = {
+>>>>>>> githubspark/branch-1.3
     "CASE" + branches.sliding(2, 2).map {
       case Seq(cond, value) => s" WHEN $cond THEN $value"
       case Seq(elseValue) => s" ELSE $elseValue"

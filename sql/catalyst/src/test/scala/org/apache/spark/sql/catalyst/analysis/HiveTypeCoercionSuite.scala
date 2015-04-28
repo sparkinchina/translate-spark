@@ -17,6 +17,7 @@
 
 package org.apache.spark.sql.catalyst.analysis
 
+<<<<<<< HEAD
 import org.scalatest.FunSuite
 
 import org.apache.spark.sql.catalyst.expressions._
@@ -24,6 +25,15 @@ import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Project}
 import org.apache.spark.sql.catalyst.types._
 
 class HiveTypeCoercionSuite extends FunSuite {
+=======
+import org.apache.spark.sql.catalyst.plans.PlanTest
+
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Project}
+import org.apache.spark.sql.types._
+
+class HiveTypeCoercionSuite extends PlanTest {
+>>>>>>> githubspark/branch-1.3
 
   test("tightest common bound for types") {
     def widenTest(t1: DataType, t2: DataType, tightestCommon: Option[DataType]) {
@@ -106,7 +116,12 @@ class HiveTypeCoercionSuite extends FunSuite {
     val booleanCasts = new HiveTypeCoercion { }.BooleanCasts
     def ruleTest(initial: Expression, transformed: Expression) {
       val testRelation = LocalRelation(AttributeReference("a", IntegerType)())
+<<<<<<< HEAD
       assert(booleanCasts(Project(Seq(Alias(initial, "a")()), testRelation)) ==
+=======
+      comparePlans(
+        booleanCasts(Project(Seq(Alias(initial, "a")()), testRelation)),
+>>>>>>> githubspark/branch-1.3
         Project(Seq(Alias(transformed, "a")()), testRelation))
     }
     // Remove superflous boolean -> boolean casts.
@@ -114,4 +129,35 @@ class HiveTypeCoercionSuite extends FunSuite {
     // Stringify boolean when casting to string.
     ruleTest(Cast(Literal(false), StringType), If(Literal(false), Literal("true"), Literal("false")))
   }
+<<<<<<< HEAD
+=======
+
+  test("coalesce casts") {
+    val fac = new HiveTypeCoercion { }.FunctionArgumentConversion
+    def ruleTest(initial: Expression, transformed: Expression) {
+      val testRelation = LocalRelation(AttributeReference("a", IntegerType)())
+      comparePlans(
+        fac(Project(Seq(Alias(initial, "a")()), testRelation)),
+        Project(Seq(Alias(transformed, "a")()), testRelation))
+    }
+    ruleTest(
+      Coalesce(Literal(1.0)
+        :: Literal(1)
+        :: Literal(1.0, FloatType)
+        :: Nil),
+      Coalesce(Cast(Literal(1.0), DoubleType)
+        :: Cast(Literal(1), DoubleType)
+        :: Cast(Literal(1.0, FloatType), DoubleType)
+        :: Nil))
+    ruleTest(
+      Coalesce(Literal(1L)
+        :: Literal(1)
+        :: Literal(new java.math.BigDecimal("1000000000000000000000"))
+        :: Nil),
+      Coalesce(Cast(Literal(1L), DecimalType())
+        :: Cast(Literal(1), DecimalType())
+        :: Cast(Literal(new java.math.BigDecimal("1000000000000000000000")), DecimalType())
+        :: Nil))
+  }
+>>>>>>> githubspark/branch-1.3
 }

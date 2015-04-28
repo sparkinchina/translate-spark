@@ -100,8 +100,12 @@ public class TransportServer implements Closeable {
       }
     });
 
+<<<<<<< HEAD
     channelFuture = bootstrap.bind(new InetSocketAddress(portToBind));
     channelFuture.syncUninterruptibly();
+=======
+    bindRightPort(portToBind);
+>>>>>>> githubspark/branch-1.3
 
     port = ((InetSocketAddress) channelFuture.channel().localAddress()).getPort();
     logger.debug("Shuffle server started on port :" + port);
@@ -123,4 +127,40 @@ public class TransportServer implements Closeable {
     bootstrap = null;
   }
 
+<<<<<<< HEAD
+=======
+  /**
+   * Attempt to bind to the specified port up to a fixed number of retries.
+   * If all attempts fail after the max number of retries, exit.
+   */
+  private void bindRightPort(int portToBind) {
+    int maxPortRetries = conf.portMaxRetries();
+
+    for (int i = 0; i <= maxPortRetries; i++) {
+      int tryPort = -1;
+      if (0 == portToBind) {
+        // Do not increment port if tryPort is 0, which is treated as a special port
+        tryPort = 0;
+      } else {
+        // If the new port wraps around, do not try a privilege port
+        tryPort = ((portToBind + i - 1024) % (65536 - 1024)) + 1024;
+      }
+      try {
+        channelFuture = bootstrap.bind(new InetSocketAddress(tryPort));
+        channelFuture.syncUninterruptibly();
+        return;
+      } catch (Exception e) {
+        logger.warn("Netty service could not bind on port " + tryPort +
+          ". Attempting the next port.");
+        if (i >= maxPortRetries) {
+          logger.error(e.getMessage() + ": Netty server failed after "
+            + maxPortRetries + " retries.");
+
+          // If it can't find a right port, it should exit directly.
+          System.exit(-1);
+        }
+      }
+    }
+  }
+>>>>>>> githubspark/branch-1.3
 }

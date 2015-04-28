@@ -17,12 +17,20 @@
 
 package org.apache.spark.sql.catalyst.optimizer
 
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.analysis.EliminateAnalysisOperators
+=======
+import org.apache.spark.sql.catalyst.analysis.{UnresolvedGetField, EliminateSubQueries}
+>>>>>>> githubspark/branch-1.3
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, LogicalPlan}
 import org.apache.spark.sql.catalyst.plans.PlanTest
 import org.apache.spark.sql.catalyst.rules.RuleExecutor
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types._
+=======
+import org.apache.spark.sql.types._
+>>>>>>> githubspark/branch-1.3
 
 // For implicit conversions
 import org.apache.spark.sql.catalyst.dsl.plans._
@@ -33,7 +41,11 @@ class ConstantFoldingSuite extends PlanTest {
   object Optimize extends RuleExecutor[LogicalPlan] {
     val batches =
       Batch("AnalysisNodes", Once,
+<<<<<<< HEAD
         EliminateAnalysisOperators) ::
+=======
+        EliminateSubQueries) ::
+>>>>>>> githubspark/branch-1.3
       Batch("ConstantFolding", Once,
         ConstantFolding,
         BooleanSimplification) :: Nil
@@ -184,7 +196,11 @@ class ConstantFoldingSuite extends PlanTest {
 
           GetItem(Literal(null, ArrayType(IntegerType)), 1) as 'c3,
           GetItem(Literal(Seq(1), ArrayType(IntegerType)), Literal(null, IntegerType)) as 'c4,
+<<<<<<< HEAD
           GetField(
+=======
+          UnresolvedGetField(
+>>>>>>> githubspark/branch-1.3
             Literal(null, StructType(Seq(StructField("a", IntegerType, true)))),
             "a") as 'c5,
 

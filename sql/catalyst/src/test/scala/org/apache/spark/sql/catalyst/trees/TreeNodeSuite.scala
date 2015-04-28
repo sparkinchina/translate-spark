@@ -22,7 +22,11 @@ import scala.collection.mutable.ArrayBuffer
 import org.scalatest.FunSuite
 
 import org.apache.spark.sql.catalyst.expressions._
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types.{StringType, NullType}
+=======
+import org.apache.spark.sql.types.{StringType, NullType}
+>>>>>>> githubspark/branch-1.3
 
 case class Dummy(optKey: Option[Expression]) extends Expression {
   def children = optKey.toSeq
@@ -104,4 +108,21 @@ class TreeNodeSuite extends FunSuite {
     assert(actual === Dummy(None))
   }
 
+<<<<<<< HEAD
+=======
+  test("preserves origin") {
+    CurrentOrigin.setPosition(1,1)
+    val add = Add(Literal(1), Literal(1))
+    CurrentOrigin.reset()
+
+    val transformed = add transform {
+      case Literal(1, _) => Literal(2)
+    }
+
+    assert(transformed.origin.line.isDefined)
+    assert(transformed.origin.startPosition.isDefined)
+  }
+
+
+>>>>>>> githubspark/branch-1.3
 }

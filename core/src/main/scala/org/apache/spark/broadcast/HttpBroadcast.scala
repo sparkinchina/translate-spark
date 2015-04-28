@@ -35,10 +35,13 @@ import org.apache.spark.util.{MetadataCleaner, MetadataCleanerType, TimeStampedH
  * task) is deserialized in the executor, the broadcasted data is fetched from the driver
  * (through a HTTP server running at the driver) and stored in the BlockManager of the
  * executor to speed up future accesses.
+<<<<<<< HEAD
  *
  * HttpBroadcast是使用HTTP server做为广播媒介，实现Broadcast的一种方式。HTTP broadcast变量（作为task
  * 的一部分）最初是在Executor上反序列化，被广播的数据从Driver上获取下来（通过在Driver上运行的HTTP server），
  * 并存储在Exexutor的BlockManager中，从而加速了后续的访问
+=======
+>>>>>>> githubspark/branch-1.3
  */
 private[spark] class HttpBroadcast[T: ClassTag](
     @transient var value_ : T, isLocal: Boolean, id: Long)
@@ -229,6 +232,7 @@ private[broadcast] object HttpBroadcast extends Logging {
       uc = new URL(url).openConnection()
       uc.setConnectTimeout(httpReadTimeout)
     }
+    Utils.setupSecureURLConnection(uc, securityManager)
 
     val in = {
       uc.setReadTimeout(httpReadTimeout)

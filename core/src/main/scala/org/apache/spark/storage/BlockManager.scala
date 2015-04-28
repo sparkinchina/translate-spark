@@ -34,10 +34,9 @@ import org.apache.spark.executor._
 import org.apache.spark.io.CompressionCodec
 import org.apache.spark.network._
 import org.apache.spark.network.buffer.{ManagedBuffer, NioManagedBuffer}
-import org.apache.spark.network.netty.{SparkTransportConf, NettyBlockTransferService}
+import org.apache.spark.network.netty.SparkTransportConf
 import org.apache.spark.network.shuffle.ExternalShuffleClient
 import org.apache.spark.network.shuffle.protocol.ExecutorShuffleInfo
-import org.apache.spark.network.util.{ConfigProvider, TransportConf}
 import org.apache.spark.serializer.Serializer
 import org.apache.spark.shuffle.ShuffleManager
 import org.apache.spark.shuffle.hash.HashShuffleManager
@@ -54,7 +53,7 @@ private[spark] class BlockResult(
     readMethod: DataReadMethod.Value,
     bytes: Long) {
   val inputMetrics = new InputMetrics(readMethod)
-  inputMetrics.bytesRead = bytes
+  inputMetrics.incBytesRead(bytes)
 }
 
 /**
@@ -130,7 +129,7 @@ private[spark] class BlockManager(
   private[spark] var shuffleServerId: BlockManagerId = _
 
   // Client to read other executors' shuffle files. This is either an external service, or just the
-  // standard BlockTranserService to directly connect to other Executors.
+  // standard BlockTransferService to directly connect to other Executors.
   private[spark] val shuffleClient = if (externalShuffleServiceEnabled) {
     val transConf = SparkTransportConf.fromSparkConf(conf, numUsableCores)
     new ExternalShuffleClient(transConf, securityManager, securityManager.isAuthenticationEnabled())
@@ -390,7 +389,10 @@ private[spark] class BlockManager(
       info: BlockInfo,
       status: BlockStatus,
       droppedMemorySize: Long = 0L): Unit = {
+<<<<<<< HEAD
     // 如果返回false, 说明你发的blockid在master没有, 需要重新注册
+=======
+>>>>>>> githubspark/branch-1.3
     val needReregister = !tryToReportBlockStatus(blockId, info, status, droppedMemorySize)
     if (needReregister) {
       logInfo(s"Got told to re-register updating block $blockId")
@@ -495,9 +497,12 @@ private[spark] class BlockManager(
         // Note that this only checks metadata tracking. If user intentionally deleted the block
         // on disk or from off heap storage without using removeBlock, this conditional check will
         // still pass but eventually we will get an exception because we can't find the block.
+<<<<<<< HEAD
         // 两次检查确保数据块的存在。存在一个很小的几率，数据在获取前被移除。
         // 注 这里仅仅是检查跟踪的元数据。如果用户没有使用 removeBlock 方法，而是蓄意删除掉磁盘上的文件，
         // 这种情况是无法检查到的，最终我们会因无法找到数据块而引发一个异常。
+=======
+>>>>>>> githubspark/branch-1.3
         if (blockInfo.get(blockId).isEmpty) {
           logWarning(s"Block $blockId had been removed")
           return None
@@ -512,6 +517,7 @@ private[spark] class BlockManager(
 
         val level = info.level
         logDebug(s"Level for block $blockId is $level")
+<<<<<<< HEAD
         /**
          * add by yay(598775508) at 2015/1/9-13:28
          * 1.level.useMemory == true：从memory中取出block并返回，若没有取到则进入分支2。
@@ -519,6 +525,9 @@ private[spark] class BlockManager(
          *       同时返回该block；level.useMemory == false: 将block从disk中读出并返回
          * 3.level.useDisk == false: 没有在本地找到block，返回None
          * */
+=======
+
+>>>>>>> githubspark/branch-1.3
         // Look for the block in memory
         if (level.useMemory) {
           logDebug(s"Getting block $blockId from memory")
@@ -631,6 +640,7 @@ private[spark] class BlockManager(
 
   private def doGetRemote(blockId: BlockId, asBlockResult: Boolean): Option[Any] = {
     require(blockId != null, "BlockId is null")
+<<<<<<< HEAD
 //   具体处理请查看BlockManagerMasterActor中的getLocations函数
     val locations = Random.shuffle(master.getLocations(blockId))
     for (loc <- locations) {
@@ -640,6 +650,14 @@ private[spark] class BlockManager(
         loc.host, loc.port, loc.executorId, blockId.toString).nioByteBuffer()
 
 //      只要有一个远端返回block该函数就返回而不继续发送请求。
+=======
+    val locations = Random.shuffle(master.getLocations(blockId))
+    for (loc <- locations) {
+      logDebug(s"Getting remote block $blockId from $loc")
+      val data = blockTransferService.fetchBlockSync(
+        loc.host, loc.port, loc.executorId, blockId.toString).nioByteBuffer()
+
+>>>>>>> githubspark/branch-1.3
       if (data != null) {
         if (asBlockResult) {
           return Some(new BlockResult(
@@ -735,8 +753,11 @@ private[spark] class BlockManager(
    * The effective storage level refers to the level according to which the block will actually be
    * handled. This allows the caller to specify an alternate behavior of doPut while preserving
    * the original level specified by the user.
+<<<<<<< HEAD
    *
    * 根据给定的存储level，保存数据，如果需要，制作数据的副本。
+=======
+>>>>>>> githubspark/branch-1.3
    */
   private def doPut(
       blockId: BlockId,
@@ -757,9 +778,13 @@ private[spark] class BlockManager(
 
     /* Remember the block's storage level so that we can correctly drop it to disk if it needs
      * to be dropped right after it got put into memory. Note, however, that other threads will
+<<<<<<< HEAD
      * not be able to get() this block until we call markReady on its BlockInfo.
      *  记录当前Storage Level，以便我们在将数据复制到内存之后，还可以按需要复制到硬盘上
      *  注：在我们调用BlockInfo的 markReady 方法之前，其他线程都没法通过get方法获得该Block内容 */
+=======
+     * not be able to get() this block until we call markReady on its BlockInfo. */
+>>>>>>> githubspark/branch-1.3
     val putBlockInfo = {
       val tinfo = new BlockInfo(level, tellMaster)
       // Do atomically !
@@ -783,9 +808,12 @@ private[spark] class BlockManager(
      * but because our put will read the whole iterator, there will be no values left. For the
      * case where the put serializes data, we'll remember the bytes, above; but for the case where
      * it doesn't, such as deserialized storage, let's rely on the put returning an Iterator. */
+<<<<<<< HEAD
     /* 如果我们不仅需要存储数据，并且要复制数据到别的机器，那么我们需要再次访问这些数据，但是因为我们的put操作操作时，
      * iterator已经迭代到末尾了，当前Iterator已经无法读取了。对于保存序列化的数据的场景，我们可以记住这些bytes，
      * 但在其他场景，比如反序列化存储的时候，我们就必须依赖返回一个Iterator*/
+=======
+>>>>>>> githubspark/branch-1.3
     var valuesAfterPut: Iterator[Any] = null
 
     // Ditto for the bytes after the put
@@ -810,19 +838,29 @@ private[spark] class BlockManager(
     putBlockInfo.synchronized {
       logTrace("Put for block %s took %s to get into synchronized block"
         .format(blockId, Utils.getUsedTimeMs(startTimeMs)))
+<<<<<<< HEAD
 //标志该blockInfo不能被读取
+=======
+
+>>>>>>> githubspark/branch-1.3
       var marked = false
       try {
         // returnValues - Whether to return the values put
         // blockStore - The type of storage to put these values into
+<<<<<<< HEAD
         // returnValues - 是否返回保存的数据
         // blockStore - 数据的存储类型
+=======
+>>>>>>> githubspark/branch-1.3
         val (returnValues, blockStore: BlockStore) = {
           if (putLevel.useMemory) {
             // Put it in memory first, even if it also has useDisk set to true;
             // We will drop it to disk later if the memory store can't hold it.
+<<<<<<< HEAD
             // 首先保存到内存中，即使putLevel设置了useDisk = true
             // 如果内存装不下，我们随后会把数据丢到disk上
+=======
+>>>>>>> githubspark/branch-1.3
             (true, memoryStore)
           } else if (putLevel.useOffHeap) {
             // Use tachyon for off-heap storage
@@ -864,7 +902,10 @@ private[spark] class BlockManager(
           // Now that the block is in either the memory, tachyon, or disk store,
           // let other threads read it, and tell the master about it.
           marked = true
+<<<<<<< HEAD
 //          标志该Block已经可以被读取了
+=======
+>>>>>>> githubspark/branch-1.3
           putBlockInfo.markReady(size)
           if (tellMaster) {
             reportBlockStatus(blockId, putBlockInfo, putBlockStatus)

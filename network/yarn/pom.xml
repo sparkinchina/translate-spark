@@ -21,8 +21,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.spark</groupId>
+<<<<<<< HEAD
     <artifactId>spark-parent</artifactId>
     <version>1.2.1</version>
+=======
+    <artifactId>spark-parent_2.10</artifactId>
+    <version>1.3.2-SNAPSHOT</version>
+>>>>>>> githubspark/branch-1.3
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -33,6 +38,11 @@
   <url>http://spark.apache.org/</url>
   <properties>
     <sbt.project.name>network-yarn</sbt.project.name>
+<<<<<<< HEAD
+=======
+    <!-- Make sure all Hadoop dependencies are provided to avoid repackaging. -->
+    <hadoop.deps.scope>provided</hadoop.deps.scope>
+>>>>>>> githubspark/branch-1.3
   </properties>
 
   <dependencies>
@@ -47,7 +57,10 @@
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-client</artifactId>
+<<<<<<< HEAD
       <scope>provided</scope>
+=======
+>>>>>>> githubspark/branch-1.3
     </dependency>
   </dependencies>
 

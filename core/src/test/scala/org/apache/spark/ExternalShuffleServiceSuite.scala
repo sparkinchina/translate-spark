@@ -19,7 +19,6 @@ package org.apache.spark
 
 import org.scalatest.BeforeAndAfterAll
 
-import org.apache.spark.SparkContext._
 import org.apache.spark.network.TransportContext
 import org.apache.spark.network.netty.SparkTransportConf
 import org.apache.spark.network.server.TransportServer

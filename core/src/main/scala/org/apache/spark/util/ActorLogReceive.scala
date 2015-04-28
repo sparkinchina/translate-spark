@@ -19,6 +19,7 @@ package org.apache.spark.util
 
 import akka.actor.Actor
 import org.slf4j.Logger
+
 /**
  * A trait to enable logging all Akka actor messages. Here's an example of using this:
  *

@@ -19,7 +19,11 @@
 Python bindings for MLlib.
 """
 
+<<<<<<< HEAD
 # MLlib currently needs and NumPy 1.4+, so complain if lower
+=======
+# MLlib currently needs NumPy 1.4+, so complain if lower
+>>>>>>> githubspark/branch-1.3
 
 import numpy
 if numpy.version.version < '1.4':

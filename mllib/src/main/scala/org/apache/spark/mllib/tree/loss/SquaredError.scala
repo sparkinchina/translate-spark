@@ -17,7 +17,6 @@
 
 package org.apache.spark.mllib.tree.loss
 
-import org.apache.spark.SparkContext._
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.tree.model.TreeEnsembleModel

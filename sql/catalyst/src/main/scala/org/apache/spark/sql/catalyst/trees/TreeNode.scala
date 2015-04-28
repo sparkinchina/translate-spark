@@ -18,13 +18,56 @@
 package org.apache.spark.sql.catalyst.trees
 
 import org.apache.spark.sql.catalyst.errors._
+<<<<<<< HEAD
+=======
+import org.apache.spark.sql.types.DataType
+>>>>>>> githubspark/branch-1.3
 
 /** Used by [[TreeNode.getNodeNumbered]] when traversing the tree for a given number */
 private class MutableInt(var i: Int)
 
+<<<<<<< HEAD
 abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
   self: BaseType with Product =>
 
+=======
+case class Origin(
+  line: Option[Int] = None,
+  startPosition: Option[Int] = None)
+
+/**
+ * Provides a location for TreeNodes to ask about the context of their origin.  For example, which
+ * line of code is currently being parsed.
+ */
+object CurrentOrigin {
+  private val value = new ThreadLocal[Origin]() {
+    override def initialValue: Origin = Origin()
+  }
+
+  def get: Origin = value.get()
+  def set(o: Origin): Unit = value.set(o)
+
+  def reset(): Unit = value.set(Origin())
+
+  def setPosition(line: Int, start: Int): Unit = {
+    value.set(
+      value.get.copy(line = Some(line), startPosition = Some(start)))
+  }
+
+  def withOrigin[A](o: Origin)(f: => A): A = {
+    set(o)
+    val ret = try f finally { reset() }
+    reset()
+    ret
+  }
+}
+
+abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
+  self: BaseType with Product =>
+
+  val origin: Origin = CurrentOrigin.get
+
+>>>>>>> githubspark/branch-1.3
   /** Returns a Seq of the children of this node */
   def children: Seq[BaseType]
 
@@ -47,6 +90,18 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
   }
 
   /**
+<<<<<<< HEAD
+=======
+   * Runs the given function recursively on [[children]] then on this node.
+   * @param f the function to be applied to each node in the tree.
+   */
+  def foreachUp(f: BaseType => Unit): Unit = {
+    children.foreach(_.foreach(f))
+    f(this)
+  }
+
+  /**
+>>>>>>> githubspark/branch-1.3
    * Returns a Seq containing the result of applying the given function to each
    * node in this tree in a preorder traversal.
    * @param f the function to be applied.
@@ -141,7 +196,14 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
    * @param rule the function used to transform this nodes children
    */
   def transformDown(rule: PartialFunction[BaseType, BaseType]): BaseType = {
+<<<<<<< HEAD
     val afterRule = rule.applyOrElse(this, identity[BaseType])
+=======
+    val afterRule = CurrentOrigin.withOrigin(origin) {
+      rule.applyOrElse(this, identity[BaseType])
+    }
+
+>>>>>>> githubspark/branch-1.3
     // Check if unchanged and then possibly return old copy to avoid gc churn.
     if (this fastEquals afterRule) {
       transformChildrenDown(rule)
@@ -175,6 +237,10 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
           Some(arg)
         }
       case m: Map[_,_] => m
+<<<<<<< HEAD
+=======
+      case d: DataType => d // Avoid unpacking Structs
+>>>>>>> githubspark/branch-1.3
       case args: Traversable[_] => args.map {
         case arg: TreeNode[_] if children contains arg =>
           val newChild = arg.asInstanceOf[BaseType].transformDown(rule)
@@ -201,9 +267,19 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
   def transformUp(rule: PartialFunction[BaseType, BaseType]): BaseType = {
     val afterRuleOnChildren = transformChildrenUp(rule);
     if (this fastEquals afterRuleOnChildren) {
+<<<<<<< HEAD
       rule.applyOrElse(this, identity[BaseType])
     } else {
       rule.applyOrElse(afterRuleOnChildren, identity[BaseType])
+=======
+      CurrentOrigin.withOrigin(origin) {
+        rule.applyOrElse(this, identity[BaseType])
+      }
+    } else {
+      CurrentOrigin.withOrigin(origin) {
+        rule.applyOrElse(afterRuleOnChildren, identity[BaseType])
+      }
+>>>>>>> githubspark/branch-1.3
     }
   }
 
@@ -227,6 +303,10 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
           Some(arg)
         }
       case m: Map[_,_] => m
+<<<<<<< HEAD
+=======
+      case d: DataType => d // Avoid unpacking Structs
+>>>>>>> githubspark/branch-1.3
       case args: Traversable[_] => args.map {
         case arg: TreeNode[_] if children contains arg =>
           val newChild = arg.asInstanceOf[BaseType].transformUp(rule)
@@ -258,6 +338,7 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
    * @param newArgs the new product arguments.
    */
   def makeCopy(newArgs: Array[AnyRef]): this.type = attachTree(this, "makeCopy") {
+<<<<<<< HEAD
     try {
       // Skip no-arg constructors that are just there for kryo.
       val defaultCtor = getClass.getConstructors.find(_.getParameterTypes.size != 0).head
@@ -265,22 +346,57 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
         defaultCtor.newInstance(newArgs: _*).asInstanceOf[this.type]
       } else {
         defaultCtor.newInstance((newArgs ++ otherCopyArgs).toArray: _*).asInstanceOf[this.type]
+=======
+    val defaultCtor =
+      getClass.getConstructors
+        .find(_.getParameterTypes.size != 0)
+        .headOption
+        .getOrElse(sys.error(s"No valid constructor for $nodeName"))
+
+    try {
+      CurrentOrigin.withOrigin(origin) {
+        // Skip no-arg constructors that are just there for kryo.
+        if (otherCopyArgs.isEmpty) {
+          defaultCtor.newInstance(newArgs: _*).asInstanceOf[this.type]
+        } else {
+          defaultCtor.newInstance((newArgs ++ otherCopyArgs).toArray: _*).asInstanceOf[this.type]
+        }
+>>>>>>> githubspark/branch-1.3
       }
     } catch {
       case e: java.lang.IllegalArgumentException =>
         throw new TreeNodeException(
+<<<<<<< HEAD
           this, s"Failed to copy node.  Is otherCopyArgs specified correctly for $nodeName? "
             + s"Exception message: ${e.getMessage}.")
+=======
+          this,
+          s"""
+             |Failed to copy node.
+             |Is otherCopyArgs specified correctly for $nodeName.
+             |Exception message: ${e.getMessage}
+             |ctor: $defaultCtor?
+             |args: ${newArgs.mkString(", ")}
+           """.stripMargin)
+>>>>>>> githubspark/branch-1.3
     }
   }
 
   /** Returns the name of this type of TreeNode.  Defaults to the class name. */
+<<<<<<< HEAD
   def nodeName = getClass.getSimpleName
+=======
+  def nodeName: String = getClass.getSimpleName
+>>>>>>> githubspark/branch-1.3
 
   /**
    * The arguments that should be included in the arg string.  Defaults to the `productIterator`.
    */
+<<<<<<< HEAD
   protected def stringArgs = productIterator
+=======
+  protected def stringArgs: Iterator[Any] = productIterator
+>>>>>>> githubspark/branch-1.3
 
   /** Returns a string representing the arguments to this node, minus any children */
   def argString: String = productIterator.flatMap {
@@ -292,18 +408,30 @@ abstract class TreeNode[BaseType <: TreeNode[BaseType]] {
   }.mkString(", ")
 
   /** String representation of this node without any children */
+<<<<<<< HEAD
   def simpleString = s"$nodeName $argString"
+=======
+  def simpleString: String = s"$nodeName $argString".trim
+>>>>>>> githubspark/branch-1.3
 
   override def toString: String = treeString
 
   /** Returns a string representation of the nodes in this tree */
+<<<<<<< HEAD
   def treeString = generateTreeString(0, new StringBuilder).toString
+=======
+  def treeString: String = generateTreeString(0, new StringBuilder).toString
+>>>>>>> githubspark/branch-1.3
 
   /**
    * Returns a string representation of the nodes in this tree, where each operator is numbered.
    * The numbers can be used with [[trees.TreeNode.apply apply]] to easily access specific subtrees.
    */
+<<<<<<< HEAD
   def numberedTreeString =
+=======
+  def numberedTreeString: String =
+>>>>>>> githubspark/branch-1.3
     treeString.split("\n").zipWithIndex.map { case (line, i) => f"$i%02d $line" }.mkString("\n")
 
   /**
@@ -355,14 +483,22 @@ trait BinaryNode[BaseType <: TreeNode[BaseType]] {
   def left: BaseType
   def right: BaseType
 
+<<<<<<< HEAD
   def children = Seq(left, right)
+=======
+  def children: Seq[BaseType] = Seq(left, right)
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
  * A [[TreeNode]] with no children.
  */
 trait LeafNode[BaseType <: TreeNode[BaseType]] {
+<<<<<<< HEAD
   def children = Nil
+=======
+  def children: Seq[BaseType] = Nil
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -370,6 +506,11 @@ trait LeafNode[BaseType <: TreeNode[BaseType]] {
  */
 trait UnaryNode[BaseType <: TreeNode[BaseType]] {
   def child: BaseType
+<<<<<<< HEAD
   def children = child :: Nil
 }
 
+=======
+  def children: Seq[BaseType] = child :: Nil
+}
+>>>>>>> githubspark/branch-1.3

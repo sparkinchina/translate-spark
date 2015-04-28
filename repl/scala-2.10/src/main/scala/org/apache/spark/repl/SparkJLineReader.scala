@@ -22,7 +22,11 @@ import io.Streamable.slurp
 /**
  *  Reads from the console using JLine.
  */
+<<<<<<< HEAD
 class SparkJLineReader(_completion: => Completion) extends InteractiveReader {
+=======
+private[repl] class SparkJLineReader(_completion: => Completion) extends InteractiveReader {
+>>>>>>> githubspark/branch-1.3
   val interactive = true
   val consoleReader = new JLineConsoleReader()
 
@@ -82,7 +86,11 @@ class SparkJLineReader(_completion: => Completion) extends InteractiveReader {
 }
 
 /** Changes the default history file to not collide with the scala repl's. */
+<<<<<<< HEAD
 class SparkJLineHistory extends JLineFileHistory {
+=======
+private[repl] class SparkJLineHistory extends JLineFileHistory {
+>>>>>>> githubspark/branch-1.3
   import Properties.userHome
 
   def defaultFileName = ".spark_history"

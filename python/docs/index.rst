@@ -14,6 +14,10 @@ Contents:
    pyspark
    pyspark.sql
    pyspark.streaming
+<<<<<<< HEAD
+=======
+   pyspark.ml
+>>>>>>> githubspark/branch-1.3
    pyspark.mllib
 
 
@@ -28,6 +32,17 @@ Core classes:
 
     A Resilient Distributed Dataset (RDD), the basic abstraction in Spark.
 
+<<<<<<< HEAD
+=======
+    :class:`pyspark.sql.SQLContext`
+
+    Main entry point for DataFrame and SQL functionality.
+
+    :class:`pyspark.sql.DataFrame`
+
+    A distributed collection of data grouped into named columns.
+
+>>>>>>> githubspark/branch-1.3
 
 Indices and tables
 ==================

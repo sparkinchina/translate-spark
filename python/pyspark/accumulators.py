@@ -215,6 +215,7 @@ FLOAT_ACCUMULATOR_PARAM = AddingAccumulatorParam(0.0)
 COMPLEX_ACCUMULATOR_PARAM = AddingAccumulatorParam(0.0j)
 
 
+<<<<<<< HEAD
 class PStatsParam(AccumulatorParam):
     """PStatsParam is used to merge pstats.Stats"""
 
@@ -230,6 +231,8 @@ class PStatsParam(AccumulatorParam):
         return value1
 
 
+=======
+>>>>>>> githubspark/branch-1.3
 class _UpdateRequestHandler(SocketServer.StreamRequestHandler):
 
     """

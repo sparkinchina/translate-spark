@@ -62,8 +62,12 @@ private[spark] class WorkerPage(parent: WorkerWebUI) extends WebUIPage("") {
 
     // For now we only show driver information if the user has submitted drivers to the cluster.
     // This is until we integrate the notion of drivers and applications in the UI.
+<<<<<<< HEAD
     // 如果用户已经提交drivers到这个集群的话眼下我们就只能显示驱动信息了.
     // 这个会直到我们整合在UI中的drivers和applications的概念的时候.
+=======
+
+>>>>>>> githubspark/branch-1.3
     val content =
       <div class="row-fluid"> <!-- Worker Details -->
         <div class="span12">
@@ -135,7 +139,11 @@ private[spark] class WorkerPage(parent: WorkerWebUI) extends WebUIPage("") {
   def driverRow(driver: DriverRunner): Seq[Node] = {
     <tr>
       <td>{driver.driverId}</td>
+<<<<<<< HEAD
       <td>{driver.driverDesc.command.arguments(1)}</td>
+=======
+      <td>{driver.driverDesc.command.arguments(2)}</td>
+>>>>>>> githubspark/branch-1.3
       <td>{driver.finalState.getOrElse(DriverState.RUNNING)}</td>
       <td sorttable_customkey={driver.driverDesc.cores.toString}>
         {driver.driverDesc.cores.toString}

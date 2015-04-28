@@ -17,16 +17,41 @@
 
 package org.apache.spark.deploy
 
+<<<<<<< HEAD
+=======
+import java.net.URI
+
+>>>>>>> githubspark/branch-1.3
 private[spark] class ApplicationDescription(
     val name: String,
     val maxCores: Option[Int],
     val memoryPerSlave: Int,
     val command: Command,
     var appUiUrl: String,
+<<<<<<< HEAD
     val eventLogDir: Option[String] = None)
+=======
+    val eventLogDir: Option[URI] = None,
+    // short name of compression codec used when writing event logs, if any (e.g. lzf)
+    val eventLogCodec: Option[String] = None)
+>>>>>>> githubspark/branch-1.3
   extends Serializable {
 
   val user = System.getProperty("user.name", "<unknown>")
 
+<<<<<<< HEAD
+=======
+  def copy(
+      name: String = name,
+      maxCores: Option[Int] = maxCores,
+      memoryPerSlave: Int = memoryPerSlave,
+      command: Command = command,
+      appUiUrl: String = appUiUrl,
+      eventLogDir: Option[URI] = eventLogDir,
+      eventLogCodec: Option[String] = eventLogCodec): ApplicationDescription =
+    new ApplicationDescription(
+      name, maxCores, memoryPerSlave, command, appUiUrl, eventLogDir, eventLogCodec)
+
+>>>>>>> githubspark/branch-1.3
   override def toString: String = "ApplicationDescription(" + name + ")"
 }

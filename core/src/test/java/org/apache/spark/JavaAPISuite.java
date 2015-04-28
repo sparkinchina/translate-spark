@@ -184,6 +184,7 @@ public class JavaAPISuite implements Serializable {
     Assert.assertEquals(new Tuple2<Integer, Integer>(3, 2), sortedPairs.get(2));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void repartitionAndSortWithinPartitions() {
     List<Tuple2<Integer, Integer>> pairs = new ArrayList<Tuple2<Integer, Integer>>();
@@ -261,6 +262,22 @@ public class JavaAPISuite implements Serializable {
       @Override
       public void call(String s) throws IOException {
         accum.add(1);
+      }
+    });
+    Assert.assertEquals(2, accum.value().intValue());
+  }
+
+  @Test
+  public void foreachPartition() {
+    final Accumulator<Integer> accum = sc.accumulator(0);
+    JavaRDD<String> rdd = sc.parallelize(Arrays.asList("Hello", "World"));
+    rdd.foreachPartition(new VoidFunction<Iterator<String>>() {
+      @Override
+      public void call(Iterator<String> iter) throws IOException {
+        while (iter.hasNext()) {
+          iter.next();
+          accum.add(1);
+        }
       }
     });
     Assert.assertEquals(2, accum.value().intValue());
@@ -492,6 +509,37 @@ public class JavaAPISuite implements Serializable {
   }
 
   @Test
+  public void treeReduce() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(-5, -4, -3, -2, -1, 1, 2, 3, 4), 10);
+    Function2<Integer, Integer, Integer> add = new Function2<Integer, Integer, Integer>() {
+      @Override
+      public Integer call(Integer a, Integer b) {
+        return a + b;
+      }
+    };
+    for (int depth = 1; depth <= 10; depth++) {
+      int sum = rdd.treeReduce(add, depth);
+      Assert.assertEquals(-5, sum);
+    }
+  }
+
+  @Test
+  public void treeAggregate() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(-5, -4, -3, -2, -1, 1, 2, 3, 4), 10);
+    Function2<Integer, Integer, Integer> add = new Function2<Integer, Integer, Integer>() {
+      @Override
+      public Integer call(Integer a, Integer b) {
+        return a + b;
+      }
+    };
+    for (int depth = 1; depth <= 10; depth++) {
+      int sum = rdd.treeAggregate(0, add, add, depth);
+      Assert.assertEquals(-5, sum);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
   public void aggregateByKey() {
     JavaPairRDD<Integer, Integer> pairs = sc.parallelizePairs(
       Arrays.asList(
@@ -605,6 +653,34 @@ public class JavaAPISuite implements Serializable {
   }
 
   @Test
+  public void isEmpty() {
+    Assert.assertTrue(sc.emptyRDD().isEmpty());
+    Assert.assertTrue(sc.parallelize(new ArrayList<Integer>()).isEmpty());
+    Assert.assertFalse(sc.parallelize(Arrays.asList(1)).isEmpty());
+    Assert.assertTrue(sc.parallelize(Arrays.asList(1, 2, 3), 3).filter(
+        new Function<Integer,Boolean>() {
+          @Override
+          public Boolean call(Integer i) {
+            return i < 0;
+          }
+        }).isEmpty());
+    Assert.assertFalse(sc.parallelize(Arrays.asList(1, 2, 3)).filter(
+        new Function<Integer, Boolean>() {
+          @Override
+          public Boolean call(Integer i) {
+            return i > 1;
+          }
+        }).isEmpty());
+  }
+
+  @Test
+  public void toArray() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3));
+    List<Integer> list = rdd.toArray();
+    Assert.assertEquals(Arrays.asList(1, 2, 3), list);
+  }
+
+  @Test
   public void cartesian() {
     JavaDoubleRDD doubleRDD = sc.parallelizeDoubles(Arrays.asList(1.0, 1.0, 2.0, 3.0, 5.0, 8.0));
     JavaRDD<String> stringRDD = sc.parallelize(Arrays.asList("Hello", "World"));
@@ -655,6 +731,80 @@ public class JavaAPISuite implements Serializable {
     // Test with provided buckets
     long[] histogram = rdd.histogram(expected_buckets);
     Assert.assertArrayEquals(expected_counts, histogram);
+  }
+
+  private static class DoubleComparator implements Comparator<Double>, Serializable {
+    public int compare(Double o1, Double o2) {
+      return o1.compareTo(o2);
+    }
+  }
+
+  @Test
+  public void max() {
+    JavaDoubleRDD rdd = sc.parallelizeDoubles(Arrays.asList(1.0, 2.0, 3.0, 4.0));
+    double max = rdd.max(new DoubleComparator());
+    Assert.assertEquals(4.0, max, 0.001);
+  }
+
+  @Test
+  public void min() {
+    JavaDoubleRDD rdd = sc.parallelizeDoubles(Arrays.asList(1.0, 2.0, 3.0, 4.0));
+    double max = rdd.min(new DoubleComparator());
+    Assert.assertEquals(1.0, max, 0.001);
+  }
+
+  @Test
+  public void takeOrdered() {
+    JavaDoubleRDD rdd = sc.parallelizeDoubles(Arrays.asList(1.0, 2.0, 3.0, 4.0));
+    Assert.assertEquals(Arrays.asList(1.0, 2.0), rdd.takeOrdered(2, new DoubleComparator()));
+    Assert.assertEquals(Arrays.asList(1.0, 2.0), rdd.takeOrdered(2));
+  }
+
+  @Test
+  public void top() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4));
+    List<Integer> top2 = rdd.top(2);
+    Assert.assertEquals(Arrays.asList(4, 3), top2);
+  }
+
+  private static class AddInts implements Function2<Integer, Integer, Integer> {
+    @Override
+    public Integer call(Integer a, Integer b) {
+      return a + b;
+    }
+  }
+
+  @Test
+  public void reduce() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4));
+    int sum = rdd.reduce(new AddInts());
+    Assert.assertEquals(10, sum);
+  }
+
+  @Test
+  public void reduceOnJavaDoubleRDD() {
+    JavaDoubleRDD rdd = sc.parallelizeDoubles(Arrays.asList(1.0, 2.0, 3.0, 4.0));
+    double sum = rdd.reduce(new Function2<Double, Double, Double>() {
+      @Override
+      public Double call(Double v1, Double v2) throws Exception {
+        return v1 + v2;
+      }
+    });
+    Assert.assertEquals(10.0, sum, 0.001);
+  }
+
+  @Test
+  public void fold() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4));
+    int sum = rdd.fold(0, new AddInts());
+    Assert.assertEquals(10, sum);
+  }
+
+  @Test
+  public void aggregate() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4));
+    int sum = rdd.aggregate(0, new AddInts(), new AddInts());
+    Assert.assertEquals(10, sum);
   }
 
   @Test
@@ -773,6 +923,25 @@ public class JavaAPISuite implements Serializable {
     Assert.assertEquals("[3, 7]", partitionSums.collect().toString());
   }
 
+
+  @Test
+  public void mapPartitionsWithIndex() {
+    JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4), 2);
+    JavaRDD<Integer> partitionSums = rdd.mapPartitionsWithIndex(
+      new Function2<Integer, Iterator<Integer>, Iterator<Integer>>() {
+        @Override
+        public Iterator<Integer> call(Integer index, Iterator<Integer> iter) throws Exception {
+          int sum = 0;
+          while (iter.hasNext()) {
+            sum += iter.next();
+          }
+          return Collections.singletonList(sum).iterator();
+        }
+    }, false);
+    Assert.assertEquals("[3, 7]", partitionSums.collect().toString());
+  }
+
+
   @Test
   public void repartition() {
     // Shrinking number of partitions
@@ -818,7 +987,7 @@ public class JavaAPISuite implements Serializable {
   @Test
   public void iterator() {
     JavaRDD<Integer> rdd = sc.parallelize(Arrays.asList(1, 2, 3, 4, 5), 2);
-    TaskContext context = new TaskContextImpl(0, 0, 0L, false, new TaskMetrics());
+    TaskContext context = new TaskContextImpl(0, 0, 0L, 0, false, new TaskMetrics());
     Assert.assertEquals(1, rdd.iterator(rdd.partitions().get(0), context).next().intValue());
   }
 
@@ -1460,6 +1629,19 @@ public class JavaAPISuite implements Serializable {
   }
 
   @Test
+  public void takeAsync() throws Exception {
+    List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
+    JavaRDD<Integer> rdd = sc.parallelize(data, 1);
+    JavaFutureAction<List<Integer>> future = rdd.takeAsync(1);
+    List<Integer> result = future.get();
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals((Integer) 1, result.get(0));
+    Assert.assertFalse(future.isCancelled());
+    Assert.assertTrue(future.isDone());
+    Assert.assertEquals(1, future.jobIds().size());
+  }
+
+  @Test
   public void foreachAsync() throws Exception {
     List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
     JavaRDD<Integer> rdd = sc.parallelize(data, 1);
@@ -1556,7 +1738,7 @@ public class JavaAPISuite implements Serializable {
   @Test
   public void testRegisterKryoClasses() {
     SparkConf conf = new SparkConf();
-    conf.registerKryoClasses(new Class[]{ Class1.class, Class2.class });
+    conf.registerKryoClasses(new Class<?>[]{ Class1.class, Class2.class });
     Assert.assertEquals(
         Class1.class.getName() + "," + Class2.class.getName(),
         conf.get("spark.kryo.classesToRegister"));

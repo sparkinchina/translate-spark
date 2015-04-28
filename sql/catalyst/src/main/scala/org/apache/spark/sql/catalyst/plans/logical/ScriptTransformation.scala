@@ -17,7 +17,11 @@
 
 package org.apache.spark.sql.catalyst.plans.logical
 
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
+=======
+import org.apache.spark.sql.catalyst.expressions.{AttributeSet, Attribute, Expression}
+>>>>>>> githubspark/branch-1.3
 
 /**
  * Transforms the input by forking and running the specified script.
@@ -25,9 +29,26 @@ import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
  * @param input the set of expression that should be passed to the script.
  * @param script the command that should be executed.
  * @param output the attributes that are produced by the script.
+<<<<<<< HEAD
+=======
+ * @param ioschema the input and output schema applied in the execution of the script.
+>>>>>>> githubspark/branch-1.3
  */
 case class ScriptTransformation(
     input: Seq[Expression],
     script: String,
     output: Seq[Attribute],
+<<<<<<< HEAD
     child: LogicalPlan) extends UnaryNode
+=======
+    child: LogicalPlan,
+    ioschema: ScriptInputOutputSchema) extends UnaryNode {
+  override def references: AttributeSet = AttributeSet(input.flatMap(_.references))
+}
+
+/**
+ * A placeholder for implementation specific input and output properties when passing data
+ * to a script. For example, in Hive this would specify which SerDes to use.
+ */
+trait ScriptInputOutputSchema
+>>>>>>> githubspark/branch-1.3

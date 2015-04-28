@@ -34,11 +34,10 @@ import org.apache.hadoop.io.SequenceFile.CompressionType
 import org.apache.hadoop.io.compress.CompressionCodec
 import org.apache.hadoop.mapred.{FileOutputCommitter, FileOutputFormat, JobConf, OutputFormat}
 import org.apache.hadoop.mapreduce.{Job => NewAPIHadoopJob, OutputFormat => NewOutputFormat,
-RecordWriter => NewRecordWriter}
+  RecordWriter => NewRecordWriter}
 
 import org.apache.spark._
 import org.apache.spark.Partitioner.defaultPartitioner
-import org.apache.spark.SparkContext._
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
@@ -51,7 +50,6 @@ import org.apache.spark.util.random.StratifiedSamplingUtils
 
 /**
  * Extra functions available on RDDs of (key, value) pairs through an implicit conversion.
- * Import `org.apache.spark.SparkContext._` at the top of your program to use these functions.
  */
 class PairRDDFunctions[K, V](self: RDD[(K, V)])
     (implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null)
@@ -126,11 +124,11 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
   def aggregateByKey[U: ClassTag](zeroValue: U, partitioner: Partitioner)(seqOp: (U, V) => U,
       combOp: (U, U) => U): RDD[(K, U)] = {
     // Serialize the zero value to a byte array so that we can get a new clone of it on each key
-    val zeroBuffer = SparkEnv.get.closureSerializer.newInstance().serialize(zeroValue)
+    val zeroBuffer = SparkEnv.get.serializer.newInstance().serialize(zeroValue)
     val zeroArray = new Array[Byte](zeroBuffer.limit)
     zeroBuffer.get(zeroArray)
 
-    lazy val cachedSerializer = SparkEnv.get.closureSerializer.newInstance()
+    lazy val cachedSerializer = SparkEnv.get.serializer.newInstance()
     val createZero = () => cachedSerializer.deserialize[U](ByteBuffer.wrap(zeroArray))
 
     combineByKey[U]((v: V) => seqOp(createZero(), v), seqOp, combOp, partitioner)
@@ -171,12 +169,12 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
    */
   def foldByKey(zeroValue: V, partitioner: Partitioner)(func: (V, V) => V): RDD[(K, V)] = {
     // Serialize the zero value to a byte array so that we can get a new clone of it on each key
-    val zeroBuffer = SparkEnv.get.closureSerializer.newInstance().serialize(zeroValue)
+    val zeroBuffer = SparkEnv.get.serializer.newInstance().serialize(zeroValue)
     val zeroArray = new Array[Byte](zeroBuffer.limit)
     zeroBuffer.get(zeroArray)
 
     // When deserializing, use a lazy val to create just one instance of the serializer per task
-    lazy val cachedSerializer = SparkEnv.get.closureSerializer.newInstance()
+    lazy val cachedSerializer = SparkEnv.get.serializer.newInstance()
     val createZero = () => cachedSerializer.deserialize[V](ByteBuffer.wrap(zeroArray))
 
     combineByKey[V]((v: V) => func(createZero(), v), func, func, partitioner)
@@ -439,6 +437,9 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
    * Note: This operation may be very expensive. If you are grouping in order to perform an
    * aggregation (such as a sum or average) over each key, using [[PairRDDFunctions.aggregateByKey]]
    * or [[PairRDDFunctions.reduceByKey]] will provide much better performance.
+   *
+   * Note: As currently implemented, groupByKey must be able to hold all the key-value pairs for any
+   * key in memory. If a key has too many values, it can result in an [[OutOfMemoryError]].
    */
   def groupByKey(partitioner: Partitioner): RDD[(K, Iterable[V])] = {
     // groupByKey shouldn't use map side combine because map side combine does not
@@ -460,6 +461,9 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
    * Note: This operation may be very expensive. If you are grouping in order to perform an
    * aggregation (such as a sum or average) over each key, using [[PairRDDFunctions.aggregateByKey]]
    * or [[PairRDDFunctions.reduceByKey]] will provide much better performance.
+   *
+   * Note: As currently implemented, groupByKey must be able to hold all the key-value pairs for any
+   * key in memory. If a key has too many values, it can result in an [[OutOfMemoryError]].
    */
   def groupByKey(numPartitions: Int): RDD[(K, Iterable[V])] = {
     groupByKey(new HashPartitioner(numPartitions))
@@ -666,7 +670,9 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
    */
   def mapValues[U](f: V => U): RDD[(K, U)] = {
     val cleanF = self.context.clean(f)
-    new MappedValuesRDD(self, cleanF)
+    new MapPartitionsRDD[(K, U), (K, V)](self,
+      (context, pid, iter) => iter.map { case (k, v) => (k, cleanF(v)) },
+      preservesPartitioning = true)
   }
 
   /**
@@ -675,7 +681,11 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
    */
   def flatMapValues[U](f: V => TraversableOnce[U]): RDD[(K, U)] = {
     val cleanF = self.context.clean(f)
-    new FlatMappedValuesRDD(self, cleanF)
+    new MapPartitionsRDD[(K, U), (K, V)](self,
+      (context, pid, iter) => iter.flatMap { case (k, v) =>
+        cleanF(v).map(x => (k, x))
+      },
+      preservesPartitioning = true)
   }
 
   /**
@@ -973,12 +983,9 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
 
     val writeShard = (context: TaskContext, iter: Iterator[(K,V)]) => {
       val config = wrappedConf.value
-      // Hadoop wants a 32-bit task attempt ID, so if ours is bigger than Int.MaxValue, roll it
-      // around by taking a mod. We expect that no task will be attempted 2 billion times.
-      val attemptNumber = (context.attemptId % Int.MaxValue).toInt
       /* "reduce task" <split #> <attempt # = spark task #> */
       val attemptId = newTaskAttemptID(jobtrackerID, stageId, isMap = false, context.partitionId,
-        attemptNumber)
+        context.attemptNumber)
       val hadoopContext = newTaskAttemptContext(config, attemptId)
       val format = outfmt.newInstance
       format match {
@@ -988,11 +995,11 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
       val committer = format.getOutputCommitter(hadoopContext)
       committer.setupTask(hadoopContext)
 
-      val (outputMetrics, bytesWrittenCallback) = initHadoopOutputMetrics(context, config)
+      val (outputMetrics, bytesWrittenCallback) = initHadoopOutputMetrics(context)
 
       val writer = format.getRecordWriter(hadoopContext).asInstanceOf[NewRecordWriter[K,V]]
+      var recordsWritten = 0L
       try {
-        var recordsWritten = 0L
         while (iter.hasNext) {
           val pair = iter.next()
           writer.write(pair._1, pair._2)
@@ -1005,7 +1012,8 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
         writer.close(hadoopContext)
       }
       committer.commitTask(hadoopContext)
-      bytesWrittenCallback.foreach { fn => outputMetrics.bytesWritten = fn() }
+      bytesWrittenCallback.foreach { fn => outputMetrics.setBytesWritten(fn()) }
+      outputMetrics.setRecordsWritten(recordsWritten)
       1
     } : Int
 
@@ -1065,14 +1073,14 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
       // around by taking a mod. We expect that no task will be attempted 2 billion times.
       // Hadoop希望尝试一个32位的任务attempt ID,所以如果我们的这个id比Int.MaxValue更大,
       // 那么通过一个模除来进行转换。我们估计应该不会尝试任务20亿次。
-      val attemptNumber = (context.attemptId % Int.MaxValue).toInt
+      val taskAttemptId = (context.taskAttemptId % Int.MaxValue).toInt
 
-      val (outputMetrics, bytesWrittenCallback) = initHadoopOutputMetrics(context, config)
+      val (outputMetrics, bytesWrittenCallback) = initHadoopOutputMetrics(context)
 
-      writer.setup(context.stageId, context.partitionId, attemptNumber)
+      writer.setup(context.stageId, context.partitionId, taskAttemptId)
       writer.open()
+      var recordsWritten = 0L
       try {
-        var recordsWritten = 0L
         while (iter.hasNext) {
           val record = iter.next()
           writer.write(record._1.asInstanceOf[AnyRef], record._2.asInstanceOf[AnyRef])
@@ -1086,18 +1094,16 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
         writer.close()
       }
       writer.commit()
-      bytesWrittenCallback.foreach { fn => outputMetrics.bytesWritten = fn() }
+      bytesWrittenCallback.foreach { fn => outputMetrics.setBytesWritten(fn()) }
+      outputMetrics.setRecordsWritten(recordsWritten)
     }
 
     self.context.runJob(self, writeToFile)
     writer.commitJob()
   }
 
-  private def initHadoopOutputMetrics(context: TaskContext, config: Configuration)
-    : (OutputMetrics, Option[() => Long]) = {
-    val bytesWrittenCallback = Option(config.get("mapreduce.output.fileoutputformat.outputdir"))
-      .map(new Path(_))
-      .flatMap(SparkHadoopUtil.get.getFSBytesWrittenOnThreadCallback(_, config))
+  private def initHadoopOutputMetrics(context: TaskContext): (OutputMetrics, Option[() => Long]) = {
+    val bytesWrittenCallback = SparkHadoopUtil.get.getFSBytesWrittenOnThreadCallback()
     val outputMetrics = new OutputMetrics(DataWriteMethod.Hadoop)
     if (bytesWrittenCallback.isDefined) {
       context.taskMetrics.outputMetrics = Some(outputMetrics)
@@ -1107,9 +1113,9 @@ class PairRDDFunctions[K, V](self: RDD[(K, V)])
 
   private def maybeUpdateOutputMetrics(bytesWrittenCallback: Option[() => Long],
       outputMetrics: OutputMetrics, recordsWritten: Long): Unit = {
-    if (recordsWritten % PairRDDFunctions.RECORDS_BETWEEN_BYTES_WRITTEN_METRIC_UPDATES == 0
-        && bytesWrittenCallback.isDefined) {
-      bytesWrittenCallback.foreach { fn => outputMetrics.bytesWritten = fn() }
+    if (recordsWritten % PairRDDFunctions.RECORDS_BETWEEN_BYTES_WRITTEN_METRIC_UPDATES == 0) {
+      bytesWrittenCallback.foreach { fn => outputMetrics.setBytesWritten(fn()) }
+      outputMetrics.setRecordsWritten(recordsWritten)
     }
   }
 

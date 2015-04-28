@@ -17,7 +17,11 @@
 
 package org.apache.spark.sql.catalyst.plans.logical
 
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.expressions.{Expression, SortOrder}
+=======
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression, SortOrder}
+>>>>>>> githubspark/branch-1.3
 
 /**
  * Performs a physical redistribution of the data.  Used when the consumer of the query
@@ -26,6 +30,7 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, SortOrder}
 abstract class RedistributeData extends UnaryNode {
   self: Product =>
 
+<<<<<<< HEAD
   def output = child.output
 }
 
@@ -37,3 +42,13 @@ case class Repartition(partitionExpressions: Seq[Expression], child: LogicalPlan
     extends RedistributeData {
 }
 
+=======
+  override def output: Seq[Attribute] = child.output
+}
+
+case class SortPartitions(sortExpressions: Seq[SortOrder], child: LogicalPlan)
+  extends RedistributeData
+
+case class Repartition(partitionExpressions: Seq[Expression], child: LogicalPlan)
+  extends RedistributeData
+>>>>>>> githubspark/branch-1.3

@@ -30,9 +30,12 @@ import org.apache.spark.util.AkkaUtils
 /**
  * Web UI server for the standalone worker.
  */
+<<<<<<< HEAD
 /**
  * 独立worker的Web界面UI服务器.
  */
+=======
+>>>>>>> githubspark/branch-1.3
 private[spark]
 class WorkerWebUI(
     val worker: Worker,
@@ -46,7 +49,10 @@ class WorkerWebUI(
   initialize()
 
   /** Initialize all components of the server. */
+<<<<<<< HEAD
   /** 初始化所有当前服务器的组件. */
+=======
+>>>>>>> githubspark/branch-1.3
   def initialize() {
     val logPage = new LogPage(this)
     attachPage(logPage)
@@ -54,7 +60,10 @@ class WorkerWebUI(
     attachHandler(createStaticHandler(WorkerWebUI.STATIC_RESOURCE_BASE, "/static"))
     attachHandler(createServletHandler("/log",
       (request: HttpServletRequest) => logPage.renderLog(request), worker.securityMgr))
+<<<<<<< HEAD
     worker.metricsSystem.getServletHandlers.foreach(attachHandler)
+=======
+>>>>>>> githubspark/branch-1.3
   }
 }
 

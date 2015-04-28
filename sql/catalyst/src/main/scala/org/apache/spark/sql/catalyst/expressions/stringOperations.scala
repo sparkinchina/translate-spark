@@ -23,7 +23,11 @@ import scala.collection.IndexedSeqOptimized
 
 
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types.{BinaryType, BooleanType, DataType, StringType}
+=======
+import org.apache.spark.sql.types.{BinaryType, BooleanType, DataType, StringType}
+>>>>>>> githubspark/branch-1.3
 
 trait StringRegexExpression {
   self: BinaryExpression =>
@@ -33,8 +37,13 @@ trait StringRegexExpression {
   def escape(v: String): String
   def matches(regex: Pattern, str: String): Boolean
 
+<<<<<<< HEAD
   def nullable: Boolean = left.nullable || right.nullable
   def dataType: DataType = BooleanType
+=======
+  override def nullable: Boolean = left.nullable || right.nullable
+  override def dataType: DataType = BooleanType
+>>>>>>> githubspark/branch-1.3
 
   // try cache the pattern for Literal
   private lazy val cache: Pattern = right match {
@@ -98,11 +107,19 @@ trait CaseConversionExpression {
 case class Like(left: Expression, right: Expression)
   extends BinaryExpression with StringRegexExpression {
 
+<<<<<<< HEAD
   def symbol = "LIKE"
 
   // replace the _ with .{1} exactly match 1 time of any character
   // replace the % with .*, match 0 or more times with any character
   override def escape(v: String) =
+=======
+  override def symbol: String = "LIKE"
+
+  // replace the _ with .{1} exactly match 1 time of any character
+  // replace the % with .*, match 0 or more times with any character
+  override def escape(v: String): String =
+>>>>>>> githubspark/branch-1.3
     if (!v.isEmpty) {
       "(?s)" + (' ' +: v.init).zip(v).flatMap {
         case (prev, '\\') => ""
@@ -129,7 +146,11 @@ case class Like(left: Expression, right: Expression)
 case class RLike(left: Expression, right: Expression)
   extends BinaryExpression with StringRegexExpression {
 
+<<<<<<< HEAD
   def symbol = "RLIKE"
+=======
+  override def symbol: String = "RLIKE"
+>>>>>>> githubspark/branch-1.3
   override def escape(v: String): String = v
   override def matches(regex: Pattern, str: String): Boolean = regex.matcher(str).find(0)
 }
@@ -141,7 +162,11 @@ case class Upper(child: Expression) extends UnaryExpression with CaseConversionE
   
   override def convert(v: String): String = v.toUpperCase()
 
+<<<<<<< HEAD
   override def toString() = s"Upper($child)"
+=======
+  override def toString: String = s"Upper($child)"
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -151,7 +176,11 @@ case class Lower(child: Expression) extends UnaryExpression with CaseConversionE
   
   override def convert(v: String): String = v.toLowerCase()
 
+<<<<<<< HEAD
   override def toString() = s"Lower($child)"
+=======
+  override def toString: String = s"Lower($child)"
+>>>>>>> githubspark/branch-1.3
 }
 
 /** A base trait for functions that compare two strings, returning a boolean. */
@@ -160,7 +189,11 @@ trait StringComparison {
 
   type EvaluatedType = Any
 
+<<<<<<< HEAD
   def nullable: Boolean = left.nullable || right.nullable
+=======
+  override def nullable: Boolean = left.nullable || right.nullable
+>>>>>>> githubspark/branch-1.3
   override def dataType: DataType = BooleanType
 
   def compare(l: String, r: String): Boolean
@@ -175,9 +208,15 @@ trait StringComparison {
     }
   }
 
+<<<<<<< HEAD
   def symbol: String = nodeName
 
   override def toString() = s"$nodeName($left, $right)"
+=======
+  override def symbol: String = nodeName
+
+  override def toString: String = s"$nodeName($left, $right)"
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -185,7 +224,11 @@ trait StringComparison {
  */
 case class Contains(left: Expression, right: Expression)
     extends BinaryExpression with StringComparison {
+<<<<<<< HEAD
   override def compare(l: String, r: String) = l.contains(r)
+=======
+  override def compare(l: String, r: String): Boolean = l.contains(r)
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -193,7 +236,11 @@ case class Contains(left: Expression, right: Expression)
  */
 case class StartsWith(left: Expression, right: Expression)
     extends BinaryExpression with StringComparison {
+<<<<<<< HEAD
   def compare(l: String, r: String) = l.startsWith(r)
+=======
+  override def compare(l: String, r: String): Boolean = l.startsWith(r)
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -201,7 +248,11 @@ case class StartsWith(left: Expression, right: Expression)
  */
 case class EndsWith(left: Expression, right: Expression)
     extends BinaryExpression with StringComparison {
+<<<<<<< HEAD
   def compare(l: String, r: String) = l.endsWith(r)
+=======
+  override def compare(l: String, r: String): Boolean = l.endsWith(r)
+>>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -212,17 +263,28 @@ case class Substring(str: Expression, pos: Expression, len: Expression) extends 
   
   type EvaluatedType = Any
 
+<<<<<<< HEAD
   override def foldable = str.foldable && pos.foldable && len.foldable
 
   def nullable: Boolean = str.nullable || pos.nullable || len.nullable
   def dataType: DataType = {
+=======
+  override def foldable: Boolean = str.foldable && pos.foldable && len.foldable
+
+  override  def nullable: Boolean = str.nullable || pos.nullable || len.nullable
+  override def dataType: DataType = {
+>>>>>>> githubspark/branch-1.3
     if (!resolved) {
       throw new UnresolvedException(this, s"Cannot resolve since $children are not resolved")
     }
     if (str.dataType == BinaryType) str.dataType else StringType
   }
 
+<<<<<<< HEAD
   override def children = str :: pos :: len :: Nil
+=======
+  override def children: Seq[Expression] = str :: pos :: len :: Nil
+>>>>>>> githubspark/branch-1.3
 
   @inline
   def slice[T, C <: Any](str: C, startPos: Int, sliceLen: Int)
@@ -267,7 +329,12 @@ case class Substring(str: Expression, pos: Expression, len: Expression) extends 
     }
   }
 
+<<<<<<< HEAD
   override def toString = len match {
+=======
+  override def toString: String = len match {
+    // TODO: This is broken because max is not an integer value.
+>>>>>>> githubspark/branch-1.3
     case max if max == Integer.MAX_VALUE => s"SUBSTR($str, $pos)"
     case _ => s"SUBSTR($str, $pos, $len)"
   }

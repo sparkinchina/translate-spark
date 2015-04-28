@@ -20,8 +20,6 @@
 # NOTE: Any changes in this file must be reflected in SparkSubmitDriverBootstrapper.scala!
 
 export SPARK_HOME="$(cd "`dirname "$0"`"/..; pwd)"
-export SPARK_CONF_DIR="${SPARK_CONF_DIR:-"$SPARK_HOME/conf"}"
-
 ORIG_ARGS=("$@")
 
 # Set COLUMNS for progress bar
@@ -46,6 +44,9 @@ while (($#)); do
   shift
 done
 
+if [ -z "$SPARK_CONF_DIR" ]; then
+  export SPARK_CONF_DIR="$SPARK_HOME/conf"
+fi
 DEFAULT_PROPERTIES_FILE="$SPARK_CONF_DIR/spark-defaults.conf"
 if [ "$MASTER" == "yarn-cluster" ]; then
   SPARK_SUBMIT_DEPLOY_MODE=cluster

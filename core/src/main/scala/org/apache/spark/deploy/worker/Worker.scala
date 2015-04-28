@@ -31,8 +31,13 @@ import scala.util.Random
 import akka.actor._
 import akka.remote.{DisassociatedEvent, RemotingLifecycleEvent}
 
+<<<<<<< HEAD
 import org.apache.spark.{Logging, SecurityManager, SparkConf, SparkException}
 import org.apache.spark.deploy.{ExecutorDescription, ExecutorState}
+=======
+import org.apache.spark.{Logging, SecurityManager, SparkConf}
+import org.apache.spark.deploy.{Command, ExecutorDescription, ExecutorState}
+>>>>>>> githubspark/branch-1.3
 import org.apache.spark.deploy.DeployMessages._
 import org.apache.spark.deploy.master.{DriverState, Master}
 import org.apache.spark.deploy.worker.ui.WorkerWebUI
@@ -40,7 +45,11 @@ import org.apache.spark.metrics.MetricsSystem
 import org.apache.spark.util.{ActorLogReceive, AkkaUtils, SignalLogger, Utils}
 
 /**
+<<<<<<< HEAD
   * @param masterUrls Each url should look like spark://host:port.
+=======
+  * @param masterAkkaUrls Each url should be a valid akka url.
+>>>>>>> githubspark/branch-1.3
   */
 private[spark] class Worker(
     host: String,
@@ -48,7 +57,11 @@ private[spark] class Worker(
     webUiPort: Int,
     cores: Int,
     memory: Int,
+<<<<<<< HEAD
     masterUrls: Array[String],
+=======
+    masterAkkaUrls: Array[String],
+>>>>>>> githubspark/branch-1.3
     actorSystemName: String,
     actorName: String,
     workDirPath: String = null,
@@ -60,7 +73,10 @@ private[spark] class Worker(
   Utils.checkHost(host, "Expected hostname")
   assert (port > 0)
 
+<<<<<<< HEAD
   // worker and executor ID 中添加时间戳，保证其唯一性
+=======
+>>>>>>> githubspark/branch-1.3
   def createDateFormat = new SimpleDateFormat("yyyyMMddHHmmss")  // For worker and executor IDs
 
   // Send a heartbeat every (heartbeat timeout) / 4 milliseconds
@@ -71,7 +87,10 @@ private[spark] class Worker(
   // Afterwards, the next 10 attempts are between 30 and 90 seconds.
   // A bit of randomness is introduced so that not all of the workers attempt to reconnect at
   // the same time.
+<<<<<<< HEAD
   // 对Worker的重联进行分散化处理，避免集中重联对Master的冲击  两种策略 5-15， 30-90
+=======
+>>>>>>> githubspark/branch-1.3
   val INITIAL_REGISTRATION_RETRIES = 6
   val TOTAL_REGISTRATION_RETRIES = INITIAL_REGISTRATION_RETRIES + 10
   val FUZZ_MULTIPLIER_INTERVAL_LOWER_BOUND = 0.500
@@ -95,7 +114,16 @@ private[spark] class Worker(
   var masterAddress: Address = null
   var activeMasterUrl: String = ""
   var activeMasterWebUiUrl : String = ""
+<<<<<<< HEAD
   val akkaUrl = "akka.tcp://%s@%s:%s/user/%s".format(actorSystemName, host, port, actorName)
+=======
+  val akkaUrl = AkkaUtils.address(
+    AkkaUtils.protocol(context.system),
+    actorSystemName,
+    host,
+    port,
+    actorName)
+>>>>>>> githubspark/branch-1.3
   @volatile var registered = false
   @volatile var connected = false
   val workerId = generateWorkerId()
@@ -115,11 +143,18 @@ private[spark] class Worker(
   val finishedApps = new HashSet[String]
 
   // The shuffle service is not actually started unless configured.
+<<<<<<< HEAD
   // 除非配置过,不然这个shuffle服务不会实际启动.
   val shuffleService = new StandaloneWorkerShuffleService(conf, securityMgr)
 
   val publicAddress = {
     val envVar = System.getenv("SPARK_PUBLIC_DNS")
+=======
+  val shuffleService = new StandaloneWorkerShuffleService(conf, securityMgr)
+
+  val publicAddress = {
+    val envVar = conf.getenv("SPARK_PUBLIC_DNS")
+>>>>>>> githubspark/branch-1.3
     if (envVar != null) envVar else host
   }
   var webUi: WorkerWebUI = null
@@ -158,6 +193,10 @@ private[spark] class Worker(
     assert(!registered)
     logInfo("Starting Spark worker %s:%d with %d cores, %s RAM".format(
       host, port, cores, Utils.megabytesToString(memory)))
+<<<<<<< HEAD
+=======
+    logInfo(s"Running Spark version ${org.apache.spark.SPARK_VERSION}")
+>>>>>>> githubspark/branch-1.3
     logInfo("Spark home: " + sparkHome)
     createWorkDir()
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
@@ -173,6 +212,7 @@ private[spark] class Worker(
   }
 
   def changeMaster(url: String, uiUrl: String) {
+<<<<<<< HEAD
     activeMasterUrl = url
     activeMasterWebUiUrl = uiUrl
     master = context.actorSelection(Master.toAkkaUrl(activeMasterUrl))
@@ -185,14 +225,30 @@ private[spark] class Worker(
     connected = true
     // Cancel any outstanding re-registration attempts because we found a new master
     // 因为我们发现了一个新的master取消任何未处理的重注册attempts
+=======
+    // activeMasterUrl it's a valid Spark url since we receive it from master.
+    activeMasterUrl = url
+    activeMasterWebUiUrl = uiUrl
+    master = context.actorSelection(
+      Master.toAkkaUrl(activeMasterUrl, AkkaUtils.protocol(context.system)))
+    masterAddress = Master.toAkkaAddress(activeMasterUrl, AkkaUtils.protocol(context.system))
+    connected = true
+    // Cancel any outstanding re-registration attempts because we found a new master
+>>>>>>> githubspark/branch-1.3
     registrationRetryTimer.foreach(_.cancel())
     registrationRetryTimer = None
   }
 
   private def tryRegisterAllMasters() {
+<<<<<<< HEAD
     for (masterUrl <- masterUrls) {
       logInfo("Connecting to master " + masterUrl + "...")
       val actor = context.actorSelection(Master.toAkkaUrl(masterUrl))
+=======
+    for (masterAkkaUrl <- masterAkkaUrls) {
+      logInfo("Connecting to master " + masterAkkaUrl + "...")
+      val actor = context.actorSelection(masterAkkaUrl)
+>>>>>>> githubspark/branch-1.3
       actor ! RegisterWorker(workerId, host, port, cores, memory, webUi.boundPort, publicAddress)
     }
   }
@@ -201,8 +257,11 @@ private[spark] class Worker(
    * Re-register with the master because a network failure or a master failure has occurred.
    * If the re-registration attempt threshold is exceeded, the worker exits with error.
    * Note that for thread-safety this should only be called from the actor.
+<<<<<<< HEAD
    * 由于网络失败或者Master的失败导致的Worker重新向Master的注册。如果重新注册尝试测试超过门限值，则
    * 认为Worker自身存在问题。 注意: 为了保证线程的安全，该方法只能由Actor调用
+=======
+>>>>>>> githubspark/branch-1.3
    */
   private def reregisterWithMaster(): Unit = {
     Utils.tryOrExit {
@@ -231,8 +290,11 @@ private[spark] class Worker(
          * old master must have died because another master has taken over. Note that this is
          * still not safe if the old master recovers within this interval, but this is a much
          * less likely scenario.
+<<<<<<< HEAD
          * 详细背书了在竞争条件下，Worker的注册可能存在重复的情况及如何尽量减少， 但无法彻底杜绝。
          * 这是V1.2在Worker注册方面改动较大的原因。
+=======
+>>>>>>> githubspark/branch-1.3
          */
         if (master != null) {
           master ! RegisterWorker(
@@ -358,10 +420,29 @@ private[spark] class Worker(
             }.toSeq
           }
           appDirectories(appId) = appLocalDirs
+<<<<<<< HEAD
           //启动Worker上的ExecutorRunner
           val manager = new ExecutorRunner(appId, execId, appDesc, cores_, memory_,
             self, workerId, host, sparkHome, executorDir, akkaUrl, conf, appLocalDirs,
             ExecutorState.LOADING)
+=======
+          val manager = new ExecutorRunner(
+            appId,
+            execId,
+            appDesc.copy(command = Worker.maybeUpdateSSLSettings(appDesc.command, conf)),
+            cores_,
+            memory_,
+            self,
+            workerId,
+            host,
+            webUi.boundPort,
+            publicAddress,
+            sparkHome,
+            executorDir,
+            akkaUrl,
+            conf,
+            appLocalDirs, ExecutorState.LOADING)
+>>>>>>> githubspark/branch-1.3
           executors(appId + "/" + execId) = manager
           manager.start()
           coresUsed += cores_
@@ -417,7 +498,18 @@ private[spark] class Worker(
 
     case LaunchDriver(driverId, driverDesc) => {
       logInfo(s"Asked to launch driver $driverId")
+<<<<<<< HEAD
       val driver = new DriverRunner(conf, driverId, workDir, sparkHome, driverDesc, self, akkaUrl)
+=======
+      val driver = new DriverRunner(
+        conf,
+        driverId,
+        workDir,
+        sparkHome,
+        driverDesc.copy(command = Worker.maybeUpdateSSLSettings(driverDesc.command, conf)),
+        self,
+        akkaUrl)
+>>>>>>> githubspark/branch-1.3
       drivers(driverId) = driver
       driver.start()
 
@@ -525,18 +617,56 @@ private[spark] object Worker extends Logging {
       memory: Int,
       masterUrls: Array[String],
       workDir: String,
+<<<<<<< HEAD
       workerNumber: Option[Int] = None): (ActorSystem, Int) = {
 
     // The LocalSparkCluster runs multiple local sparkWorkerX actor systems
     val conf = new SparkConf
+=======
+      workerNumber: Option[Int] = None,
+      conf: SparkConf = new SparkConf): (ActorSystem, Int) = {
+
+    // The LocalSparkCluster runs multiple local sparkWorkerX actor systems
+>>>>>>> githubspark/branch-1.3
     val systemName = "sparkWorker" + workerNumber.map(_.toString).getOrElse("")
     val actorName = "Worker"
     val securityMgr = new SecurityManager(conf)
     val (actorSystem, boundPort) = AkkaUtils.createActorSystem(systemName, host, port,
       conf = conf, securityManager = securityMgr)
+<<<<<<< HEAD
     actorSystem.actorOf(Props(classOf[Worker], host, boundPort, webUiPort, cores, memory,
       masterUrls, systemName, actorName,  workDir, conf, securityMgr), name = actorName)
     (actorSystem, boundPort)
   }
 
+=======
+    val masterAkkaUrls = masterUrls.map(Master.toAkkaUrl(_, AkkaUtils.protocol(actorSystem)))
+    actorSystem.actorOf(Props(classOf[Worker], host, boundPort, webUiPort, cores, memory,
+      masterAkkaUrls, systemName, actorName,  workDir, conf, securityMgr), name = actorName)
+    (actorSystem, boundPort)
+  }
+
+  private[spark] def isUseLocalNodeSSLConfig(cmd: Command): Boolean = {
+    val pattern = """\-Dspark\.ssl\.useNodeLocalConf\=(.+)""".r
+    val result = cmd.javaOpts.collectFirst {
+      case pattern(_result) => _result.toBoolean
+    }
+    result.getOrElse(false)
+  }
+
+  private[spark] def maybeUpdateSSLSettings(cmd: Command, conf: SparkConf): Command = {
+    val prefix = "spark.ssl."
+    val useNLC = "spark.ssl.useNodeLocalConf"
+    if (isUseLocalNodeSSLConfig(cmd)) {
+      val newJavaOpts = cmd.javaOpts
+          .filter(opt => !opt.startsWith(s"-D$prefix")) ++
+          conf.getAll.collect { case (key, value) if key.startsWith(prefix) => s"-D$key=$value" } :+
+          s"-D$useNLC=true"
+      cmd.copy(javaOpts = newJavaOpts)
+    } else {
+      cmd
+    }
+  }
+
+>>>>>>> githubspark/branch-1.3
 }

@@ -19,7 +19,11 @@ import org.apache.spark.SPARK_VERSION
 /**
  *  Machinery for the asynchronous initialization of the repl.
  */
+<<<<<<< HEAD
 trait SparkILoopInit {
+=======
+private[repl] trait SparkILoopInit {
+>>>>>>> githubspark/branch-1.3
   self: SparkILoop =>
 
   /** Print a welcome message */
@@ -127,7 +131,21 @@ trait SparkILoopInit {
            _sc
          }
         """)
+<<<<<<< HEAD
       command("import org.apache.spark.SparkContext._")
+=======
+      command("""
+         @transient val sqlContext = {
+           val _sqlContext = org.apache.spark.repl.Main.interp.createSQLContext()
+           println("SQL context available as sqlContext.")
+           _sqlContext
+         }
+        """)
+      command("import org.apache.spark.SparkContext._")
+      command("import sqlContext.implicits._")
+      command("import sqlContext.sql")
+      command("import org.apache.spark.sql.functions._")
+>>>>>>> githubspark/branch-1.3
     }
   }
 

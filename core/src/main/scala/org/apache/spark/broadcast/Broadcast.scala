@@ -64,7 +64,6 @@ import scala.reflect.ClassTag
  * @param id A unique identifier for the broadcast variable.
  * @tparam T Type of the data contained in the broadcast variable.
  */
-
 abstract class Broadcast[T: ClassTag](val id: Long) extends Serializable with Logging {
 
   /**

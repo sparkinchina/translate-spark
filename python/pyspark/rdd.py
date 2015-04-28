@@ -19,7 +19,10 @@ import copy
 from collections import defaultdict
 from itertools import chain, ifilter, imap
 import operator
+<<<<<<< HEAD
 import os
+=======
+>>>>>>> githubspark/branch-1.3
 import sys
 import shlex
 from subprocess import Popen, PIPE
@@ -29,9 +32,15 @@ import warnings
 import heapq
 import bisect
 import random
+<<<<<<< HEAD
 from math import sqrt, log, isinf, isnan
 
 from pyspark.accumulators import PStatsParam
+=======
+import socket
+from math import sqrt, log, isinf, isnan, pow, ceil
+
+>>>>>>> githubspark/branch-1.3
 from pyspark.serializers import NoOpSerializer, CartesianDeserializer, \
     BatchedSerializer, CloudPickleSerializer, PairDeserializer, \
     PickleSerializer, pack_long, AutoBatchedSerializer
@@ -112,6 +121,34 @@ def _parse_memory(s):
     return int(float(s[:-1]) * units[s[-1].lower()])
 
 
+<<<<<<< HEAD
+=======
+def _load_from_socket(port, serializer):
+    sock = socket.socket()
+    sock.settimeout(3)
+    try:
+        sock.connect(("localhost", port))
+        rf = sock.makefile("rb", 65536)
+        for item in serializer.load_stream(rf):
+            yield item
+    finally:
+        sock.close()
+
+
+class Partitioner(object):
+    def __init__(self, numPartitions, partitionFunc):
+        self.numPartitions = numPartitions
+        self.partitionFunc = partitionFunc
+
+    def __eq__(self, other):
+        return (isinstance(other, Partitioner) and self.numPartitions == other.numPartitions
+                and self.partitionFunc == other.partitionFunc)
+
+    def __call__(self, k):
+        return self.partitionFunc(k) % self.numPartitions
+
+
+>>>>>>> githubspark/branch-1.3
 class RDD(object):
 
     """
@@ -127,7 +164,11 @@ class RDD(object):
         self.ctx = ctx
         self._jrdd_deserializer = jrdd_deserializer
         self._id = jrdd.id()
+<<<<<<< HEAD
         self._partitionFunc = None
+=======
+        self.partitioner = None
+>>>>>>> githubspark/branch-1.3
 
     def _pickled(self):
         return self._reserialize(AutoBatchedSerializer(PickleSerializer()))
@@ -451,14 +492,26 @@ class RDD(object):
         if self._jrdd_deserializer == other._jrdd_deserializer:
             rdd = RDD(self._jrdd.union(other._jrdd), self.ctx,
                       self._jrdd_deserializer)
+<<<<<<< HEAD
             return rdd
+=======
+>>>>>>> githubspark/branch-1.3
         else:
             # These RDDs contain data in different serialized formats, so we
             # must normalize them to the default serializer.
             self_copy = self._reserialize()
             other_copy = other._reserialize()
+<<<<<<< HEAD
             return RDD(self_copy._jrdd.union(other_copy._jrdd), self.ctx,
                        self.ctx.serializer)
+=======
+            rdd = RDD(self_copy._jrdd.union(other_copy._jrdd), self.ctx,
+                      self.ctx.serializer)
+        if (self.partitioner == other.partitioner and
+                self.getNumPartitions() == rdd.getNumPartitions()):
+            rdd.partitioner = self.partitioner
+        return rdd
+>>>>>>> githubspark/branch-1.3
 
     def intersection(self, other):
         """
@@ -562,7 +615,11 @@ class RDD(object):
         maxSampleSize = numPartitions * 20.0  # constant from Spark's RangePartitioner
         fraction = min(maxSampleSize / max(rddSize, 1), 1.0)
         samples = self.sample(False, fraction, 1).map(lambda (k, v): k).collect()
+<<<<<<< HEAD
         samples = sorted(samples, reverse=(not ascending), key=keyfunc)
+=======
+        samples = sorted(samples, key=keyfunc)
+>>>>>>> githubspark/branch-1.3
 
         # we have numPartitions many parts but one of the them has
         # an implicit boundary
@@ -683,6 +740,7 @@ class RDD(object):
         Return a list that contains all of the elements in this RDD.
         """
         with SCCallSiteSync(self.context) as css:
+<<<<<<< HEAD
             bytesInJava = self._jrdd.collect().iterator()
         return list(self._collect_iterator_through_file(bytesInJava))
 
@@ -698,6 +756,10 @@ class RDD(object):
             for item in self._jrdd_deserializer.load_stream(tempFile):
                 yield item
         os.unlink(tempFile.name)
+=======
+            port = self.ctx._jvm.PythonRDD.collectAndServe(self._jrdd.rdd())
+        return list(_load_from_socket(port, self._jrdd_deserializer))
+>>>>>>> githubspark/branch-1.3
 
     def reduce(self, f):
         """
@@ -727,6 +789,46 @@ class RDD(object):
             return reduce(f, vals)
         raise ValueError("Can not reduce() empty RDD")
 
+<<<<<<< HEAD
+=======
+    def treeReduce(self, f, depth=2):
+        """
+        Reduces the elements of this RDD in a multi-level tree pattern.
+
+        :param depth: suggested depth of the tree (default: 2)
+
+        >>> add = lambda x, y: x + y
+        >>> rdd = sc.parallelize([-5, -4, -3, -2, -1, 1, 2, 3, 4], 10)
+        >>> rdd.treeReduce(add)
+        -5
+        >>> rdd.treeReduce(add, 1)
+        -5
+        >>> rdd.treeReduce(add, 2)
+        -5
+        >>> rdd.treeReduce(add, 5)
+        -5
+        >>> rdd.treeReduce(add, 10)
+        -5
+        """
+        if depth < 1:
+            raise ValueError("Depth cannot be smaller than 1 but got %d." % depth)
+
+        zeroValue = None, True  # Use the second entry to indicate whether this is a dummy value.
+
+        def op(x, y):
+            if x[1]:
+                return y
+            elif y[1]:
+                return x
+            else:
+                return f(x[0], y[0]), False
+
+        reduced = self.map(lambda x: (x, False)).treeAggregate(zeroValue, op, op, depth)
+        if reduced[1]:
+            raise ValueError("Cannot reduce empty RDD.")
+        return reduced[0]
+
+>>>>>>> githubspark/branch-1.3
     def fold(self, zeroValue, op):
         """
         Aggregate the elements of each partition, and then the results for all
@@ -778,6 +880,61 @@ class RDD(object):
 
         return self.mapPartitions(func).fold(zeroValue, combOp)
 
+<<<<<<< HEAD
+=======
+    def treeAggregate(self, zeroValue, seqOp, combOp, depth=2):
+        """
+        Aggregates the elements of this RDD in a multi-level tree
+        pattern.
+
+        :param depth: suggested depth of the tree (default: 2)
+
+        >>> add = lambda x, y: x + y
+        >>> rdd = sc.parallelize([-5, -4, -3, -2, -1, 1, 2, 3, 4], 10)
+        >>> rdd.treeAggregate(0, add, add)
+        -5
+        >>> rdd.treeAggregate(0, add, add, 1)
+        -5
+        >>> rdd.treeAggregate(0, add, add, 2)
+        -5
+        >>> rdd.treeAggregate(0, add, add, 5)
+        -5
+        >>> rdd.treeAggregate(0, add, add, 10)
+        -5
+        """
+        if depth < 1:
+            raise ValueError("Depth cannot be smaller than 1 but got %d." % depth)
+
+        if self.getNumPartitions() == 0:
+            return zeroValue
+
+        def aggregatePartition(iterator):
+            acc = zeroValue
+            for obj in iterator:
+                acc = seqOp(acc, obj)
+            yield acc
+
+        partiallyAggregated = self.mapPartitions(aggregatePartition)
+        numPartitions = partiallyAggregated.getNumPartitions()
+        scale = max(int(ceil(pow(numPartitions, 1.0 / depth))), 2)
+        # If creating an extra level doesn't help reduce the wall-clock time, we stop the tree
+        # aggregation.
+        while numPartitions > scale + numPartitions / scale:
+            numPartitions /= scale
+            curNumPartitions = numPartitions
+
+            def mapPartition(i, iterator):
+                for obj in iterator:
+                    yield (i % curNumPartitions, obj)
+
+            partiallyAggregated = partiallyAggregated \
+                .mapPartitionsWithIndex(mapPartition) \
+                .reduceByKey(combOp, curNumPartitions) \
+                .values()
+
+        return partiallyAggregated.reduce(combOp)
+
+>>>>>>> githubspark/branch-1.3
     def max(self, key=None):
         """
         Find the maximum item in this RDD.
@@ -1088,7 +1245,11 @@ class RDD(object):
         [91, 92, 93]
         """
         items = []
+<<<<<<< HEAD
         totalParts = self._jrdd.partitions().size()
+=======
+        totalParts = self.getNumPartitions()
+>>>>>>> githubspark/branch-1.3
         partsScanned = 0
 
         while len(items) < num and partsScanned < totalParts:
@@ -1141,6 +1302,21 @@ class RDD(object):
             return rs[0]
         raise ValueError("RDD is empty")
 
+<<<<<<< HEAD
+=======
+    def isEmpty(self):
+        """
+        Returns true if and only if the RDD contains no elements at all. Note that an RDD
+        may be empty even when it has at least 1 partition.
+
+        >>> sc.parallelize([]).isEmpty()
+        True
+        >>> sc.parallelize([1]).isEmpty()
+        False
+        """
+        return self.getNumPartitions() == 0 or len(self.take(1)) == 0
+
+>>>>>>> githubspark/branch-1.3
     def saveAsNewAPIHadoopDataset(self, conf, keyConverter=None, valueConverter=None):
         """
         Output a Python RDD of key-value pairs (of form C{RDD[(K, V)]}) to any Hadoop file
@@ -1266,10 +1442,21 @@ class RDD(object):
             ser = BatchedSerializer(PickleSerializer(), batchSize)
         self._reserialize(ser)._jrdd.saveAsObjectFile(path)
 
+<<<<<<< HEAD
     def saveAsTextFile(self, path):
         """
         Save this RDD as a text file, using string representations of elements.
 
+=======
+    def saveAsTextFile(self, path, compressionCodecClass=None):
+        """
+        Save this RDD as a text file, using string representations of elements.
+
+        @param path: path to text file
+        @param compressionCodecClass: (None by default) string i.e.
+            "org.apache.hadoop.io.compress.GzipCodec"
+
+>>>>>>> githubspark/branch-1.3
         >>> tempFile = NamedTemporaryFile(delete=True)
         >>> tempFile.close()
         >>> sc.parallelize(range(10)).saveAsTextFile(tempFile.name)
@@ -1285,6 +1472,19 @@ class RDD(object):
         >>> sc.parallelize(['', 'foo', '', 'bar', '']).saveAsTextFile(tempFile2.name)
         >>> ''.join(sorted(input(glob(tempFile2.name + "/part-0000*"))))
         '\\n\\n\\nbar\\nfoo\\n'
+<<<<<<< HEAD
+=======
+
+        Using compressionCodecClass
+
+        >>> tempFile3 = NamedTemporaryFile(delete=True)
+        >>> tempFile3.close()
+        >>> codec = "org.apache.hadoop.io.compress.GzipCodec"
+        >>> sc.parallelize(['foo', 'bar']).saveAsTextFile(tempFile3.name, codec)
+        >>> from fileinput import input, hook_compressed
+        >>> ''.join(sorted(input(glob(tempFile3.name + "/part*.gz"), openhook=hook_compressed)))
+        'bar\\nfoo\\n'
+>>>>>>> githubspark/branch-1.3
         """
         def func(split, iterator):
             for x in iterator:
@@ -1295,7 +1495,15 @@ class RDD(object):
                 yield x
         keyed = self.mapPartitionsWithIndex(func)
         keyed._bypass_serializer = True
+<<<<<<< HEAD
         keyed._jrdd.map(self.ctx._jvm.BytesToString()).saveAsTextFile(path)
+=======
+        if compressionCodecClass:
+            compressionCodec = self.ctx._jvm.java.lang.Class.forName(compressionCodecClass)
+            keyed._jrdd.map(self.ctx._jvm.BytesToString()).saveAsTextFile(path, compressionCodec)
+        else:
+            keyed._jrdd.map(self.ctx._jvm.BytesToString()).saveAsTextFile(path)
+>>>>>>> githubspark/branch-1.3
 
     # Pair functions
 
@@ -1470,6 +1678,12 @@ class RDD(object):
         """
         if numPartitions is None:
             numPartitions = self._defaultReducePartitions()
+<<<<<<< HEAD
+=======
+        partitioner = Partitioner(numPartitions, partitionFunc)
+        if self.partitioner == partitioner:
+            return self
+>>>>>>> githubspark/branch-1.3
 
         # Transferring O(n) objects to Java is too expensive.
         # Instead, we'll form the hash buckets in Python,
@@ -1514,11 +1728,16 @@ class RDD(object):
                 yield pack_long(split)
                 yield outputSerializer.dumps(items)
 
+<<<<<<< HEAD
         keyed = self.mapPartitionsWithIndex(add_shuffle_key)
+=======
+        keyed = self.mapPartitionsWithIndex(add_shuffle_key, preservesPartitioning=True)
+>>>>>>> githubspark/branch-1.3
         keyed._bypass_serializer = True
         with SCCallSiteSync(self.context) as css:
             pairRDD = self.ctx._jvm.PairwiseRDD(
                 keyed._jrdd.rdd()).asJavaPairRDD()
+<<<<<<< HEAD
             partitioner = self.ctx._jvm.PythonPartitioner(numPartitions,
                                                           id(partitionFunc))
         jrdd = pairRDD.partitionBy(partitioner).values()
@@ -1526,6 +1745,13 @@ class RDD(object):
         # This is required so that id(partitionFunc) remains unique,
         # even if partitionFunc is a lambda:
         rdd._partitionFunc = partitionFunc
+=======
+            jpartitioner = self.ctx._jvm.PythonPartitioner(numPartitions,
+                                                           id(partitionFunc))
+        jrdd = self.ctx._jvm.PythonRDD.valueOfPair(pairRDD.partitionBy(jpartitioner))
+        rdd = RDD(jrdd, self.ctx, BatchedSerializer(outputSerializer))
+        rdd.partitioner = partitioner
+>>>>>>> githubspark/branch-1.3
         return rdd
 
     # TODO: add control over map-side aggregation
@@ -1571,7 +1797,11 @@ class RDD(object):
             merger.mergeValues(iterator)
             return merger.iteritems()
 
+<<<<<<< HEAD
         locally_combined = self.mapPartitions(combineLocally)
+=======
+        locally_combined = self.mapPartitions(combineLocally, preservesPartitioning=True)
+>>>>>>> githubspark/branch-1.3
         shuffled = locally_combined.partitionBy(numPartitions)
 
         def _mergeCombiners(iterator):
@@ -1580,7 +1810,11 @@ class RDD(object):
             merger.mergeCombiners(iterator)
             return merger.iteritems()
 
+<<<<<<< HEAD
         return shuffled.mapPartitions(_mergeCombiners, True)
+=======
+        return shuffled.mapPartitions(_mergeCombiners, preservesPartitioning=True)
+>>>>>>> githubspark/branch-1.3
 
     def aggregateByKey(self, zeroValue, seqFunc, combFunc, numPartitions=None):
         """
@@ -1622,8 +1856,13 @@ class RDD(object):
         Hash-partitions the resulting RDD with into numPartitions partitions.
 
         Note: If you are grouping in order to perform an aggregation (such as a
+<<<<<<< HEAD
         sum or average) over each key, using reduceByKey will provide much
         better performance.
+=======
+        sum or average) over each key, using reduceByKey or aggregateByKey will
+        provide much better performance.
+>>>>>>> githubspark/branch-1.3
 
         >>> x = sc.parallelize([("a", 1), ("b", 1), ("a", 1)])
         >>> map((lambda (x,y): (x, list(y))), sorted(x.groupByKey().collect()))
@@ -1815,7 +2054,11 @@ class RDD(object):
 
         my_batch = get_batch_size(self._jrdd_deserializer)
         other_batch = get_batch_size(other._jrdd_deserializer)
+<<<<<<< HEAD
         if my_batch != other_batch:
+=======
+        if my_batch != other_batch or not my_batch:
+>>>>>>> githubspark/branch-1.3
             # use the smallest batchSize for both of them
             batchSize = min(my_batch, other_batch)
             if batchSize <= 0:
@@ -1959,8 +2202,13 @@ class RDD(object):
         """
         values = self.filter(lambda (k, v): k == key).values()
 
+<<<<<<< HEAD
         if self._partitionFunc is not None:
             return self.ctx.runJob(values, lambda x: x, [self._partitionFunc(key)], False)
+=======
+        if self.partitioner is not None:
+            return self.ctx.runJob(values, lambda x: x, [self.partitioner(key)], False)
+>>>>>>> githubspark/branch-1.3
 
         return values.collect()
 
@@ -1975,7 +2223,12 @@ class RDD(object):
 
     def countApprox(self, timeout, confidence=0.95):
         """
+<<<<<<< HEAD
         :: Experimental ::
+=======
+        .. note:: Experimental
+
+>>>>>>> githubspark/branch-1.3
         Approximate version of count() that returns a potentially incomplete
         result within a timeout, even if not all tasks have finished.
 
@@ -1988,7 +2241,12 @@ class RDD(object):
 
     def sumApprox(self, timeout, confidence=0.95):
         """
+<<<<<<< HEAD
         :: Experimental ::
+=======
+        .. note:: Experimental
+
+>>>>>>> githubspark/branch-1.3
         Approximate operation to return the sum within a timeout
         or meet the confidence.
 
@@ -2004,7 +2262,12 @@ class RDD(object):
 
     def meanApprox(self, timeout, confidence=0.95):
         """
+<<<<<<< HEAD
         :: Experimental ::
+=======
+        .. note:: Experimental
+
+>>>>>>> githubspark/branch-1.3
         Approximate operation to return the mean within a timeout
         or meet the confidence.
 
@@ -2020,7 +2283,12 @@ class RDD(object):
 
     def countApproxDistinct(self, relativeSD=0.05):
         """
+<<<<<<< HEAD
         :: Experimental ::
+=======
+        .. note:: Experimental
+
+>>>>>>> githubspark/branch-1.3
         Return approximate number of distinct elements in the RDD.
 
         The algorithm used is based on streamlib's implementation of
@@ -2047,6 +2315,40 @@ class RDD(object):
         hashRDD = self.map(lambda x: portable_hash(x) & 0xFFFFFFFF)
         return hashRDD._to_java_object_rdd().countApproxDistinct(relativeSD)
 
+<<<<<<< HEAD
+=======
+    def toLocalIterator(self):
+        """
+        Return an iterator that contains all of the elements in this RDD.
+        The iterator will consume as much memory as the largest partition in this RDD.
+        >>> rdd = sc.parallelize(range(10))
+        >>> [x for x in rdd.toLocalIterator()]
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        """
+        partitions = xrange(self.getNumPartitions())
+        for partition in partitions:
+            rows = self.context.runJob(self, lambda x: x, [partition])
+            for row in rows:
+                yield row
+
+
+def _prepare_for_python_RDD(sc, command, obj=None):
+    # the serialized command will be compressed by broadcast
+    ser = CloudPickleSerializer()
+    pickled_command = ser.dumps(command)
+    if len(pickled_command) > (1 << 20):  # 1M
+        # The broadcast will have same life cycle as created PythonRDD
+        broadcast = sc.broadcast(pickled_command)
+        pickled_command = ser.dumps(broadcast)
+    broadcast_vars = ListConverter().convert(
+        [x._jbroadcast for x in sc._pickled_broadcast_vars],
+        sc._gateway._gateway_client)
+    sc._pickled_broadcast_vars.clear()
+    env = MapConverter().convert(sc.environment, sc._gateway._gateway_client)
+    includes = ListConverter().convert(sc._python_includes, sc._gateway._gateway_client)
+    return pickled_command, broadcast_vars, env, includes
+
+>>>>>>> githubspark/branch-1.3
 
 class PipelinedRDD(RDD):
 
@@ -2092,6 +2394,7 @@ class PipelinedRDD(RDD):
         self._id = None
         self._jrdd_deserializer = self.ctx.serializer
         self._bypass_serializer = False
+<<<<<<< HEAD
         self._partitionFunc = prev._partitionFunc if self.preservesPartitioning else None
         self._broadcast = None
 
@@ -2099,6 +2402,12 @@ class PipelinedRDD(RDD):
         if self._broadcast:
             self._broadcast.unpersist()
             self._broadcast = None
+=======
+        self.partitioner = prev.partitioner if self.preservesPartitioning else None
+
+    def getNumPartitions(self):
+        return self._prev_jrdd.partitions().size()
+>>>>>>> githubspark/branch-1.3
 
     @property
     def _jrdd(self):
@@ -2106,6 +2415,7 @@ class PipelinedRDD(RDD):
             return self._jrdd_val
         if self._bypass_serializer:
             self._jrdd_deserializer = NoOpSerializer()
+<<<<<<< HEAD
         enable_profile = self.ctx._conf.get("spark.python.profile", "false") == "true"
         profileStats = self.ctx.accumulator(None, PStatsParam) if enable_profile else None
         command = (self.func, profileStats, self._prev_jrdd_deserializer,
@@ -2134,6 +2444,27 @@ class PipelinedRDD(RDD):
         if enable_profile:
             self._id = self._jrdd_val.id()
             self.ctx._add_profile(self._id, profileStats)
+=======
+
+        if self.ctx.profiler_collector:
+            profiler = self.ctx.profiler_collector.new_profiler(self.ctx)
+        else:
+            profiler = None
+
+        command = (self.func, profiler, self._prev_jrdd_deserializer,
+                   self._jrdd_deserializer)
+        pickled_cmd, bvars, env, includes = _prepare_for_python_RDD(self.ctx, command, self)
+        python_rdd = self.ctx._jvm.PythonRDD(self._prev_jrdd.rdd(),
+                                             bytearray(pickled_cmd),
+                                             env, includes, self.preservesPartitioning,
+                                             self.ctx.pythonExec,
+                                             bvars, self.ctx._javaAccumulator)
+        self._jrdd_val = python_rdd.asJavaRDD()
+
+        if profiler:
+            self._id = self._jrdd_val.id()
+            self.ctx.profiler_collector.add_profiler(self._id, profiler)
+>>>>>>> githubspark/branch-1.3
         return self._jrdd_val
 
     def id(self):

@@ -20,11 +20,15 @@ package org.apache.spark.deploy.worker
 import java.io._
 
 import scala.collection.JavaConversions._
+<<<<<<< HEAD
 import scala.collection.Map
+=======
+>>>>>>> githubspark/branch-1.3
 
 import akka.actor.ActorRef
 import com.google.common.base.Charsets.UTF_8
 import com.google.common.io.Files
+<<<<<<< HEAD
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileUtil, Path}
 
@@ -33,15 +37,28 @@ import org.apache.spark.deploy.{Command, DriverDescription, SparkHadoopUtil}
 import org.apache.spark.deploy.DeployMessages.DriverStateChanged
 import org.apache.spark.deploy.master.DriverState
 import org.apache.spark.deploy.master.DriverState.DriverState
+=======
+import org.apache.hadoop.fs.{FileUtil, Path}
+
+import org.apache.spark.{Logging, SparkConf}
+import org.apache.spark.deploy.{DriverDescription, SparkHadoopUtil}
+import org.apache.spark.deploy.DeployMessages.DriverStateChanged
+import org.apache.spark.deploy.master.DriverState
+import org.apache.spark.deploy.master.DriverState.DriverState
+import org.apache.spark.util.{Clock, SystemClock}
+>>>>>>> githubspark/branch-1.3
 
 /**
  * Manages the execution of one driver, including automatically restarting the driver on failure.
  * This is currently only used in standalone cluster deploy mode.
  */
+<<<<<<< HEAD
 /**
  * 管理一个driver的执行, 包括失败时自动重启这个driver.
  * 这个当前只能用在独立集群部署模式.
  */
+=======
+>>>>>>> githubspark/branch-1.3
 private[spark] class DriverRunner(
     val conf: SparkConf,
     val driverId: String,
@@ -56,7 +73,10 @@ private[spark] class DriverRunner(
   @volatile var killed = false
 
   // Populated once finished
+<<<<<<< HEAD
   // 一旦完成了就被终结(三种不同的完成状态)
+=======
+>>>>>>> githubspark/branch-1.3
   var finalState: Option[DriverState] = None
   var finalException: Option[Exception] = None
   var finalExitCode: Option[Int] = None
@@ -64,15 +84,22 @@ private[spark] class DriverRunner(
   // Decoupled for testing
   private[deploy] def setClock(_clock: Clock) = clock = _clock
   private[deploy] def setSleeper(_sleeper: Sleeper) = sleeper = _sleeper
+<<<<<<< HEAD
   private var clock = new Clock {
     def currentTimeMillis(): Long = System.currentTimeMillis()
   }
+=======
+  private var clock: Clock = new SystemClock()
+>>>>>>> githubspark/branch-1.3
   private var sleeper = new Sleeper {
     def sleep(seconds: Int): Unit = (0 until seconds).takeWhile(f => {Thread.sleep(1000); !killed})
   }
 
   /** Starts a thread to run and manage the driver. */
+<<<<<<< HEAD
   /** 开启一个线程来运行和管理这个driver. */
+=======
+>>>>>>> githubspark/branch-1.3
   def start() = {
     new Thread("DriverRunner for " + driverId) {
       override def run() {
@@ -80,12 +107,24 @@ private[spark] class DriverRunner(
           val driverDir = createWorkingDirectory()
           val localJarFilename = downloadUserJar(driverDir)
 
+<<<<<<< HEAD
           // Make sure user application jar is on the classpath
           // 确保用户应用jar在classpath上
           // TODO: If we add ability to submit multiple jars they should also be added here
           // TODO: 如果我们增加功能来提交多个jars，实现代码也应该写在这儿
           val builder = CommandUtils.buildProcessBuilder(driverDesc.command, driverDesc.mem,
             sparkHome.getAbsolutePath, substituteVariables, Seq(localJarFilename))
+=======
+          def substituteVariables(argument: String): String = argument match {
+            case "{{WORKER_URL}}" => workerUrl
+            case "{{USER_JAR}}" => localJarFilename
+            case other => other
+          }
+
+          // TODO: If we add ability to submit multiple jars they should also be added here
+          val builder = CommandUtils.buildProcessBuilder(driverDesc.command, driverDesc.mem,
+            sparkHome.getAbsolutePath, substituteVariables)
+>>>>>>> githubspark/branch-1.3
           launchDriver(builder, driverDir, driverDesc.supervise)
         }
         catch {
@@ -112,7 +151,10 @@ private[spark] class DriverRunner(
   }
 
   /** Terminate this driver (or prevent it from ever starting if not yet started) */
+<<<<<<< HEAD
   /** 终结这个driver (或者阻止它尚未启动的启动过程 */
+=======
+>>>>>>> githubspark/branch-1.3
   def kill() {
     synchronized {
       process.foreach(p => p.destroy())
@@ -120,6 +162,7 @@ private[spark] class DriverRunner(
     }
   }
 
+<<<<<<< HEAD
   /** Replace variables in a command argument passed to us */
   /** 在传递给我们的一个命令参数中替换变量 */
   private def substituteVariables(argument: String): String = argument match {
@@ -127,14 +170,19 @@ private[spark] class DriverRunner(
     case other => other
   }
 
+=======
+>>>>>>> githubspark/branch-1.3
   /**
    * Creates the working directory for this driver.
    * Will throw an exception if there are errors preparing the directory.
    */
+<<<<<<< HEAD
   /**
    * 为了这个driver创建这个工作目录.
    * 如果在准备这个目录的时候出现错误那么会抛出一个异常.
    */
+=======
+>>>>>>> githubspark/branch-1.3
   private def createWorkingDirectory(): File = {
     val driverDir = new File(workDir, driverId)
     if (!driverDir.exists() && !driverDir.mkdirs()) {
@@ -147,10 +195,13 @@ private[spark] class DriverRunner(
    * Download the user jar into the supplied directory and return its local path.
    * Will throw an exception if there are errors downloading the jar.
    */
+<<<<<<< HEAD
   /**
    * 将这个用户jar下载进提供的目录并且返回它的本地路径.
    * 如果在下载这个jar得过程中出现错误将会抛出一个异常.
    */
+=======
+>>>>>>> githubspark/branch-1.3
   private def downloadUserJar(driverDir: File): String = {
 
     val jarPath = new Path(driverDesc.jarUrl)
@@ -164,13 +215,19 @@ private[spark] class DriverRunner(
     val localJarFilename = localJarFile.getAbsolutePath
 
     if (!localJarFile.exists()) { // May already exist if running multiple workers on one node
+<<<<<<< HEAD
       // 如果运行多个workers在一个节点可能已经存在了
+=======
+>>>>>>> githubspark/branch-1.3
       logInfo(s"Copying user jar $jarPath to $destPath")
       FileUtil.copy(jarFileSystem, jarPath, destPath, false, hadoopConf)
     }
 
     if (!localJarFile.exists()) { // Verify copy succeeded
+<<<<<<< HEAD
       // 核实是否拷贝成功了
+=======
+>>>>>>> githubspark/branch-1.3
       throw new Exception(s"Did not see expected jar $jarFileName in $driverDir")
     }
 
@@ -181,7 +238,10 @@ private[spark] class DriverRunner(
     builder.directory(baseDir)
     def initialize(process: Process) = {
       // Redirect stdout and stderr to files
+<<<<<<< HEAD
       // 重定向stdout和stderr到文件中
+=======
+>>>>>>> githubspark/branch-1.3
       val stdout = new File(baseDir, "stdout")
       CommandUtils.redirectStream(process.getInputStream, stdout)
 
@@ -197,10 +257,15 @@ private[spark] class DriverRunner(
   private[deploy] def runCommandWithRetry(command: ProcessBuilderLike, initialize: Process => Unit,
     supervise: Boolean) {
     // Time to wait between submission retries.
+<<<<<<< HEAD
     // 在提交重试之间等待的时间.
     var waitSeconds = 1
     // A run of this many seconds resets the exponential back-off.
     // 许多秒的运行时间来重置这个指数补偿
+=======
+    var waitSeconds = 1
+    // A run of this many seconds resets the exponential back-off.
+>>>>>>> githubspark/branch-1.3
     val successfulRunDuration = 5
 
     var keepTrying = !killed
@@ -214,9 +279,15 @@ private[spark] class DriverRunner(
         initialize(process.get)
       }
 
+<<<<<<< HEAD
       val processStart = clock.currentTimeMillis()
       val exitCode = process.get.waitFor()
       if (clock.currentTimeMillis() - processStart > successfulRunDuration * 1000) {
+=======
+      val processStart = clock.getTimeMillis()
+      val exitCode = process.get.waitFor()
+      if (clock.getTimeMillis() - processStart > successfulRunDuration * 1000) {
+>>>>>>> githubspark/branch-1.3
         waitSeconds = 1
       }
 
@@ -224,7 +295,10 @@ private[spark] class DriverRunner(
         logInfo(s"Command exited with status $exitCode, re-launching after $waitSeconds s.")
         sleeper.sleep(waitSeconds)
         waitSeconds = waitSeconds * 2 // exponential back-off
+<<<<<<< HEAD
         // 指数补偿
+=======
+>>>>>>> githubspark/branch-1.3
       }
 
       keepTrying = supervise && exitCode != 0 && !killed
@@ -233,16 +307,22 @@ private[spark] class DriverRunner(
   }
 }
 
+<<<<<<< HEAD
 private[deploy] trait Clock {
   def currentTimeMillis(): Long
 }
 
+=======
+>>>>>>> githubspark/branch-1.3
 private[deploy] trait Sleeper {
   def sleep(seconds: Int)
 }
 
 // Needed because ProcessBuilder is a final class and cannot be mocked
+<<<<<<< HEAD
 // 这个是必需的因为ProcessBuilder是最终类并且不能被模拟
+=======
+>>>>>>> githubspark/branch-1.3
 private[deploy] trait ProcessBuilderLike {
   def start(): Process
   def command: Seq[String]

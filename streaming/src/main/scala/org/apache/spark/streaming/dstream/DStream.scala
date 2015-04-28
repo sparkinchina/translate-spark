@@ -20,8 +20,13 @@ package org.apache.spark.streaming.dstream
 
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
 
+<<<<<<< HEAD
 import scala.deprecated
 import scala.collection.mutable.HashMap
+=======
+import scala.collection.mutable.HashMap
+import scala.language.implicitConversions
+>>>>>>> githubspark/branch-1.3
 import scala.reflect.ClassTag
 import scala.util.matching.Regex
 
@@ -29,7 +34,11 @@ import org.apache.spark.{Logging, SparkException}
 import org.apache.spark.rdd.{BlockRDD, PairRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming._
+<<<<<<< HEAD
 import org.apache.spark.streaming.StreamingContext._
+=======
+import org.apache.spark.streaming.StreamingContext.rddToFileName
+>>>>>>> githubspark/branch-1.3
 import org.apache.spark.streaming.scheduler.Job
 import org.apache.spark.util.{CallSite, MetadataCleaner, Utils}
 
@@ -48,8 +57,12 @@ import org.apache.spark.util.{CallSite, MetadataCleaner, Utils}
  * `window`. In addition, [[org.apache.spark.streaming.dstream.PairDStreamFunctions]] contains
  * operations available only on DStreams of key-value pairs, such as `groupByKeyAndWindow` and
  * `join`. These operations are automatically available on any DStream of pairs
+<<<<<<< HEAD
  * (e.g., DStream[(Int, Int)] through implicit conversions when
  * `org.apache.spark.streaming.StreamingContext._` is imported.
+=======
+ * (e.g., DStream[(Int, Int)] through implicit conversions.
+>>>>>>> githubspark/branch-1.3
  *
  * DStreams internally is characterized by a few basic properties:
  *  - A list of other DStreams that the DStream depends on
@@ -612,6 +625,7 @@ abstract class DStream[T: ClassTag] (
    * operator, so this DStream will be registered as an output stream and there materialized.
    */
   def print() {
+<<<<<<< HEAD
     def foreachFunc = (rdd: RDD[T], time: Time) => {
       val first11 = rdd.take(11)
       println ("-------------------------------------------")
@@ -619,6 +633,23 @@ abstract class DStream[T: ClassTag] (
       println ("-------------------------------------------")
       first11.take(10).foreach(println)
       if (first11.size > 10) println("...")
+=======
+    print(10)
+  }
+
+  /**
+   * Print the first num elements of each RDD generated in this DStream. This is an output
+   * operator, so this DStream will be registered as an output stream and there materialized.
+   */
+  def print(num: Int) {
+    def foreachFunc = (rdd: RDD[T], time: Time) => {
+      val firstNum = rdd.take(num + 1)
+      println ("-------------------------------------------")
+      println ("Time: " + time)
+      println ("-------------------------------------------")
+      firstNum.take(num).foreach(println)
+      if (firstNum.size > num) println("...")
+>>>>>>> githubspark/branch-1.3
       println()
     }
     new ForEachDStream(this, context.sparkContext.clean(foreachFunc)).register()
@@ -808,10 +839,28 @@ abstract class DStream[T: ClassTag] (
   }
 }
 
+<<<<<<< HEAD
 private[streaming] object DStream {
 
   /** Get the creation site of a DStream from the stack trace of when the DStream is created. */
   def getCreationSite(): CallSite = {
+=======
+object DStream {
+
+  // `toPairDStreamFunctions` was in SparkContext before 1.3 and users had to
+  // `import StreamingContext._` to enable it. Now we move it here to make the compiler find
+  // it automatically. However, we still keep the old function in StreamingContext for backward
+  // compatibility and forward to the following function directly.
+
+  implicit def toPairDStreamFunctions[K, V](stream: DStream[(K, V)])
+      (implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null):
+    PairDStreamFunctions[K, V] = {
+    new PairDStreamFunctions[K, V](stream)
+  }
+
+  /** Get the creation site of a DStream from the stack trace of when the DStream is created. */
+  private[streaming] def getCreationSite(): CallSite = {
+>>>>>>> githubspark/branch-1.3
     val SPARK_CLASS_REGEX = """^org\.apache\.spark""".r
     val SPARK_STREAMING_TESTCLASS_REGEX = """^org\.apache\.spark\.streaming\.test""".r
     val SPARK_EXAMPLES_CLASS_REGEX = """^org\.apache\.spark\.examples""".r

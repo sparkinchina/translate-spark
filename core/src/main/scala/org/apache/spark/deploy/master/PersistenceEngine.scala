@@ -17,6 +17,10 @@
 
 package org.apache.spark.deploy.master
 
+import org.apache.spark.annotation.DeveloperApi
+
+import scala.reflect.ClassTag
+
 /**
  * Allows Master to persist any state that is necessary in order to recover from a failure.
  * The following semantics are required:
@@ -32,36 +36,69 @@ package org.apache.spark.deploy.master
  *  满足以上两条，我们就能让所以的App和Worker进行持久化，但也可能Job完成后，我们还没有来得及删除App或者Worker,
  *  failure就发生了。因此他们的生存与否必须在恢复时进行必要的验证
  *
+ * The implementation of this trait defines how name-object pairs are stored or retrieved.
  */
-private[spark] trait PersistenceEngine {
-  def addApplication(app: ApplicationInfo)
+@DeveloperApi
+trait PersistenceEngine {
 
-  def removeApplication(app: ApplicationInfo)
+  /**
+   * Defines how the object is serialized and persisted. Implementation will
+   * depend on the store used.
+   */
+  def persist(name: String, obj: Object)
 
-  def addWorker(worker: WorkerInfo)
+  /**
+   * Defines how the object referred by its name is removed from the store.
+   */
+  def unpersist(name: String)
 
-  def removeWorker(worker: WorkerInfo)
+  /**
+   * Gives all objects, matching a prefix. This defines how objects are
+   * read/deserialized back.
+   */
+  def read[T: ClassTag](prefix: String): Seq[T]
 
-  def addDriver(driver: DriverInfo)
+  final def addApplication(app: ApplicationInfo): Unit = {
+    persist("app_" + app.id, app)
+  }
 
-  def removeDriver(driver: DriverInfo)
+  final def removeApplication(app: ApplicationInfo): Unit = {
+    unpersist("app_" + app.id)
+  }
+
+  final def addWorker(worker: WorkerInfo): Unit = {
+    persist("worker_" + worker.id, worker)
+  }
+
+  final def removeWorker(worker: WorkerInfo): Unit = {
+    unpersist("worker_" + worker.id)
+  }
+
+  final def addDriver(driver: DriverInfo): Unit = {
+    persist("driver_" + driver.id, driver)
+  }
+
+  final def removeDriver(driver: DriverInfo): Unit = {
+    unpersist("driver_" + driver.id)
+  }
 
   /**
    * Returns the persisted data sorted by their respective ids (which implies that they're
    * sorted by time of creation).
    */
-  def readPersistedData(): (Seq[ApplicationInfo], Seq[DriverInfo], Seq[WorkerInfo])
+  final def readPersistedData(): (Seq[ApplicationInfo], Seq[DriverInfo], Seq[WorkerInfo]) = {
+    (read[ApplicationInfo]("app_"), read[DriverInfo]("driver_"), read[WorkerInfo]("worker_"))
+  }
 
   def close() {}
 }
 
 private[spark] class BlackHolePersistenceEngine extends PersistenceEngine {
-  override def addApplication(app: ApplicationInfo) {}
-  override def removeApplication(app: ApplicationInfo) {}
-  override def addWorker(worker: WorkerInfo) {}
-  override def removeWorker(worker: WorkerInfo) {}
-  override def addDriver(driver: DriverInfo) {}
-  override def removeDriver(driver: DriverInfo) {}
 
-  override def readPersistedData() = (Nil, Nil, Nil)
+  override def persist(name: String, obj: Object): Unit = {}
+
+  override def unpersist(name: String): Unit = {}
+
+  override def read[T: ClassTag](name: String): Seq[T] = Nil
+
 }

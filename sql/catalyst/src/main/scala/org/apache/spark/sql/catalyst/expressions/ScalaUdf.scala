@@ -18,8 +18,12 @@
 package org.apache.spark.sql.catalyst.expressions
 
 import org.apache.spark.sql.catalyst.ScalaReflection
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types.DataType
 import org.apache.spark.util.ClosureCleaner
+=======
+import org.apache.spark.sql.types.DataType
+>>>>>>> githubspark/branch-1.3
 
 /**
  * User-defined function.
@@ -30,9 +34,15 @@ case class ScalaUdf(function: AnyRef, dataType: DataType, children: Seq[Expressi
 
   type EvaluatedType = Any
 
+<<<<<<< HEAD
   def nullable = true
 
   override def toString = s"scalaUDF(${children.mkString(",")})"
+=======
+  override def nullable: Boolean = true
+
+  override def toString: String = s"scalaUDF(${children.mkString(",")})"
+>>>>>>> githubspark/branch-1.3
 
   // scalastyle:off
 

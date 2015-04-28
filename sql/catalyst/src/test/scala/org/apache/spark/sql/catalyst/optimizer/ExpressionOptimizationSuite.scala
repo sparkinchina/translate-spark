@@ -29,7 +29,11 @@ class ExpressionOptimizationSuite extends ExpressionEvaluationSuite {
       expression: Expression,
       expected: Any,
       inputRow: Row = EmptyRow): Unit = {
+<<<<<<< HEAD
     val plan = Project(Alias(expression, s"Optimized($expression)")() :: Nil, NoRelation)
+=======
+    val plan = Project(Alias(expression, s"Optimized($expression)")() :: Nil, OneRowRelation)
+>>>>>>> githubspark/branch-1.3
     val optimizedPlan = DefaultOptimizer(plan)
     super.checkEvaluation(optimizedPlan.expressions.head, expected, inputRow)
   }

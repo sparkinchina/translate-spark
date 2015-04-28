@@ -22,14 +22,13 @@ import scala.collection.mutable.{ArrayBuffer, SynchronizedBuffer}
 import scala.language.existentials
 import scala.reflect.ClassTag
 
-import util.ManualClock
-
 import org.apache.spark.{SparkConf, SparkException}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.{BlockRDD, RDD}
 import org.apache.spark.storage.StorageLevel
-import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.streaming.dstream.{DStream, WindowedDStream}
+import org.apache.spark.util.{Clock, ManualClock}
+import org.apache.spark.HashPartitioner
 
 class BasicOperationsSuite extends TestSuiteBase {
   test("map") {
@@ -350,6 +349,79 @@ class BasicOperationsSuite extends TestSuiteBase {
     testOperation(inputData, updateStateOperation, outputData, true)
   }
 
+  test("updateStateByKey - simple with initial value RDD") {
+    val initial = Seq(("a", 1), ("c", 2))
+
+    val inputData =
+      Seq(
+        Seq("a"),
+        Seq("a", "b"),
+        Seq("a", "b", "c"),
+        Seq("a", "b"),
+        Seq("a"),
+        Seq()
+      )
+
+    val outputData =
+      Seq(
+        Seq(("a", 2), ("c", 2)),
+        Seq(("a", 3), ("b", 1), ("c", 2)),
+        Seq(("a", 4), ("b", 2), ("c", 3)),
+        Seq(("a", 5), ("b", 3), ("c", 3)),
+        Seq(("a", 6), ("b", 3), ("c", 3)),
+        Seq(("a", 6), ("b", 3), ("c", 3))
+      )
+
+    val updateStateOperation = (s: DStream[String]) => {
+      val initialRDD = s.context.sparkContext.makeRDD(initial)
+      val updateFunc = (values: Seq[Int], state: Option[Int]) => {
+        Some(values.sum + state.getOrElse(0))
+      }
+      s.map(x => (x, 1)).updateStateByKey[Int](updateFunc,
+        new HashPartitioner (numInputPartitions), initialRDD)
+    }
+
+    testOperation(inputData, updateStateOperation, outputData, true)
+  }
+
+  test("updateStateByKey - with initial value RDD") {
+    val initial = Seq(("a", 1), ("c", 2))
+
+    val inputData =
+      Seq(
+        Seq("a"),
+        Seq("a", "b"),
+        Seq("a", "b", "c"),
+        Seq("a", "b"),
+        Seq("a"),
+        Seq()
+      )
+
+    val outputData =
+      Seq(
+        Seq(("a", 2), ("c", 2)),
+        Seq(("a", 3), ("b", 1), ("c", 2)),
+        Seq(("a", 4), ("b", 2), ("c", 3)),
+        Seq(("a", 5), ("b", 3), ("c", 3)),
+        Seq(("a", 6), ("b", 3), ("c", 3)),
+        Seq(("a", 6), ("b", 3), ("c", 3))
+      )
+
+    val updateStateOperation = (s: DStream[String]) => {
+      val initialRDD = s.context.sparkContext.makeRDD(initial)
+      val updateFunc = (values: Seq[Int], state: Option[Int]) => {
+        Some(values.sum + state.getOrElse(0))
+      }
+      val newUpdateFunc = (iterator: Iterator[(String, Seq[Int], Option[Int])]) => {
+        iterator.flatMap(t => updateFunc(t._2, t._3).map(s => (t._1, s)))
+      }
+      s.map(x => (x, 1)).updateStateByKey[Int](newUpdateFunc,
+        new HashPartitioner (numInputPartitions), true, initialRDD)
+    }
+
+    testOperation(inputData, updateStateOperation, outputData, true)
+  }
+
   test("updateStateByKey - object lifecycle") {
     val inputData =
       Seq(
@@ -513,7 +585,7 @@ class BasicOperationsSuite extends TestSuiteBase {
         for (i <- 0 until input.size) {
           testServer.send(input(i).toString + "\n")
           Thread.sleep(200)
-          clock.addToTime(batchDuration.milliseconds)
+          clock.advance(batchDuration.milliseconds)
           collectRddInfo()
         }
 
@@ -564,8 +636,8 @@ class BasicOperationsSuite extends TestSuiteBase {
         ssc.graph.getOutputStreams().head.dependencies.head.asInstanceOf[DStream[T]]
       if (rememberDuration != null) ssc.remember(rememberDuration)
       val output = runStreams[(Int, Int)](ssc, cleanupTestInput.size, numExpectedOutput)
-      val clock = ssc.scheduler.clock.asInstanceOf[ManualClock]
-      assert(clock.time === Seconds(10).milliseconds)
+      val clock = ssc.scheduler.clock.asInstanceOf[Clock]
+      assert(clock.getTimeMillis() === Seconds(10).milliseconds)
       assert(output.size === numExpectedOutput)
       operatedStream
     }

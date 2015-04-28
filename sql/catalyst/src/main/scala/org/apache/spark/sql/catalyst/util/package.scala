@@ -34,7 +34,11 @@ package object util {
     tempFile
   }
 
+<<<<<<< HEAD
   def fileToString(file: File, encoding: String = "UTF-8") = {
+=======
+  def fileToString(file: File, encoding: String = "UTF-8"): String = {
+>>>>>>> githubspark/branch-1.3
     val inStream = new FileInputStream(file)
     val outStream = new ByteArrayOutputStream
     try {
@@ -56,7 +60,11 @@ package object util {
   def resourceToString(
       resource:String,
       encoding: String = "UTF-8",
+<<<<<<< HEAD
       classLoader: ClassLoader = SparkUtils.getSparkClassLoader) = {
+=======
+      classLoader: ClassLoader = SparkUtils.getSparkClassLoader): String = {
+>>>>>>> githubspark/branch-1.3
     val inStream = classLoader.getResourceAsStream(resource)
     val outStream = new ByteArrayOutputStream
     try {
@@ -104,7 +112,11 @@ package object util {
     new String(out.toByteArray)
   }
 
+<<<<<<< HEAD
   def stringOrNull(a: AnyRef) = if (a == null) null else a.toString
+=======
+  def stringOrNull(a: AnyRef): String = if (a == null) null else a.toString
+>>>>>>> githubspark/branch-1.3
 
   def benchmark[A](f: => A): A = {
     val startTime = System.nanoTime()

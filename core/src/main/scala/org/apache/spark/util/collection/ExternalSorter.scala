@@ -352,6 +352,7 @@ private[spark] class ExternalSorter[K, V, C](
     // Create our file writers if we haven't done so yet
     if (partitionWriters == null) {
       curWriteMetrics = new ShuffleWriteMetrics()
+      val openStartTime = System.nanoTime
       partitionWriters = Array.fill(numPartitions) {
         // Because these files may be read during shuffle, their compression must be controlled by
         // spark.shuffle.compress instead of spark.shuffle.spill.compress, so we need to use
@@ -359,6 +360,10 @@ private[spark] class ExternalSorter[K, V, C](
         val (blockId, file) = diskBlockManager.createTempShuffleBlock()
         blockManager.getDiskWriter(blockId, file, ser, fileBufferSize, curWriteMetrics).open()
       }
+      // Creating the file to write to and creating a disk writer both involve interacting with
+      // the disk, and can take a long time in aggregate when we open many files, so should be
+      // included in the shuffle write time.
+      curWriteMetrics.incShuffleWriteTime(System.nanoTime - openStartTime)
     }
 
     // No need to sort stuff, just write each element out
@@ -723,6 +728,7 @@ private[spark] class ExternalSorter[K, V, C](
       partitionWriters.foreach(_.commitAndClose())
       var out: FileOutputStream = null
       var in: FileInputStream = null
+      val writeStartTime = System.nanoTime
       try {
         out = new FileOutputStream(outputFile, true)
         for (i <- 0 until numPartitions) {
@@ -739,6 +745,8 @@ private[spark] class ExternalSorter[K, V, C](
         if (in != null) {
           in.close()
         }
+        context.taskMetrics.shuffleWriteMetrics.foreach(
+          _.incShuffleWriteTime(System.nanoTime - writeStartTime))
       }
     } else {
       // Either we're not bypassing merge-sort or we have only in-memory data; get an iterator by
@@ -757,12 +765,13 @@ private[spark] class ExternalSorter[K, V, C](
       }
     }
 
-    context.taskMetrics.memoryBytesSpilled += memoryBytesSpilled
-    context.taskMetrics.diskBytesSpilled += diskBytesSpilled
+    context.taskMetrics.incMemoryBytesSpilled(memoryBytesSpilled)
+    context.taskMetrics.incDiskBytesSpilled(diskBytesSpilled)
     context.taskMetrics.shuffleWriteMetrics.filter(_ => bypassMergeSort).foreach { m =>
       if (curWriteMetrics != null) {
-        m.shuffleBytesWritten += curWriteMetrics.shuffleBytesWritten
-        m.shuffleWriteTime += curWriteMetrics.shuffleWriteTime
+        m.incShuffleBytesWritten(curWriteMetrics.shuffleBytesWritten)
+        m.incShuffleWriteTime(curWriteMetrics.shuffleWriteTime)
+        m.incShuffleRecordsWritten(curWriteMetrics.shuffleRecordsWritten)
       }
     }
 

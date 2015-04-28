@@ -20,9 +20,9 @@ package org.apache.spark.sql.columnar
 import java.nio.{ByteBuffer, ByteOrder}
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.types._
 import org.apache.spark.sql.columnar.ColumnBuilder._
 import org.apache.spark.sql.columnar.compression.{AllCompressionSchemes, CompressibleColumnBuilder}
+import org.apache.spark.sql.types._
 
 private[sql] trait ColumnBuilder {
   /**
@@ -58,7 +58,7 @@ private[sql] class BasicColumnBuilder[T <: DataType, JvmType](
   override def initialize(
       initialSize: Int,
       columnName: String = "",
-      useCompression: Boolean = false) = {
+      useCompression: Boolean = false): Unit = {
 
     val size = if (initialSize == 0) DEFAULT_INITIAL_BUFFER_SIZE else initialSize
     this.columnName = columnName
@@ -73,7 +73,7 @@ private[sql] class BasicColumnBuilder[T <: DataType, JvmType](
     columnType.append(row, ordinal, buffer)
   }
 
-  override def build() = {
+  override def build(): ByteBuffer = {
     buffer.flip().asInstanceOf[ByteBuffer]
   }
 }

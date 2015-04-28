@@ -21,8 +21,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.spark</groupId>
+<<<<<<< HEAD
     <artifactId>spark-parent</artifactId>
     <version>1.2.1</version>
+=======
+    <artifactId>spark-parent_2.10</artifactId>
+    <version>1.3.2-SNAPSHOT</version>
+>>>>>>> githubspark/branch-1.3
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -52,7 +57,10 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
+<<<<<<< HEAD
       <scope>provided</scope>
+=======
+>>>>>>> githubspark/branch-1.3
     </dependency>
 
     <!-- Test dependencies -->
@@ -83,11 +91,14 @@
       <artifactId>mockito-all</artifactId>
       <scope>test</scope>
     </dependency>
+<<<<<<< HEAD
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.binary.version}</artifactId>
       <scope>test</scope>
     </dependency>
+=======
+>>>>>>> githubspark/branch-1.3
   </dependencies>
 
   <build>

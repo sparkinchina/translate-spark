@@ -20,7 +20,11 @@ package org.apache.spark.sql.catalyst.expressions
 import scala.collection.Map
 
 import org.apache.spark.sql.catalyst.trees
+<<<<<<< HEAD
 import org.apache.spark.sql.catalyst.types._
+=======
+import org.apache.spark.sql.types._
+>>>>>>> githubspark/branch-1.3
 
 /**
  * An expression that produces zero or more rows given a single input row.
@@ -45,7 +49,11 @@ abstract class Generator extends Expression {
   override lazy val dataType =
     ArrayType(StructType(output.map(a => StructField(a.name, a.dataType, a.nullable, a.metadata))))
 
+<<<<<<< HEAD
   override def nullable = false
+=======
+  override def nullable: Boolean = false
+>>>>>>> githubspark/branch-1.3
 
   /**
    * Should be overridden by specific generators.  Called only once for each instance to ensure
@@ -74,6 +82,28 @@ abstract class Generator extends Expression {
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * A generator that produces its output using the provided lambda function.
+ */
+case class UserDefinedGenerator(
+    schema: Seq[Attribute],
+    function: Row => TraversableOnce[Row],
+    children: Seq[Expression])
+  extends Generator{
+
+  override protected def makeOutput(): Seq[Attribute] = schema
+
+  override def eval(input: Row): TraversableOnce[Row] = {
+    val inputRow = new InterpretedProjection(children)
+    function(inputRow(input))
+  }
+
+  override def toString: String = s"UserDefinedGenerator(${children.mkString(",")})"
+}
+
+/**
+>>>>>>> githubspark/branch-1.3
  * Given an input array produces a sequence of rows for each value in the array.
  */
 case class Explode(attributeNames: Seq[String], child: Expression)
@@ -111,5 +141,9 @@ case class Explode(attributeNames: Seq[String], child: Expression)
     }
   }
 
+<<<<<<< HEAD
   override def toString() = s"explode($child)"
+=======
+  override def toString: String = s"explode($child)"
+>>>>>>> githubspark/branch-1.3
 }

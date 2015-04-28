@@ -19,6 +19,10 @@ package org.apache.spark
 
 import java.io.File
 
+<<<<<<< HEAD
+=======
+import org.eclipse.jetty.server.ssl.SslSocketConnector
+>>>>>>> githubspark/branch-1.3
 import org.eclipse.jetty.util.security.{Constraint, Password}
 import org.eclipse.jetty.security.authentication.DigestAuthenticator
 import org.eclipse.jetty.security.{ConstraintMapping, ConstraintSecurityHandler, HashLoginService}
@@ -78,7 +82,10 @@ private[spark] class HttpServer(
    */
   private def doStart(startPort: Int): (Server, Int) = {
     val server = new Server()
-    val connector = new SocketConnector
+
+    val connector = securityManager.fileServerSSLOptions.createJettySslContextFactory()
+      .map(new SslSocketConnector(_)).getOrElse(new SocketConnector)
+
     connector.setMaxIdleTime(60 * 1000)
     connector.setSoLingerTime(-1)
     connector.setPort(startPort)
@@ -155,13 +162,14 @@ private[spark] class HttpServer(
   }
 
   /**
-   * Get the URI of this HTTP server (http://host:port)
+   * Get the URI of this HTTP server (http://host:port or https://host:port)
    */
   def uri: String = {
     if (server == null) {
       throw new ServerStateException("Server is not started")
     } else {
-      "http://" + Utils.localIpAddress + ":" + port
+      val scheme = if (securityManager.fileServerSSLOptions.enabled) "https" else "http"
+      s"$scheme://${Utils.localIpAddress}:$port"
     }
   }
 }

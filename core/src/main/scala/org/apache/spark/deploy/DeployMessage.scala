@@ -148,15 +148,32 @@ private[deploy] object DeployMessages {
 
   // Master to MasterWebUI
 
+<<<<<<< HEAD
   case class MasterStateResponse(host: String, port: Int, workers: Array[WorkerInfo],
     activeApps: Array[ApplicationInfo], completedApps: Array[ApplicationInfo],
     activeDrivers: Array[DriverInfo], completedDrivers: Array[DriverInfo],
     status: MasterState) {
+=======
+  case class MasterStateResponse(
+      host: String,
+      port: Int,
+      restPort: Option[Int],
+      workers: Array[WorkerInfo],
+      activeApps: Array[ApplicationInfo],
+      completedApps: Array[ApplicationInfo],
+      activeDrivers: Array[DriverInfo],
+      completedDrivers: Array[DriverInfo],
+      status: MasterState) {
+>>>>>>> githubspark/branch-1.3
 
     Utils.checkHost(host, "Required hostname")
     assert (port > 0)
 
     def uri = "spark://" + host + ":" + port
+<<<<<<< HEAD
+=======
+    def restUri: Option[String] = restPort.map { p => "spark://" + host + ":" + p }
+>>>>>>> githubspark/branch-1.3
   }
 
   //  WorkerWebUI to Worker
