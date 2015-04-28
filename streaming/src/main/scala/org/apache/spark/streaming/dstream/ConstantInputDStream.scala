@@ -23,6 +23,8 @@ import scala.reflect.ClassTag
 
 /**
  * An input stream that always returns the same RDD on each timestep. Useful for testing.
+ *
+ * 一个输入流，每个批次都返回相同的 RDD 实例。在测试中非常有用。
  */
 class ConstantInputDStream[T: ClassTag](ssc_ : StreamingContext, rdd: RDD[T])
   extends InputDStream[T](ssc_) {
