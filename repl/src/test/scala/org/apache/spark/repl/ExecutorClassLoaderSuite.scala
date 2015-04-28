@@ -20,15 +20,6 @@ package org.apache.spark.repl
 import java.io.File
 import java.net.{URL, URLClassLoader}
 
-<<<<<<< HEAD
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.FunSuite
-
-import org.apache.spark.{SparkConf, TestUtils}
-import org.apache.spark.util.Utils
-
-class ExecutorClassLoaderSuite extends FunSuite with BeforeAndAfterAll {
-=======
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.language.postfixOps
@@ -48,7 +39,6 @@ class ExecutorClassLoaderSuite
   with BeforeAndAfterAll
   with MockitoSugar
   with Logging {
->>>>>>> githubspark/branch-1.3
 
   val childClassNames = List("ReplFakeClass1", "ReplFakeClass2")
   val parentClassNames = List("ReplFakeClass1", "ReplFakeClass2", "ReplFakeClass3")
@@ -56,10 +46,7 @@ class ExecutorClassLoaderSuite
   var tempDir2: File = _
   var url1: String = _
   var urls2: Array[URL] = _
-<<<<<<< HEAD
-=======
   var classServer: HttpServer = _
->>>>>>> githubspark/branch-1.3
 
   override def beforeAll() {
     super.beforeAll()
@@ -73,17 +60,12 @@ class ExecutorClassLoaderSuite
 
   override def afterAll() {
     super.afterAll()
-<<<<<<< HEAD
-    Utils.deleteRecursively(tempDir1)
-    Utils.deleteRecursively(tempDir2)
-=======
     if (classServer != null) {
       classServer.stop()
     }
     Utils.deleteRecursively(tempDir1)
     Utils.deleteRecursively(tempDir2)
     SparkEnv.set(null)
->>>>>>> githubspark/branch-1.3
   }
 
   test("child first") {
@@ -118,8 +100,6 @@ class ExecutorClassLoaderSuite
     }
   }
 
-<<<<<<< HEAD
-=======
   test("failing to fetch classes from HTTP server should not leak resources (SPARK-6209)") {
     // This is a regression test for SPARK-6209, a bug where each failed attempt to load a class
     // from the driver's class server would leak a HTTP connection, causing the class server's
@@ -169,5 +149,4 @@ class ExecutorClassLoaderSuite
     failAfter(10 seconds)(tryAndFailToLoadABunchOfClasses())(interruptor)
   }
 
->>>>>>> githubspark/branch-1.3
 }

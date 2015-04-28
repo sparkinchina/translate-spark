@@ -70,10 +70,7 @@ class SpecialLengths(object):
     PYTHON_EXCEPTION_THROWN = -2
     TIMING_DATA = -3
     END_OF_STREAM = -4
-<<<<<<< HEAD
-=======
     NULL = -5
->>>>>>> githubspark/branch-1.3
 
 
 class Serializer(object):
@@ -137,11 +134,8 @@ class FramedSerializer(Serializer):
 
     def _write_with_length(self, obj, stream):
         serialized = self.dumps(obj)
-<<<<<<< HEAD
-=======
         if serialized is None:
             raise ValueError("serialized value should not be None")
->>>>>>> githubspark/branch-1.3
         if len(serialized) > (1 << 31):
             raise ValueError("can not serialize object larger than 2G")
         write_int(len(serialized), stream)
@@ -154,15 +148,10 @@ class FramedSerializer(Serializer):
         length = read_int(stream)
         if length == SpecialLengths.END_OF_DATA_SECTION:
             raise EOFError
-<<<<<<< HEAD
-        obj = stream.read(length)
-        if obj == "":
-=======
         elif length == SpecialLengths.NULL:
             return None
         obj = stream.read(length)
         if len(obj) < length:
->>>>>>> githubspark/branch-1.3
             raise EOFError
         return self.loads(obj)
 
@@ -500,11 +489,8 @@ class UTF8Deserializer(Serializer):
         length = read_int(stream)
         if length == SpecialLengths.END_OF_DATA_SECTION:
             raise EOFError
-<<<<<<< HEAD
-=======
         elif length == SpecialLengths.NULL:
             return None
->>>>>>> githubspark/branch-1.3
         s = stream.read(length)
         return s.decode("utf-8") if self.use_unicode else s
 

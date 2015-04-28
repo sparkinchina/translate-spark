@@ -19,11 +19,7 @@ package org.apache.spark.sql.catalyst.expressions
 
 import com.clearspring.analytics.stream.cardinality.HyperLogLog
 
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.sql.catalyst.trees
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.util.collection.OpenHashSet
@@ -83,48 +79,29 @@ abstract class AggregateFunction
   /** Base should return the generic aggregate expression that this function is computing */
   val base: AggregateExpression
 
-<<<<<<< HEAD
-  override def nullable = base.nullable
-  override def dataType = base.dataType
-=======
   override def nullable: Boolean = base.nullable
   override def dataType: DataType = base.dataType
->>>>>>> githubspark/branch-1.3
 
   def update(input: Row): Unit
 
   // Do we really need this?
-<<<<<<< HEAD
-  override def newInstance() = makeCopy(productIterator.map { case a: AnyRef => a }.toArray)
-=======
   override def newInstance(): AggregateFunction = {
     makeCopy(productIterator.map { case a: AnyRef => a }.toArray)
   }
->>>>>>> githubspark/branch-1.3
 }
 
 case class Min(child: Expression) extends PartialAggregate with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = true
-  override def dataType = child.dataType
-  override def toString = s"MIN($child)"
-=======
   override def nullable: Boolean = true
   override def dataType: DataType = child.dataType
   override def toString: String = s"MIN($child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     val partialMin = Alias(Min(child), "PartialMin")()
     SplitEvaluation(Min(partialMin.toAttribute), partialMin :: Nil)
   }
 
-<<<<<<< HEAD
-  override def newInstance() = new MinFunction(child, this)
-=======
   override def newInstance(): MinFunction = new MinFunction(child, this)
->>>>>>> githubspark/branch-1.3
 }
 
 case class MinFunction(expr: Expression, base: AggregateExpression) extends AggregateFunction {
@@ -146,26 +123,16 @@ case class MinFunction(expr: Expression, base: AggregateExpression) extends Aggr
 
 case class Max(child: Expression) extends PartialAggregate with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = true
-  override def dataType = child.dataType
-  override def toString = s"MAX($child)"
-=======
   override def nullable: Boolean = true
   override def dataType: DataType = child.dataType
   override def toString: String = s"MAX($child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     val partialMax = Alias(Max(child), "PartialMax")()
     SplitEvaluation(Max(partialMax.toAttribute), partialMax :: Nil)
   }
 
-<<<<<<< HEAD
-  override def newInstance() = new MaxFunction(child, this)
-=======
   override def newInstance(): MaxFunction = new MaxFunction(child, this)
->>>>>>> githubspark/branch-1.3
 }
 
 case class MaxFunction(expr: Expression, base: AggregateExpression) extends AggregateFunction {
@@ -187,41 +154,21 @@ case class MaxFunction(expr: Expression, base: AggregateExpression) extends Aggr
 
 case class Count(child: Expression) extends PartialAggregate with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = false
-  override def dataType = LongType
-  override def toString = s"COUNT($child)"
-=======
   override def nullable: Boolean = false
   override def dataType: LongType.type = LongType
   override def toString: String = s"COUNT($child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     val partialCount = Alias(Count(child), "PartialCount")()
     SplitEvaluation(Coalesce(Seq(Sum(partialCount.toAttribute), Literal(0L))), partialCount :: Nil)
   }
 
-<<<<<<< HEAD
-  override def newInstance() = new CountFunction(child, this)
-=======
   override def newInstance(): CountFunction = new CountFunction(child, this)
->>>>>>> githubspark/branch-1.3
 }
 
 case class CountDistinct(expressions: Seq[Expression]) extends PartialAggregate {
   def this() = this(null)
 
-<<<<<<< HEAD
-  override def children = expressions
-
-  override def nullable = false
-  override def dataType = LongType
-  override def toString = s"COUNT(DISTINCT ${expressions.mkString(",")})"
-  override def newInstance() = new CountDistinctFunction(expressions, this)
-
-  override def asPartial = {
-=======
   override def children: Seq[Expression] = expressions
 
   override def nullable: Boolean = false
@@ -230,7 +177,6 @@ case class CountDistinct(expressions: Seq[Expression]) extends PartialAggregate 
   override def newInstance(): CountDistinctFunction = new CountDistinctFunction(expressions, this)
 
   override def asPartial: SplitEvaluation = {
->>>>>>> githubspark/branch-1.3
     val partialSet = Alias(CollectHashSet(expressions), "partialSets")()
     SplitEvaluation(
       CombineSetsAndCount(partialSet.toAttribute),
@@ -241,19 +187,11 @@ case class CountDistinct(expressions: Seq[Expression]) extends PartialAggregate 
 case class CollectHashSet(expressions: Seq[Expression]) extends AggregateExpression {
   def this() = this(null)
 
-<<<<<<< HEAD
-  override def children = expressions
-  override def nullable = false
-  override def dataType = ArrayType(expressions.head.dataType)
-  override def toString = s"AddToHashSet(${expressions.mkString(",")})"
-  override def newInstance() = new CollectHashSetFunction(expressions, this)
-=======
   override def children: Seq[Expression] = expressions
   override def nullable: Boolean = false
   override def dataType: ArrayType = ArrayType(expressions.head.dataType)
   override def toString: String = s"AddToHashSet(${expressions.mkString(",")})"
   override def newInstance(): CollectHashSetFunction = new CollectHashSetFunction(expressions, this)
->>>>>>> githubspark/branch-1.3
 }
 
 case class CollectHashSetFunction(
@@ -283,13 +221,6 @@ case class CollectHashSetFunction(
 case class CombineSetsAndCount(inputSet: Expression) extends AggregateExpression {
   def this() = this(null)
 
-<<<<<<< HEAD
-  override def children = inputSet :: Nil
-  override def nullable = false
-  override def dataType = LongType
-  override def toString = s"CombineAndCount($inputSet)"
-  override def newInstance() = new CombineSetsAndCountFunction(inputSet, this)
-=======
   override def children: Seq[Expression] = inputSet :: Nil
   override def nullable: Boolean = false
   override def dataType: DataType = LongType
@@ -297,7 +228,6 @@ case class CombineSetsAndCount(inputSet: Expression) extends AggregateExpression
   override def newInstance(): CombineSetsAndCountFunction = {
     new CombineSetsAndCountFunction(inputSet, this)
   }
->>>>>>> githubspark/branch-1.3
 }
 
 case class CombineSetsAndCountFunction(
@@ -323,51 +253,31 @@ case class CombineSetsAndCountFunction(
 case class ApproxCountDistinctPartition(child: Expression, relativeSD: Double)
   extends AggregateExpression with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = false
-  override def dataType = child.dataType
-  override def toString = s"APPROXIMATE COUNT(DISTINCT $child)"
-  override def newInstance() = new ApproxCountDistinctPartitionFunction(child, this, relativeSD)
-=======
   override def nullable: Boolean = false
   override def dataType: DataType = child.dataType
   override def toString: String = s"APPROXIMATE COUNT(DISTINCT $child)"
   override def newInstance(): ApproxCountDistinctPartitionFunction = {
     new ApproxCountDistinctPartitionFunction(child, this, relativeSD)
   }
->>>>>>> githubspark/branch-1.3
 }
 
 case class ApproxCountDistinctMerge(child: Expression, relativeSD: Double)
   extends AggregateExpression with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = false
-  override def dataType = LongType
-  override def toString = s"APPROXIMATE COUNT(DISTINCT $child)"
-  override def newInstance() = new ApproxCountDistinctMergeFunction(child, this, relativeSD)
-=======
   override def nullable: Boolean = false
   override def dataType: LongType.type = LongType
   override def toString: String = s"APPROXIMATE COUNT(DISTINCT $child)"
   override def newInstance(): ApproxCountDistinctMergeFunction = {
     new ApproxCountDistinctMergeFunction(child, this, relativeSD)
   }
->>>>>>> githubspark/branch-1.3
 }
 
 case class ApproxCountDistinct(child: Expression, relativeSD: Double = 0.05)
   extends PartialAggregate with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = false
-  override def dataType = LongType
-  override def toString = s"APPROXIMATE COUNT(DISTINCT $child)"
-=======
   override def nullable: Boolean = false
   override def dataType: LongType.type = LongType
   override def toString: String = s"APPROXIMATE COUNT(DISTINCT $child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     val partialCount =
@@ -378,24 +288,14 @@ case class ApproxCountDistinct(child: Expression, relativeSD: Double = 0.05)
       partialCount :: Nil)
   }
 
-<<<<<<< HEAD
-  override def newInstance() = new CountDistinctFunction(child :: Nil, this)
-=======
   override def newInstance(): CountDistinctFunction = new CountDistinctFunction(child :: Nil, this)
->>>>>>> githubspark/branch-1.3
 }
 
 case class Average(child: Expression) extends PartialAggregate with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = true
-
-  override def dataType = child.dataType match {
-=======
   override def nullable: Boolean = true
 
   override def dataType: DataType = child.dataType match {
->>>>>>> githubspark/branch-1.3
     case DecimalType.Fixed(precision, scale) =>
       DecimalType(precision + 4, scale + 4)  // Add 4 digits after decimal point, like Hive
     case DecimalType.Unlimited =>
@@ -404,11 +304,7 @@ case class Average(child: Expression) extends PartialAggregate with trees.UnaryN
       DoubleType
   }
 
-<<<<<<< HEAD
-  override def toString = s"AVG($child)"
-=======
   override def toString: String = s"AVG($child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     child.dataType match {
@@ -435,24 +331,14 @@ case class Average(child: Expression) extends PartialAggregate with trees.UnaryN
     }
   }
 
-<<<<<<< HEAD
-  override def newInstance() = new AverageFunction(child, this)
-=======
   override def newInstance(): AverageFunction = new AverageFunction(child, this)
->>>>>>> githubspark/branch-1.3
 }
 
 case class Sum(child: Expression) extends PartialAggregate with trees.UnaryNode[Expression] {
 
-<<<<<<< HEAD
-  override def nullable = true
-
-  override def dataType = child.dataType match {
-=======
   override def nullable: Boolean = true
 
   override def dataType: DataType = child.dataType match {
->>>>>>> githubspark/branch-1.3
     case DecimalType.Fixed(precision, scale) =>
       DecimalType(precision + 10, scale)  // Add 10 digits left of decimal point, like Hive
     case DecimalType.Unlimited =>
@@ -461,11 +347,7 @@ case class Sum(child: Expression) extends PartialAggregate with trees.UnaryNode[
       child.dataType
   }
 
-<<<<<<< HEAD
-  override def toString = s"SUM($child)"
-=======
   override def toString: String = s"SUM($child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     child.dataType match {
@@ -483,17 +365,6 @@ case class Sum(child: Expression) extends PartialAggregate with trees.UnaryNode[
     }
   }
 
-<<<<<<< HEAD
-  override def newInstance() = new SumFunction(child, this)
-}
-
-case class SumDistinct(child: Expression)
-  extends AggregateExpression with trees.UnaryNode[Expression] {
-
-  override def nullable = true
-
-  override def dataType = child.dataType match {
-=======
   override def newInstance(): SumFunction = new SumFunction(child, this)
 }
 
@@ -503,7 +374,6 @@ case class SumDistinct(child: Expression)
   def this() = this(null)
   override def nullable: Boolean = true
   override def dataType: DataType = child.dataType match {
->>>>>>> githubspark/branch-1.3
     case DecimalType.Fixed(precision, scale) =>
       DecimalType(precision + 10, scale)  // Add 10 digits left of decimal point, like Hive
     case DecimalType.Unlimited =>
@@ -511,18 +381,6 @@ case class SumDistinct(child: Expression)
     case _ =>
       child.dataType
   }
-<<<<<<< HEAD
-
-  override def toString = s"SUM(DISTINCT $child)"
-
-  override def newInstance() = new SumDistinctFunction(child, this)
-}
-
-case class First(child: Expression) extends PartialAggregate with trees.UnaryNode[Expression] {
-  override def nullable = true
-  override def dataType = child.dataType
-  override def toString = s"FIRST($child)"
-=======
   override def toString: String = s"SUM(DISTINCT $child)"
   override def newInstance(): SumDistinctFunction = new SumDistinctFunction(child, this)
 
@@ -580,7 +438,6 @@ case class First(child: Expression) extends PartialAggregate with trees.UnaryNod
   override def nullable: Boolean = true
   override def dataType: DataType = child.dataType
   override def toString: String = s"FIRST($child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     val partialFirst = Alias(First(child), "PartialFirst")()
@@ -588,16 +445,6 @@ case class First(child: Expression) extends PartialAggregate with trees.UnaryNod
       First(partialFirst.toAttribute),
       partialFirst :: Nil)
   }
-<<<<<<< HEAD
-  override def newInstance() = new FirstFunction(child, this)
-}
-
-case class Last(child: Expression) extends PartialAggregate with trees.UnaryNode[Expression] {
-  override def references = child.references
-  override def nullable = true
-  override def dataType = child.dataType
-  override def toString = s"LAST($child)"
-=======
   override def newInstance(): FirstFunction = new FirstFunction(child, this)
 }
 
@@ -606,7 +453,6 @@ case class Last(child: Expression) extends PartialAggregate with trees.UnaryNode
   override def nullable: Boolean = true
   override def dataType: DataType = child.dataType
   override def toString: String = s"LAST($child)"
->>>>>>> githubspark/branch-1.3
 
   override def asPartial: SplitEvaluation = {
     val partialLast = Alias(Last(child), "PartialLast")()
@@ -614,11 +460,7 @@ case class Last(child: Expression) extends PartialAggregate with trees.UnaryNode
       Last(partialLast.toAttribute),
       partialLast :: Nil)
   }
-<<<<<<< HEAD
-  override def newInstance() = new LastFunction(child, this)
-=======
   override def newInstance(): LastFunction = new LastFunction(child, this)
->>>>>>> githubspark/branch-1.3
 }
 
 case class AverageFunction(expr: Expression, base: AggregateExpression)
@@ -819,12 +661,7 @@ case class LastFunction(expr: Expression, base: AggregateExpression) extends Agg
     result = input
   }
 
-<<<<<<< HEAD
-  override def eval(input: Row): Any =  if (result != null) expr.eval(result.asInstanceOf[Row])
-                                        else null
-=======
   override def eval(input: Row): Any = {
     if (result != null) expr.eval(result.asInstanceOf[Row]) else null
   }
->>>>>>> githubspark/branch-1.3
 }

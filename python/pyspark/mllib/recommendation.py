@@ -19,13 +19,9 @@ from collections import namedtuple
 
 from pyspark import SparkContext
 from pyspark.rdd import RDD
-<<<<<<< HEAD
-from pyspark.mllib.common import JavaModelWrapper, callMLlibFunc
-=======
 from pyspark.mllib.common import JavaModelWrapper, callMLlibFunc, inherit_doc
 from pyspark.mllib.util import JavaLoader, JavaSaveable
 from pyspark.sql import DataFrame
->>>>>>> githubspark/branch-1.3
 
 __all__ = ['MatrixFactorizationModel', 'ALS', 'Rating']
 
@@ -45,12 +41,8 @@ class Rating(namedtuple("Rating", ["user", "product", "rating"])):
         return Rating, (int(self.user), int(self.product), float(self.rating))
 
 
-<<<<<<< HEAD
-class MatrixFactorizationModel(JavaModelWrapper):
-=======
 @inherit_doc
 class MatrixFactorizationModel(JavaModelWrapper, JavaSaveable, JavaLoader):
->>>>>>> githubspark/branch-1.3
 
     """A matrix factorisation model trained by regularized alternating
     least-squares.
@@ -60,19 +52,6 @@ class MatrixFactorizationModel(JavaModelWrapper, JavaSaveable, JavaLoader):
     >>> r3 = (2, 1, 2.0)
     >>> ratings = sc.parallelize([r1, r2, r3])
     >>> model = ALS.trainImplicit(ratings, 1, seed=10)
-<<<<<<< HEAD
-    >>> model.predict(2,2)
-    0.4473...
-
-    >>> testset = sc.parallelize([(1, 2), (1, 1)])
-    >>> model = ALS.train(ratings, 1, seed=10)
-    >>> model.predictAll(testset).collect()
-    [Rating(user=1, product=1, rating=1.0471...), Rating(user=1, product=2, rating=1.9679...)]
-
-    >>> model = ALS.train(ratings, 4, seed=10)
-    >>> model.userFeatures().collect()
-    [(2, array('d', [...])), (1, array('d', [...]))]
-=======
     >>> model.predict(2, 2)
     0.4...
 
@@ -84,7 +63,6 @@ class MatrixFactorizationModel(JavaModelWrapper, JavaSaveable, JavaLoader):
     >>> model = ALS.train(ratings, 4, seed=10)
     >>> model.userFeatures().collect()
     [(1, array('d', [...])), (2, array('d', [...]))]
->>>>>>> githubspark/branch-1.3
 
     >>> first_user = model.userFeatures().take(1)[0]
     >>> latents = first_user[1]
@@ -92,11 +70,7 @@ class MatrixFactorizationModel(JavaModelWrapper, JavaSaveable, JavaLoader):
     True
 
     >>> model.productFeatures().collect()
-<<<<<<< HEAD
-    [(2, array('d', [...])), (1, array('d', [...]))]
-=======
     [(1, array('d', [...])), (2, array('d', [...]))]
->>>>>>> githubspark/branch-1.3
 
     >>> first_product = model.productFeatures().take(1)[0]
     >>> latents = first_product[1]
@@ -104,14 +78,6 @@ class MatrixFactorizationModel(JavaModelWrapper, JavaSaveable, JavaLoader):
     True
 
     >>> model = ALS.train(ratings, 1, nonnegative=True, seed=10)
-<<<<<<< HEAD
-    >>> model.predict(2,2)
-    3.735...
-
-    >>> model = ALS.trainImplicit(ratings, 1, nonnegative=True, seed=10)
-    >>> model.predict(2,2)
-    0.4473...
-=======
     >>> model.predict(2, 2)
     3.8...
 
@@ -136,7 +102,6 @@ class MatrixFactorizationModel(JavaModelWrapper, JavaSaveable, JavaLoader):
     ...     os.removedirs(path)
     ... except OSError:
     ...     pass
->>>>>>> githubspark/branch-1.3
     """
     def predict(self, user, product):
         return self._java_model.predict(int(user), int(product))
@@ -154,29 +119,17 @@ class MatrixFactorizationModel(JavaModelWrapper, JavaSaveable, JavaLoader):
     def productFeatures(self):
         return self.call("getProductFeatures")
 
-<<<<<<< HEAD
-=======
     @classmethod
     def load(cls, sc, path):
         model = cls._load_java(sc, path)
         wrapper = sc._jvm.MatrixFactorizationModelWrapper(model)
         return MatrixFactorizationModel(wrapper)
 
->>>>>>> githubspark/branch-1.3
 
 class ALS(object):
 
     @classmethod
     def _prepare(cls, ratings):
-<<<<<<< HEAD
-        assert isinstance(ratings, RDD), "ratings should be RDD"
-        first = ratings.first()
-        if not isinstance(first, Rating):
-            if isinstance(first, (tuple, list)):
-                ratings = ratings.map(lambda x: Rating(*x))
-            else:
-                raise ValueError("rating should be RDD of Rating or tuple/list")
-=======
         if isinstance(ratings, RDD):
             pass
         elif isinstance(ratings, DataFrame):
@@ -191,7 +144,6 @@ class ALS(object):
             ratings = ratings.map(lambda x: Rating(*x))
         else:
             raise TypeError("Expect a Rating or a tuple/list, but got %s." % type(first))
->>>>>>> githubspark/branch-1.3
         return ratings
 
     @classmethod
@@ -212,16 +164,11 @@ class ALS(object):
 def _test():
     import doctest
     import pyspark.mllib.recommendation
-<<<<<<< HEAD
-    globs = pyspark.mllib.recommendation.__dict__.copy()
-    globs['sc'] = SparkContext('local[4]', 'PythonTest')
-=======
     from pyspark.sql import SQLContext
     globs = pyspark.mllib.recommendation.__dict__.copy()
     sc = SparkContext('local[4]', 'PythonTest')
     globs['sc'] = sc
     globs['sqlContext'] = SQLContext(sc)
->>>>>>> githubspark/branch-1.3
     (failure_count, test_count) = doctest.testmod(globs=globs, optionflags=doctest.ELLIPSIS)
     globs['sc'].stop()
     if failure_count:

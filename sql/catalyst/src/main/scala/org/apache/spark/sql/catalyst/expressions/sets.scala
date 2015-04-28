@@ -17,11 +17,7 @@
 
 package org.apache.spark.sql.catalyst.expressions
 
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.util.collection.OpenHashSet
 
 /**
@@ -30,19 +26,6 @@ import org.apache.spark.util.collection.OpenHashSet
 case class NewSet(elementType: DataType) extends LeafExpression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def nullable = false
-
-  // We are currently only using these Expressions internally for aggregation.  However, if we ever
-  // expose these to users we'll want to create a proper type instead of hijacking ArrayType.
-  def dataType = ArrayType(elementType)
-
-  def eval(input: Row): Any = {
-    new OpenHashSet[Any]()
-  }
-
-  override def toString = s"new Set($dataType)"
-=======
   override def nullable: Boolean = false
 
   // We are currently only using these Expressions internally for aggregation.  However, if we ever
@@ -54,7 +37,6 @@ case class NewSet(elementType: DataType) extends LeafExpression {
   }
 
   override def toString: String = s"new Set($dataType)"
->>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -64,14 +46,6 @@ case class NewSet(elementType: DataType) extends LeafExpression {
 case class AddItemToSet(item: Expression, set: Expression) extends Expression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def children = item :: set :: Nil
-
-  def nullable = set.nullable
-
-  def dataType = set.dataType
-  def eval(input: Row): Any = {
-=======
   override def children: Seq[Expression] = item :: set :: Nil
 
   override def nullable: Boolean = set.nullable
@@ -79,7 +53,6 @@ case class AddItemToSet(item: Expression, set: Expression) extends Expression {
   override def dataType: DataType = set.dataType
 
   override def eval(input: Row): Any = {
->>>>>>> githubspark/branch-1.3
     val itemEval = item.eval(input)
     val setEval = set.eval(input).asInstanceOf[OpenHashSet[Any]]
 
@@ -95,11 +68,7 @@ case class AddItemToSet(item: Expression, set: Expression) extends Expression {
     }
   }
 
-<<<<<<< HEAD
-  override def toString = s"$set += $item"
-=======
   override def toString: String = s"$set += $item"
->>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -109,15 +78,6 @@ case class AddItemToSet(item: Expression, set: Expression) extends Expression {
 case class CombineSets(left: Expression, right: Expression) extends BinaryExpression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def nullable = left.nullable || right.nullable
-
-  def dataType = left.dataType
-
-  def symbol = "++="
-
-  def eval(input: Row): Any = {
-=======
   override def nullable: Boolean = left.nullable || right.nullable
 
   override def dataType: DataType = left.dataType
@@ -125,7 +85,6 @@ case class CombineSets(left: Expression, right: Expression) extends BinaryExpres
   override def symbol: String = "++="
 
   override def eval(input: Row): Any = {
->>>>>>> githubspark/branch-1.3
     val leftEval = left.eval(input).asInstanceOf[OpenHashSet[Any]]
     if(leftEval != null) {
       val rightEval = right.eval(input).asInstanceOf[OpenHashSet[Any]]
@@ -151,28 +110,16 @@ case class CombineSets(left: Expression, right: Expression) extends BinaryExpres
 case class CountSet(child: Expression) extends UnaryExpression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def nullable = child.nullable
-
-  def dataType = LongType
-
-  def eval(input: Row): Any = {
-=======
   override def nullable: Boolean = child.nullable
 
   override def dataType: DataType = LongType
 
   override def eval(input: Row): Any = {
->>>>>>> githubspark/branch-1.3
     val childEval = child.eval(input).asInstanceOf[OpenHashSet[Any]]
     if (childEval != null) {
       childEval.size.toLong
     }
   }
 
-<<<<<<< HEAD
-  override def toString = s"$child.count()"
-=======
   override def toString: String = s"$child.count()"
->>>>>>> githubspark/branch-1.3
 }

@@ -18,10 +18,7 @@
 package org.apache.spark.sql.catalyst.optimizer
 
 import scala.collection.immutable.HashSet
-<<<<<<< HEAD
-=======
 import org.apache.spark.sql.catalyst.analysis.EliminateSubQueries
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.Inner
 import org.apache.spark.sql.catalyst.plans.FullOuter
@@ -30,23 +27,15 @@ import org.apache.spark.sql.catalyst.plans.RightOuter
 import org.apache.spark.sql.catalyst.plans.LeftSemi
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-import org.apache.spark.sql.catalyst.types.decimal.Decimal
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 
 abstract class Optimizer extends RuleExecutor[LogicalPlan]
 
 object DefaultOptimizer extends Optimizer {
   val batches =
-<<<<<<< HEAD
-=======
     // SubQueries are only needed for analysis and can be removed before execution.
     Batch("Remove SubQueries", FixedPoint(100),
       EliminateSubQueries) ::
->>>>>>> githubspark/branch-1.3
     Batch("Combine Limits", FixedPoint(100),
       CombineLimits) ::
     Batch("ConstantFolding", FixedPoint(100),
@@ -65,14 +54,10 @@ object DefaultOptimizer extends Optimizer {
       CombineFilters,
       PushPredicateThroughProject,
       PushPredicateThroughJoin,
-<<<<<<< HEAD
-      ColumnPruning) :: Nil
-=======
       PushPredicateThroughGenerate,
       ColumnPruning) ::
     Batch("LocalRelation", FixedPoint(100),
       ConvertToLocalRelation) :: Nil
->>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -138,8 +123,6 @@ object ColumnPruning extends Rule[LogicalPlan] {
     case a @ Aggregate(_, _, child) if (child.outputSet -- a.references).nonEmpty =>
       a.copy(child = Project(a.references.toSeq, child))
 
-<<<<<<< HEAD
-=======
     case p @ Project(projectList, a @ Aggregate(groupingExpressions, aggregateExpressions, child))
         if (a.outputSet -- p.references).nonEmpty =>
       Project(
@@ -149,7 +132,6 @@ object ColumnPruning extends Rule[LogicalPlan] {
           aggregateExpressions.filter(e => p.references.contains(e)),
           child))
 
->>>>>>> githubspark/branch-1.3
     // Eliminate unneeded attributes from either side of a Join.
     case Project(projectList, Join(left, right, joinType, condition)) =>
       // Collect the list of all references required either above or to evaluate the condition.
@@ -159,11 +141,7 @@ object ColumnPruning extends Rule[LogicalPlan] {
           condition.map(_.references).getOrElse(AttributeSet(Seq.empty))
 
       /** Applies a projection only when the child is producing unnecessary attributes */
-<<<<<<< HEAD
-      def pruneJoinChild(c: LogicalPlan) = prunedChild(c, allReferences)
-=======
       def pruneJoinChild(c: LogicalPlan): LogicalPlan = prunedChild(c, allReferences)
->>>>>>> githubspark/branch-1.3
 
       Project(projectList, Join(pruneJoinChild(left), pruneJoinChild(right), joinType, condition))
 
@@ -240,26 +218,15 @@ object NullPropagation extends Rule[LogicalPlan] {
   def apply(plan: LogicalPlan): LogicalPlan = plan transform {
     case q: LogicalPlan => q transformExpressionsUp {
       case e @ Count(Literal(null, _)) => Cast(Literal(0L), e.dataType)
-<<<<<<< HEAD
-      case e @ Sum(Literal(c, _)) if c == 0 => Cast(Literal(0L), e.dataType)
-      case e @ Average(Literal(c, _)) if c == 0 => Literal(0.0, e.dataType)
-=======
->>>>>>> githubspark/branch-1.3
       case e @ IsNull(c) if !c.nullable => Literal(false, BooleanType)
       case e @ IsNotNull(c) if !c.nullable => Literal(true, BooleanType)
       case e @ GetItem(Literal(null, _), _) => Literal(null, e.dataType)
       case e @ GetItem(_, Literal(null, _)) => Literal(null, e.dataType)
-<<<<<<< HEAD
-      case e @ GetField(Literal(null, _), _) => Literal(null, e.dataType)
-      case e @ EqualNullSafe(Literal(null, _), r) => IsNull(r)
-      case e @ EqualNullSafe(l, Literal(null, _)) => IsNull(l)
-=======
       case e @ StructGetField(Literal(null, _), _, _) => Literal(null, e.dataType)
       case e @ ArrayGetField(Literal(null, _), _, _, _) => Literal(null, e.dataType)
       case e @ EqualNullSafe(Literal(null, _), r) => IsNull(r)
       case e @ EqualNullSafe(l, Literal(null, _)) => IsNull(l)
       case e @ Count(expr) if !expr.nullable => Count(Literal(1))
->>>>>>> githubspark/branch-1.3
 
       // For Coalesce, remove null literals.
       case e @ Coalesce(children) =>
@@ -343,46 +310,6 @@ object OptimizeIn extends Rule[LogicalPlan] {
 }
 
 /**
-<<<<<<< HEAD
- * Simplifies boolean expressions where the answer can be determined without evaluating both sides.
- * Note that this rule can eliminate expressions that might otherwise have been evaluated and thus
- * is only safe when evaluations of expressions does not result in side effects.
- */
-object BooleanSimplification extends Rule[LogicalPlan] {
-  def apply(plan: LogicalPlan): LogicalPlan = plan transform {
-    case q: LogicalPlan => q transformExpressionsUp {
-      case and @ And(left, right) =>
-        (left, right) match {
-          case (Literal(true, BooleanType), r) => r
-          case (l, Literal(true, BooleanType)) => l
-          case (Literal(false, BooleanType), _) => Literal(false)
-          case (_, Literal(false, BooleanType)) => Literal(false)
-          case (_, _) => and
-        }
-
-      case or @ Or(left, right) =>
-        (left, right) match {
-          case (Literal(true, BooleanType), _) => Literal(true)
-          case (_, Literal(true, BooleanType)) => Literal(true)
-          case (Literal(false, BooleanType), r) => r
-          case (l, Literal(false, BooleanType)) => l
-          case (_, _) => or
-        }
-
-      case not @ Not(exp) =>
-        exp match {
-          case Literal(true, BooleanType) => Literal(false)
-          case Literal(false, BooleanType) => Literal(true)
-          case GreaterThan(l, r) => LessThanOrEqual(l, r)
-          case GreaterThanOrEqual(l, r) => LessThan(l, r)
-          case LessThan(l, r) => GreaterThanOrEqual(l, r)
-          case LessThanOrEqual(l, r) => GreaterThan(l, r)
-          case Not(e) => e
-          case _ => not
-        }
-
-      // Turn "if (true) a else b" into "a", and if (false) a else b" into "b".
-=======
  * Simplifies boolean expressions:
  * 1. Simplifies expressions whose answer can be determined without evaluating both sides.
  * 2. Eliminates / extracts common factors.
@@ -488,7 +415,6 @@ object BooleanSimplification extends Rule[LogicalPlan] with PredicateHelper {
 
       // if (true) a else b  =>  a
       // if (false) a else b  =>  b
->>>>>>> githubspark/branch-1.3
       case e @ If(Literal(v, _), trueValue, falseValue) => if (v == true) trueValue else falseValue
     }
   }
@@ -545,8 +471,6 @@ object PushPredicateThroughProject extends Rule[LogicalPlan] {
 }
 
 /**
-<<<<<<< HEAD
-=======
  * Push [[Filter]] operators through [[Generate]] operators. Parts of the predicate that reference
  * attributes generated in [[Generate]] will remain above, and the rest should be pushed beneath.
  */
@@ -571,7 +495,6 @@ object PushPredicateThroughGenerate extends Rule[LogicalPlan] with PredicateHelp
 }
 
 /**
->>>>>>> githubspark/branch-1.3
  * Pushes down [[Filter]] operators where the `condition` can be
  * evaluated using only the attributes of the left or right side of a join.  Other
  * [[Filter]] conditions are moved into the `condition` of the [[Join]].
@@ -728,8 +651,6 @@ object DecimalAggregates extends Rule[LogicalPlan] {
         DecimalType(prec + 4, scale + 4))
   }
 }
-<<<<<<< HEAD
-=======
 
 /**
  * Converts local operations (i.e. ones that don't require data exchange) on LocalRelation to
@@ -744,4 +665,3 @@ object ConvertToLocalRelation extends Rule[LogicalPlan] {
       LocalRelation(projectList.map(_.toAttribute), data.map(projection))
   }
 }
->>>>>>> githubspark/branch-1.3

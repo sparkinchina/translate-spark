@@ -19,12 +19,6 @@
 Fuller unit tests for Python MLlib.
 """
 
-<<<<<<< HEAD
-import sys
-import array as pyarray
-
-from numpy import array, array_equal
-=======
 import os
 import sys
 import tempfile
@@ -32,7 +26,6 @@ import array as pyarray
 
 from numpy import array, array_equal
 from py4j.protocol import Py4JJavaError
->>>>>>> githubspark/branch-1.3
 
 if sys.version_info[:2] <= (2, 6):
     try:
@@ -43,14 +36,9 @@ if sys.version_info[:2] <= (2, 6):
 else:
     import unittest
 
-<<<<<<< HEAD
-from pyspark.mllib.linalg import Vector, SparseVector, DenseVector, VectorUDT, _convert_to_vector,\
-    DenseMatrix
-=======
 from pyspark.mllib.common import _to_java_object_rdd
 from pyspark.mllib.linalg import Vector, SparseVector, DenseVector, VectorUDT, _convert_to_vector,\
     DenseMatrix, Vectors, Matrices
->>>>>>> githubspark/branch-1.3
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.mllib.random import RandomRDDs
 from pyspark.mllib.stat import Statistics
@@ -135,8 +123,6 @@ class VectorTests(PySparkTestCase):
         dv = DenseVector(v)
         self.assertTrue(dv.array.dtype == 'float64')
 
-<<<<<<< HEAD
-=======
     def test_sparse_vector_indexing(self):
         sv = SparseVector(4, {1: 1, 3: 2})
         self.assertEquals(sv[0], 0.)
@@ -149,7 +135,6 @@ class VectorTests(PySparkTestCase):
         for ind in [4, -5, 7.8]:
             self.assertRaises(ValueError, sv.__getitem__, ind)
 
->>>>>>> githubspark/branch-1.3
 
 class ListTests(PySparkTestCase):
 
@@ -158,11 +143,7 @@ class ListTests(PySparkTestCase):
     as NumPy arrays.
     """
 
-<<<<<<< HEAD
-    def test_clustering(self):
-=======
     def test_kmeans(self):
->>>>>>> githubspark/branch-1.3
         from pyspark.mllib.clustering import KMeans
         data = [
             [0, 1.1],
@@ -174,11 +155,6 @@ class ListTests(PySparkTestCase):
         self.assertEquals(clusters.predict(data[0]), clusters.predict(data[1]))
         self.assertEquals(clusters.predict(data[2]), clusters.predict(data[3]))
 
-<<<<<<< HEAD
-    def test_classification(self):
-        from pyspark.mllib.classification import LogisticRegressionWithSGD, SVMWithSGD, NaiveBayes
-        from pyspark.mllib.tree import DecisionTree
-=======
     def test_kmeans_deterministic(self):
         from pyspark.mllib.clustering import KMeans
         X = range(0, 100, 10)
@@ -224,7 +200,6 @@ class ListTests(PySparkTestCase):
         from pyspark.mllib.classification import LogisticRegressionWithSGD, SVMWithSGD, NaiveBayes
         from pyspark.mllib.tree import DecisionTree, DecisionTreeModel, RandomForest,\
             RandomForestModel, GradientBoostedTrees, GradientBoostedTreesModel
->>>>>>> githubspark/branch-1.3
         data = [
             LabeledPoint(0.0, [1, 0, 0]),
             LabeledPoint(1.0, [0, 1, 1]),
@@ -234,11 +209,8 @@ class ListTests(PySparkTestCase):
         rdd = self.sc.parallelize(data)
         features = [p.features.tolist() for p in data]
 
-<<<<<<< HEAD
-=======
         temp_dir = tempfile.mkdtemp()
 
->>>>>>> githubspark/branch-1.3
         lr_model = LogisticRegressionWithSGD.train(rdd)
         self.assertTrue(lr_model.predict(features[0]) <= 0)
         self.assertTrue(lr_model.predict(features[1]) > 0)
@@ -258,25 +230,13 @@ class ListTests(PySparkTestCase):
         self.assertTrue(nb_model.predict(features[3]) > 0)
 
         categoricalFeaturesInfo = {0: 3}  # feature 0 has 3 categories
-<<<<<<< HEAD
-        dt_model = \
-            DecisionTree.trainClassifier(rdd, numClasses=2,
-                                         categoricalFeaturesInfo=categoricalFeaturesInfo)
-=======
         dt_model = DecisionTree.trainClassifier(
             rdd, numClasses=2, categoricalFeaturesInfo=categoricalFeaturesInfo)
->>>>>>> githubspark/branch-1.3
         self.assertTrue(dt_model.predict(features[0]) <= 0)
         self.assertTrue(dt_model.predict(features[1]) > 0)
         self.assertTrue(dt_model.predict(features[2]) <= 0)
         self.assertTrue(dt_model.predict(features[3]) > 0)
 
-<<<<<<< HEAD
-    def test_regression(self):
-        from pyspark.mllib.regression import LinearRegressionWithSGD, LassoWithSGD, \
-            RidgeRegressionWithSGD
-        from pyspark.mllib.tree import DecisionTree
-=======
         dt_model_dir = os.path.join(temp_dir, "dt")
         dt_model.save(self.sc, dt_model_dir)
         same_dt_model = DecisionTreeModel.load(self.sc, dt_model_dir)
@@ -315,7 +275,6 @@ class ListTests(PySparkTestCase):
         from pyspark.mllib.regression import LinearRegressionWithSGD, LassoWithSGD, \
             RidgeRegressionWithSGD
         from pyspark.mllib.tree import DecisionTree, RandomForest, GradientBoostedTrees
->>>>>>> githubspark/branch-1.3
         data = [
             LabeledPoint(-1.0, [0, -1]),
             LabeledPoint(1.0, [0, 1]),
@@ -344,20 +303,13 @@ class ListTests(PySparkTestCase):
         self.assertTrue(rr_model.predict(features[3]) > 0)
 
         categoricalFeaturesInfo = {0: 2}  # feature 0 has 2 categories
-<<<<<<< HEAD
-        dt_model = \
-            DecisionTree.trainRegressor(rdd, categoricalFeaturesInfo=categoricalFeaturesInfo)
-=======
         dt_model = DecisionTree.trainRegressor(
             rdd, categoricalFeaturesInfo=categoricalFeaturesInfo)
->>>>>>> githubspark/branch-1.3
         self.assertTrue(dt_model.predict(features[0]) <= 0)
         self.assertTrue(dt_model.predict(features[1]) > 0)
         self.assertTrue(dt_model.predict(features[2]) <= 0)
         self.assertTrue(dt_model.predict(features[3]) > 0)
 
-<<<<<<< HEAD
-=======
         rf_model = RandomForest.trainRegressor(
             rdd, categoricalFeaturesInfo=categoricalFeaturesInfo, numTrees=100, seed=1)
         self.assertTrue(rf_model.predict(features[0]) <= 0)
@@ -379,7 +331,6 @@ class ListTests(PySparkTestCase):
         except ValueError:
             self.fail()
 
->>>>>>> githubspark/branch-1.3
 
 class StatTests(PySparkTestCase):
     # SPARK-4023
@@ -417,11 +368,7 @@ class VectorUDTTests(PySparkTestCase):
         sqlCtx = SQLContext(self.sc)
         rdd = self.sc.parallelize([LabeledPoint(1.0, self.dv1), LabeledPoint(0.0, self.sv1)])
         srdd = sqlCtx.inferSchema(rdd)
-<<<<<<< HEAD
-        schema = srdd.schema()
-=======
         schema = srdd.schema
->>>>>>> githubspark/branch-1.3
         field = [f for f in schema.fields if f.name == "features"][0]
         self.assertEqual(field.dataType, self.udt)
         vectors = srdd.map(lambda p: p.features).collect()
@@ -577,8 +524,6 @@ class SciPyTests(PySparkTestCase):
         self.assertTrue(dt_model.predict(features[3]) > 0)
 
 
-<<<<<<< HEAD
-=======
 class ChiSqTestTests(PySparkTestCase):
     def test_goodness_of_fit(self):
         from numpy import inf
@@ -683,7 +628,6 @@ class SerDeTest(PySparkTestCase):
         self.assertEqual(_to_java_object_rdd(data).count(), 10)
 
 
->>>>>>> githubspark/branch-1.3
 if __name__ == "__main__":
     if not _have_scipy:
         print "NOTE: Skipping SciPy tests as it does not seem to be installed"

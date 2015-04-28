@@ -18,25 +18,12 @@
 package org.apache.spark.sql.catalyst.expressions
 
 import org.apache.spark.sql.catalyst.analysis.UnresolvedException
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 
 case class UnaryMinus(child: Expression) extends UnaryExpression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def dataType = child.dataType
-  override def foldable = child.foldable
-  def nullable = child.nullable
-  override def toString = s"-$child"
-
-  override def eval(input: Row): Any = {
-    n1(child, input, _.negate(_))
-=======
   override def dataType: DataType = child.dataType
   override def foldable: Boolean = child.foldable
   override def nullable: Boolean = child.nullable
@@ -54,22 +41,12 @@ case class UnaryMinus(child: Expression) extends UnaryExpression {
     } else {
       numeric.negate(evalE)
     }
->>>>>>> githubspark/branch-1.3
   }
 }
 
 case class Sqrt(child: Expression) extends UnaryExpression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def dataType = DoubleType
-  override def foldable = child.foldable
-  def nullable = child.nullable
-  override def toString = s"SQRT($child)"
-
-  override def eval(input: Row): Any = {
-    n1(child, input, (na,a) => math.sqrt(na.toDouble(a)))
-=======
   override def dataType: DataType = DoubleType
   override def foldable: Boolean = child.foldable
   override def nullable: Boolean = true
@@ -89,7 +66,6 @@ case class Sqrt(child: Expression) extends UnaryExpression {
       if (value < 0) null
       else math.sqrt(value)
     }
->>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -98,22 +74,14 @@ abstract class BinaryArithmetic extends BinaryExpression {
 
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def nullable = left.nullable || right.nullable
-=======
   def nullable: Boolean = left.nullable || right.nullable
->>>>>>> githubspark/branch-1.3
 
   override lazy val resolved =
     left.resolved && right.resolved &&
     left.dataType == right.dataType &&
     !DecimalType.isFixed(left.dataType)
 
-<<<<<<< HEAD
-  def dataType = {
-=======
   def dataType: DataType = {
->>>>>>> githubspark/branch-1.3
     if (!resolved) {
       throw new UnresolvedException(this,
         s"datatype. Can not resolve due to differing types ${left.dataType}, ${right.dataType}")
@@ -140,48 +108,6 @@ abstract class BinaryArithmetic extends BinaryExpression {
 }
 
 case class Add(left: Expression, right: Expression) extends BinaryArithmetic {
-<<<<<<< HEAD
-  def symbol = "+"
-
-  override def eval(input: Row): Any = n2(input, left, right, _.plus(_, _))
-}
-
-case class Subtract(left: Expression, right: Expression) extends BinaryArithmetic {
-  def symbol = "-"
-
-  override def eval(input: Row): Any = n2(input, left, right, _.minus(_, _))
-}
-
-case class Multiply(left: Expression, right: Expression) extends BinaryArithmetic {
-  def symbol = "*"
-
-  override def eval(input: Row): Any = n2(input, left, right, _.times(_, _))
-}
-
-case class Divide(left: Expression, right: Expression) extends BinaryArithmetic {
-  def symbol = "/"
-
-  override def nullable = true
-
-  override def eval(input: Row): Any = {
-    val evalE2 = right.eval(input)
-    dataType match {
-      case _ if evalE2 == null => null
-      case _ if evalE2 == 0 => null
-      case ft: FractionalType => f1(input, left, _.div(_, evalE2.asInstanceOf[ft.JvmType]))
-      case it: IntegralType => i1(input, left, _.quot(_, evalE2.asInstanceOf[it.JvmType]))
-    }
-  }
-
-}
-
-case class Remainder(left: Expression, right: Expression) extends BinaryArithmetic {
-  def symbol = "%"
-
-  override def nullable = left.nullable || right.nullable || dataType.isInstanceOf[DecimalType]
-
-  override def eval(input: Row): Any = i2(input, left, right, _.rem(_, _))
-=======
   override def symbol: String = "+"
 
   lazy val numeric = dataType match {
@@ -300,24 +226,12 @@ case class Remainder(left: Expression, right: Expression) extends BinaryArithmet
       }
     }
   }
->>>>>>> githubspark/branch-1.3
 }
 
 /**
  * A function that calculates bitwise and(&) of two numbers.
  */
 case class BitwiseAnd(left: Expression, right: Expression) extends BinaryArithmetic {
-<<<<<<< HEAD
-  def symbol = "&"
-
-  override def evalInternal(evalE1: EvaluatedType, evalE2: EvaluatedType): Any = dataType match {
-    case ByteType => (evalE1.asInstanceOf[Byte] & evalE2.asInstanceOf[Byte]).toByte
-    case ShortType => (evalE1.asInstanceOf[Short] & evalE2.asInstanceOf[Short]).toShort
-    case IntegerType => evalE1.asInstanceOf[Int] & evalE2.asInstanceOf[Int]
-    case LongType => evalE1.asInstanceOf[Long] & evalE2.asInstanceOf[Long]
-    case other => sys.error(s"Unsupported bitwise & operation on $other")
-  }
-=======
   override def symbol: String = "&"
 
   lazy val and: (Any, Any) => Any = dataType match {
@@ -333,24 +247,12 @@ case class BitwiseAnd(left: Expression, right: Expression) extends BinaryArithme
   }
 
   override def evalInternal(evalE1: EvaluatedType, evalE2: EvaluatedType): Any = and(evalE1, evalE2)
->>>>>>> githubspark/branch-1.3
 }
 
 /**
  * A function that calculates bitwise or(|) of two numbers.
  */
 case class BitwiseOr(left: Expression, right: Expression) extends BinaryArithmetic {
-<<<<<<< HEAD
-  def symbol = "|"
-
-  override def evalInternal(evalE1: EvaluatedType, evalE2: EvaluatedType): Any = dataType match {
-    case ByteType => (evalE1.asInstanceOf[Byte] | evalE2.asInstanceOf[Byte]).toByte
-    case ShortType => (evalE1.asInstanceOf[Short] | evalE2.asInstanceOf[Short]).toShort
-    case IntegerType => evalE1.asInstanceOf[Int] | evalE2.asInstanceOf[Int]
-    case LongType => evalE1.asInstanceOf[Long] | evalE2.asInstanceOf[Long]
-    case other => sys.error(s"Unsupported bitwise | operation on $other")
-  }
-=======
   override def symbol: String = "|"
 
   lazy val or: (Any, Any) => Any = dataType match {
@@ -366,24 +268,12 @@ case class BitwiseOr(left: Expression, right: Expression) extends BinaryArithmet
   }
 
   override def evalInternal(evalE1: EvaluatedType, evalE2: EvaluatedType): Any = or(evalE1, evalE2)
->>>>>>> githubspark/branch-1.3
 }
 
 /**
  * A function that calculates bitwise xor(^) of two numbers.
  */
 case class BitwiseXor(left: Expression, right: Expression) extends BinaryArithmetic {
-<<<<<<< HEAD
-  def symbol = "^"
-
-  override def evalInternal(evalE1: EvaluatedType, evalE2: EvaluatedType): Any = dataType match {
-    case ByteType => (evalE1.asInstanceOf[Byte] ^ evalE2.asInstanceOf[Byte]).toByte
-    case ShortType => (evalE1.asInstanceOf[Short] ^ evalE2.asInstanceOf[Short]).toShort
-    case IntegerType => evalE1.asInstanceOf[Int] ^ evalE2.asInstanceOf[Int]
-    case LongType => evalE1.asInstanceOf[Long] ^ evalE2.asInstanceOf[Long]
-    case other => sys.error(s"Unsupported bitwise ^ operation on $other")
-  }
-=======
   override def symbol: String = "^"
 
   lazy val xor: (Any, Any) => Any = dataType match {
@@ -399,7 +289,6 @@ case class BitwiseXor(left: Expression, right: Expression) extends BinaryArithme
   }
 
   override def evalInternal(evalE1: EvaluatedType, evalE2: EvaluatedType): Any = xor(evalE1, evalE2)
->>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -408,12 +297,6 @@ case class BitwiseXor(left: Expression, right: Expression) extends BinaryArithme
 case class BitwiseNot(child: Expression) extends UnaryExpression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def dataType = child.dataType
-  override def foldable = child.foldable
-  def nullable = child.nullable
-  override def toString = s"~$child"
-=======
   override def dataType: DataType = child.dataType
   override def foldable: Boolean = child.foldable
   override def nullable: Boolean = child.nullable
@@ -430,24 +313,13 @@ case class BitwiseNot(child: Expression) extends UnaryExpression {
       ((evalE: Long) => ~evalE).asInstanceOf[(Any) => Any]
     case other => sys.error(s"Unsupported bitwise ~ operation on $other")
   }
->>>>>>> githubspark/branch-1.3
 
   override def eval(input: Row): Any = {
     val evalE = child.eval(input)
     if (evalE == null) {
       null
     } else {
-<<<<<<< HEAD
-      dataType match {
-        case ByteType => (~evalE.asInstanceOf[Byte]).toByte
-        case ShortType => (~evalE.asInstanceOf[Short]).toShort
-        case IntegerType => ~evalE.asInstanceOf[Int]
-        case LongType => ~evalE.asInstanceOf[Long]
-        case other => sys.error(s"Unsupported bitwise ~ operation on $other")
-      }
-=======
       not(evalE)
->>>>>>> githubspark/branch-1.3
     }
   }
 }
@@ -455,29 +327,6 @@ case class BitwiseNot(child: Expression) extends UnaryExpression {
 case class MaxOf(left: Expression, right: Expression) extends Expression {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  override def foldable = left.foldable && right.foldable
-
-  override def nullable = left.nullable && right.nullable
-
-  override def children = left :: right :: Nil
-
-  override def dataType = left.dataType
-
-  override def eval(input: Row): Any = {
-    val leftEval = left.eval(input)
-    val rightEval = right.eval(input)
-    if (leftEval == null) {
-      rightEval
-    } else if (rightEval == null) {
-      leftEval
-    } else {
-      val numeric = left.dataType.asInstanceOf[NumericType].numeric.asInstanceOf[Numeric[Any]]
-      if (numeric.compare(leftEval, rightEval) < 0) {
-        rightEval
-      } else {
-        leftEval
-=======
   override def foldable: Boolean = left.foldable && right.foldable
 
   override def nullable: Boolean = left.nullable && right.nullable
@@ -513,16 +362,11 @@ case class MaxOf(left: Expression, right: Expression) extends Expression {
         evalE2
       } else {
         evalE1
->>>>>>> githubspark/branch-1.3
       }
     }
   }
 
-<<<<<<< HEAD
-  override def toString = s"MaxOf($left, $right)"
-=======
   override def toString: String = s"MaxOf($left, $right)"
->>>>>>> githubspark/branch-1.3
 }
 
 /**
@@ -531,14 +375,6 @@ case class MaxOf(left: Expression, right: Expression) extends Expression {
 case class Abs(child: Expression) extends UnaryExpression  {
   type EvaluatedType = Any
 
-<<<<<<< HEAD
-  def dataType = child.dataType
-  override def foldable = child.foldable
-  def nullable = child.nullable
-  override def toString = s"Abs($child)"
-
-  override def eval(input: Row): Any = n1(child, input, _.abs(_))
-=======
   override def dataType: DataType = child.dataType
   override def foldable: Boolean = child.foldable
   override def nullable: Boolean = child.nullable
@@ -557,5 +393,4 @@ case class Abs(child: Expression) extends UnaryExpression  {
       numeric.abs(evalE)
     }
   }
->>>>>>> githubspark/branch-1.3
 }

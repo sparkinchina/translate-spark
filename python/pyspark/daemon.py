@@ -61,14 +61,10 @@ def worker(sock):
     except SystemExit as exc:
         exit_code = compute_real_exit_code(exc.code)
     finally:
-<<<<<<< HEAD
-        outfile.flush()
-=======
         try:
             outfile.flush()
         except Exception:
             pass
->>>>>>> githubspark/branch-1.3
     return exit_code
 
 

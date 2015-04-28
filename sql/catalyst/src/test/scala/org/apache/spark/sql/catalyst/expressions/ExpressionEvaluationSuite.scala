@@ -21,18 +21,6 @@ import java.sql.{Date, Timestamp}
 
 import scala.collection.immutable.HashSet
 
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types.decimal.Decimal
-import org.scalatest.FunSuite
-import org.scalatest.Matchers._
-import org.scalactic.TripleEqualsSupport.Spread
-
-import org.apache.spark.sql.catalyst.types._
-
-
-/* Implicit conversions */
-import org.apache.spark.sql.catalyst.dsl.expressions._
-=======
 import org.scalactic.TripleEqualsSupport.Spread
 import org.scalatest.FunSuite
 import org.scalatest.Matchers._
@@ -41,7 +29,6 @@ import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedGetField
 import org.apache.spark.sql.types._
 
->>>>>>> githubspark/branch-1.3
 
 class ExpressionEvaluationSuite extends FunSuite {
 
@@ -190,8 +177,6 @@ class ExpressionEvaluationSuite extends FunSuite {
     checkEvaluation(Divide(Literal(null, IntegerType), Literal(null, IntegerType)), null)
   }
 
-<<<<<<< HEAD
-=======
   test("Remainder") {
     checkEvaluation(Remainder(Literal(2), Literal(1)), 0)
     checkEvaluation(Remainder(Literal(1.0), Literal(2.0)), 1.0)
@@ -207,7 +192,6 @@ class ExpressionEvaluationSuite extends FunSuite {
     checkEvaluation(Remainder(Literal(null, IntegerType), Literal(null, IntegerType)), null)
   }
 
->>>>>>> githubspark/branch-1.3
   test("INSET") {
     val hS = HashSet[Any]() + 1 + 2
     val nS = HashSet[Any]() + 1 + 2 + null
@@ -320,10 +304,7 @@ class ExpressionEvaluationSuite extends FunSuite {
 
     val sd = "1970-01-01"
     val d = Date.valueOf(sd)
-<<<<<<< HEAD
-=======
     val zts = sd + " 00:00:00"
->>>>>>> githubspark/branch-1.3
     val sts = sd + " 00:00:02"
     val nts = sts + ".1"
     val ts = Timestamp.valueOf(nts)
@@ -340,22 +321,14 @@ class ExpressionEvaluationSuite extends FunSuite {
     checkEvaluation(Cast(Literal(1.toDouble) cast TimestampType, DoubleType), 1.toDouble)
 
     checkEvaluation(Cast(Literal(sd) cast DateType, StringType), sd)
-<<<<<<< HEAD
-    checkEvaluation(Cast(Literal(d) cast StringType, DateType), d)
-=======
     checkEvaluation(Cast(Literal(d) cast StringType, DateType), 0)
->>>>>>> githubspark/branch-1.3
     checkEvaluation(Cast(Literal(nts) cast TimestampType, StringType), nts)
     checkEvaluation(Cast(Literal(ts) cast StringType, TimestampType), ts)
     // all convert to string type to check
     checkEvaluation(
       Cast(Cast(Literal(nts) cast TimestampType, DateType), StringType), sd)
     checkEvaluation(
-<<<<<<< HEAD
-      Cast(Cast(Literal(ts) cast DateType, TimestampType), StringType), sts)
-=======
       Cast(Cast(Literal(ts) cast DateType, TimestampType), StringType), zts)
->>>>>>> githubspark/branch-1.3
 
     checkEvaluation(Cast("abdef" cast BinaryType, StringType), "abdef")
 
@@ -406,13 +379,8 @@ class ExpressionEvaluationSuite extends FunSuite {
   }
 
   test("date") {
-<<<<<<< HEAD
-    val d1 = Date.valueOf("1970-01-01")
-    val d2 = Date.valueOf("1970-01-02")
-=======
     val d1 = DateUtils.fromJavaDate(Date.valueOf("1970-01-01"))
     val d2 = DateUtils.fromJavaDate(Date.valueOf("1970-01-02"))
->>>>>>> githubspark/branch-1.3
     checkEvaluation(Literal(d1) < Literal(d2), true)
   }
 
@@ -493,17 +461,6 @@ class ExpressionEvaluationSuite extends FunSuite {
 
   test("date casting") {
     val d = Date.valueOf("1970-01-01")
-<<<<<<< HEAD
-    checkEvaluation(Cast(d, ShortType), null)
-    checkEvaluation(Cast(d, IntegerType), null)
-    checkEvaluation(Cast(d, LongType), null)
-    checkEvaluation(Cast(d, FloatType), null)
-    checkEvaluation(Cast(d, DoubleType), null)
-    checkEvaluation(Cast(d, DecimalType.Unlimited), null)
-    checkEvaluation(Cast(d, DecimalType(10, 2)), null)
-    checkEvaluation(Cast(d, StringType), "1970-01-01")
-    checkEvaluation(Cast(Cast(d, TimestampType), StringType), "1970-01-01 00:00:00")
-=======
     checkEvaluation(Cast(Literal(d), ShortType), null)
     checkEvaluation(Cast(Literal(d), IntegerType), null)
     checkEvaluation(Cast(Literal(d), LongType), null)
@@ -513,17 +470,12 @@ class ExpressionEvaluationSuite extends FunSuite {
     checkEvaluation(Cast(Literal(d), DecimalType(10, 2)), null)
     checkEvaluation(Cast(Literal(d), StringType), "1970-01-01")
     checkEvaluation(Cast(Cast(Literal(d), TimestampType), StringType), "1970-01-01 00:00:00")
->>>>>>> githubspark/branch-1.3
   }
 
   test("timestamp casting") {
     val millis = 15 * 1000 + 2
     val seconds = millis * 1000 + 2
     val ts = new Timestamp(millis)
-<<<<<<< HEAD
-    val ts1 = new Timestamp(15 * 1000)  // a timestamp without the milliseconds part
-=======
->>>>>>> githubspark/branch-1.3
     val tss = new Timestamp(seconds)
     checkEvaluation(Cast(ts, ShortType), 15)
     checkEvaluation(Cast(ts, IntegerType), 15)
@@ -548,8 +500,6 @@ class ExpressionEvaluationSuite extends FunSuite {
     checkEvaluation(Cast(Literal(1.0f / 0.0f), TimestampType), null)
   }
 
-<<<<<<< HEAD
-=======
   test("array casting") {
     val array = Literal(Seq("123", "abc", "", null), ArrayType(StringType, containsNull = true))
     val array_notNull = Literal(Seq("123", "abc", ""), ArrayType(StringType, containsNull = false))
@@ -786,7 +736,6 @@ class ExpressionEvaluationSuite extends FunSuite {
       Row(0L)))
   }
 
->>>>>>> githubspark/branch-1.3
   test("null checking") {
     val row = new GenericRow(Array[Any]("^Ba*n", null, true, null))
     val c1 = 'a.string.at(0)
@@ -898,10 +847,6 @@ class ExpressionEvaluationSuite extends FunSuite {
     checkEvaluation(GetItem(BoundReference(4, typeArray, true),
       Literal(null, IntegerType)), null, row)
 
-<<<<<<< HEAD
-    checkEvaluation(GetField(BoundReference(2, typeS, nullable = true), "a"), "aa", row)
-    checkEvaluation(GetField(Literal(null, typeS), "a"), null, row)
-=======
     def quickBuildGetField(expr: Expression, fieldName: String) = {
       expr.dataType match {
         case StructType(fields) =>
@@ -914,24 +859,12 @@ class ExpressionEvaluationSuite extends FunSuite {
 
     checkEvaluation(quickBuildGetField(BoundReference(2, typeS, nullable = true), "a"), "aa", row)
     checkEvaluation(quickBuildGetField(Literal(null, typeS), "a"), null, row)
->>>>>>> githubspark/branch-1.3
 
     val typeS_notNullable = StructType(
       StructField("a", StringType, nullable = false)
         :: StructField("b", StringType, nullable = false) :: Nil
     )
 
-<<<<<<< HEAD
-    assert(GetField(BoundReference(2,typeS, nullable = true), "a").nullable === true)
-    assert(GetField(BoundReference(2, typeS_notNullable, nullable = false), "a").nullable === false)
-
-    assert(GetField(Literal(null, typeS), "a").nullable === true)
-    assert(GetField(Literal(null, typeS_notNullable), "a").nullable === true)
-
-    checkEvaluation('c.map(typeMap).at(3).getItem("aa"), "bb", row)
-    checkEvaluation('c.array(typeArray.elementType).at(4).getItem(1), "bb", row)
-    checkEvaluation('c.struct(typeS).at(2).getField("a"), "aa", row)
-=======
     assert(quickBuildGetField(BoundReference(2,typeS, nullable = true), "a").nullable === true)
     assert(quickBuildGetField(BoundReference(2, typeS_notNullable, nullable = false), "a").nullable === false)
 
@@ -941,7 +874,6 @@ class ExpressionEvaluationSuite extends FunSuite {
     checkEvaluation('c.map(typeMap).at(3).getItem("aa"), "bb", row)
     checkEvaluation('c.array(typeArray.elementType).at(4).getItem(1), "bb", row)
     checkEvaluation(quickResolve('c.struct(typeS).at(2).getField("a")), "aa", row)
->>>>>>> githubspark/branch-1.3
   }
 
   test("arithmetic") {
@@ -1113,11 +1045,8 @@ class ExpressionEvaluationSuite extends FunSuite {
     }
 
     checkEvaluation(Sqrt(Literal(null, DoubleType)), null, new GenericRow(Array[Any](null)))
-<<<<<<< HEAD
-=======
     checkEvaluation(Sqrt(-1), null, EmptyRow)
     checkEvaluation(Sqrt(-1.5), null, EmptyRow)
->>>>>>> githubspark/branch-1.3
   }
 
   test("Bitwise operations") {

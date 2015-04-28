@@ -29,11 +29,7 @@ import copy_reg
 
 import numpy as np
 
-<<<<<<< HEAD
-from pyspark.sql import UserDefinedType, StructField, StructType, ArrayType, DoubleType, \
-=======
 from pyspark.sql.types import UserDefinedType, StructField, StructType, ArrayType, DoubleType, \
->>>>>>> githubspark/branch-1.3
     IntegerType, ByteType
 
 
@@ -156,12 +152,9 @@ class VectorUDT(UserDefinedType):
         else:
             raise ValueError("do not recognize type %r" % tpe)
 
-<<<<<<< HEAD
-=======
     def simpleString(self):
         return "vector"
 
->>>>>>> githubspark/branch-1.3
 
 class Vector(object):
 
@@ -180,9 +173,6 @@ class Vector(object):
 
 class DenseVector(Vector):
     """
-<<<<<<< HEAD
-    A dense vector represented by a value array.
-=======
     A dense vector represented by a value array. We use numpy array for
     storage and arithmetics will be delegated to the underlying numpy
     array.
@@ -201,7 +191,6 @@ class DenseVector(Vector):
     DenseVector([3.0, 2.0])
     >>> u % 2
     DenseVector([1.0, 0.0])
->>>>>>> githubspark/branch-1.3
     """
     def __init__(self, ar):
         if isinstance(ar, basestring):
@@ -320,8 +309,6 @@ class DenseVector(Vector):
     def __getattr__(self, item):
         return getattr(self.array, item)
 
-<<<<<<< HEAD
-=======
     def _delegate(op):
         def func(self, other):
             if isinstance(other, DenseVector):
@@ -341,7 +328,6 @@ class DenseVector(Vector):
     __rdiv__ = _delegate("__rdiv__")
     __rmod__ = _delegate("__rmod__")
 
->>>>>>> githubspark/branch-1.3
 
 class SparseVector(Vector):
     """
@@ -563,8 +549,6 @@ class SparseVector(Vector):
                 and np.array_equal(other.indices, self.indices)
                 and np.array_equal(other.values, self.values))
 
-<<<<<<< HEAD
-=======
     def __getitem__(self, index):
         inds = self.indices
         vals = self.values
@@ -582,7 +566,6 @@ class SparseVector(Vector):
             return vals[insert_index]
         return 0.
 
->>>>>>> githubspark/branch-1.3
     def __ne__(self, other):
         return not self.__eq__(other)
 

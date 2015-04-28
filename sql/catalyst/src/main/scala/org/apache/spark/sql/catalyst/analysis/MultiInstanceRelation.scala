@@ -26,39 +26,9 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
  * produced by distinct operators in a query tree as this breaks the guarantee that expression
  * ids, which are used to differentiate attributes, are unique.
  *
-<<<<<<< HEAD
- * Before analysis, all operators that include this trait will be asked to produce a new version
- * of itself with globally unique expression ids.
- *
- * 一个应该被混入某种查询操作中的特质，在该查询操作中，单个实例可能会在一个逻辑查询计划中多次出现。
- * 在一个查询树中，如果不同操作具有同一属性的不同拷贝，这是
- */
-trait MultiInstanceRelation {
-  def newInstance(): this.type
-}
-
-/**
- * If any MultiInstanceRelation appears more than once in the query plan then the plan is updated so
- * that each instance has unique expression ids for the attributes produced.
- */
-object NewRelationInstances extends Rule[LogicalPlan] {
-  def apply(plan: LogicalPlan): LogicalPlan = {
-    val localRelations = plan collect { case l: MultiInstanceRelation => l}
-    val multiAppearance = localRelations
-      .groupBy(identity[MultiInstanceRelation])
-      .filter { case (_, ls) => ls.size > 1 }
-      .map(_._1)
-      .toSet
-
-    plan transform {
-      case l: MultiInstanceRelation if multiAppearance contains l => l.newInstance
-    }
-  }
-=======
  * During analysis, operators that include this trait may be asked to produce a new version
  * of itself with globally unique expression ids.
  */
 trait MultiInstanceRelation {
   def newInstance(): LogicalPlan
->>>>>>> githubspark/branch-1.3
 }

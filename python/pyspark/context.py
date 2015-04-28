@@ -20,12 +20,8 @@ import shutil
 import sys
 from threading import Lock
 from tempfile import NamedTemporaryFile
-<<<<<<< HEAD
-import atexit
-=======
 
 from py4j.java_collections import ListConverter
->>>>>>> githubspark/branch-1.3
 
 from pyspark import accumulators
 from pyspark.accumulators import Accumulator
@@ -36,17 +32,10 @@ from pyspark.java_gateway import launch_gateway
 from pyspark.serializers import PickleSerializer, BatchedSerializer, UTF8Deserializer, \
     PairDeserializer, AutoBatchedSerializer, NoOpSerializer
 from pyspark.storagelevel import StorageLevel
-<<<<<<< HEAD
-from pyspark.rdd import RDD
-from pyspark.traceback_utils import CallSite, first_spark_call
-
-from py4j.java_collections import ListConverter
-=======
 from pyspark.rdd import RDD, _load_from_socket
 from pyspark.traceback_utils import CallSite, first_spark_call
 from pyspark.status import StatusTracker
 from pyspark.profiler import ProfilerCollector, BasicProfiler
->>>>>>> githubspark/branch-1.3
 
 
 __all__ = ['SparkContext']
@@ -70,26 +59,16 @@ class SparkContext(object):
 
     _gateway = None
     _jvm = None
-<<<<<<< HEAD
-    _writeToFile = None
-=======
->>>>>>> githubspark/branch-1.3
     _next_accum_id = 0
     _active_spark_context = None
     _lock = Lock()
     _python_includes = None  # zip and egg files that need to be added to PYTHONPATH
 
-<<<<<<< HEAD
-    def __init__(self, master=None, appName=None, sparkHome=None, pyFiles=None,
-                 environment=None, batchSize=0, serializer=PickleSerializer(), conf=None,
-                 gateway=None, jsc=None):
-=======
     PACKAGE_EXTENSIONS = ('.zip', '.egg', '.jar')
 
     def __init__(self, master=None, appName=None, sparkHome=None, pyFiles=None,
                  environment=None, batchSize=0, serializer=PickleSerializer(), conf=None,
                  gateway=None, jsc=None, profiler_cls=BasicProfiler):
->>>>>>> githubspark/branch-1.3
         """
         Create a new SparkContext. At least the master and app name should be set,
         either through the named parameters here or through C{conf}.
@@ -111,12 +90,9 @@ class SparkContext(object):
         :param conf: A L{SparkConf} object setting Spark properties.
         :param gateway: Use an existing gateway and JVM, otherwise a new JVM
                will be instantiated.
-<<<<<<< HEAD
-=======
         :param jsc: The JavaSparkContext instance (optional).
         :param profiler_cls: A class of custom Profiler used to do profiling
                (default is pyspark.profiler.BasicProfiler).
->>>>>>> githubspark/branch-1.3
 
 
         >>> from pyspark.context import SparkContext
@@ -131,22 +107,14 @@ class SparkContext(object):
         SparkContext._ensure_initialized(self, gateway=gateway)
         try:
             self._do_init(master, appName, sparkHome, pyFiles, environment, batchSize, serializer,
-<<<<<<< HEAD
-                          conf, jsc)
-=======
                           conf, jsc, profiler_cls)
->>>>>>> githubspark/branch-1.3
         except:
             # If an error occurs, clean up in order to allow future SparkContext creation:
             self.stop()
             raise
 
     def _do_init(self, master, appName, sparkHome, pyFiles, environment, batchSize, serializer,
-<<<<<<< HEAD
-                 conf, jsc):
-=======
                  conf, jsc, profiler_cls):
->>>>>>> githubspark/branch-1.3
         self.environment = environment or {}
         self._conf = conf or SparkConf(_jvm=self._jvm)
         self._batchSize = batchSize  # -1 represents an unlimited batch size
@@ -219,11 +187,7 @@ class SparkContext(object):
         for path in self._conf.get("spark.submit.pyFiles", "").split(","):
             if path != "":
                 (dirname, filename) = os.path.split(path)
-<<<<<<< HEAD
-                if filename.lower().endswith("zip") or filename.lower().endswith("egg"):
-=======
                 if filename[-4:].lower() in self.PACKAGE_EXTENSIONS:
->>>>>>> githubspark/branch-1.3
                     self._python_includes.append(filename)
                     sys.path.insert(1, os.path.join(SparkFiles.getRootDirectory(), filename))
 
@@ -234,15 +198,11 @@ class SparkContext(object):
                 .getAbsolutePath()
 
         # profiling stats collected for each PythonRDD
-<<<<<<< HEAD
-        self._profile_stats = []
-=======
         if self._conf.get("spark.python.profile", "false") == "true":
             dump_path = self._conf.get("spark.python.profile.dump", None)
             self.profiler_collector = ProfilerCollector(profiler_cls, dump_path)
         else:
             self.profiler_collector = None
->>>>>>> githubspark/branch-1.3
 
     def _initialize_context(self, jconf):
         """
@@ -260,10 +220,6 @@ class SparkContext(object):
             if not SparkContext._gateway:
                 SparkContext._gateway = gateway or launch_gateway()
                 SparkContext._jvm = SparkContext._gateway.jvm
-<<<<<<< HEAD
-                SparkContext._writeToFile = SparkContext._jvm.PythonRDD.writeToFile
-=======
->>>>>>> githubspark/branch-1.3
 
             if instance:
                 if (SparkContext._active_spark_context and
@@ -468,11 +424,7 @@ class SparkContext(object):
 
     def binaryFiles(self, path, minPartitions=None):
         """
-<<<<<<< HEAD
-        :: Experimental ::
-=======
         .. note:: Experimental
->>>>>>> githubspark/branch-1.3
 
         Read a directory of binary files from HDFS, a local file system
         (available on all nodes), or any Hadoop-supported file system URI
@@ -489,11 +441,7 @@ class SparkContext(object):
 
     def binaryRecords(self, path, recordLength):
         """
-<<<<<<< HEAD
-        :: Experimental ::
-=======
         .. note:: Experimental
->>>>>>> githubspark/branch-1.3
 
         Load data from a flat binary file, assuming each record is a set of numbers
         with the specified numerical format (see ByteBuffer), and the number of
@@ -758,11 +706,7 @@ class SparkContext(object):
         self.addFile(path)
         (dirname, filename) = os.path.split(path)  # dirname may be directory or HDFS/S3 prefix
 
-<<<<<<< HEAD
-        if filename.endswith('.zip') or filename.endswith('.ZIP') or filename.endswith('.egg'):
-=======
         if filename[-4:].lower() in self.PACKAGE_EXTENSIONS:
->>>>>>> githubspark/branch-1.3
             self._python_includes.append(filename)
             # for tests in local mode
             sys.path.insert(1, os.path.join(SparkFiles.getRootDirectory(), filename))
@@ -865,15 +809,12 @@ class SparkContext(object):
         """
         self._jsc.sc().cancelAllJobs()
 
-<<<<<<< HEAD
-=======
     def statusTracker(self):
         """
         Return :class:`StatusTracker` object
         """
         return StatusTracker(self._jsc.statusTracker())
 
->>>>>>> githubspark/branch-1.3
     def runJob(self, rdd, partitionFunc, partitions=None, allowLocal=False):
         """
         Executes the given partitionFunc on the specified set of partitions,
@@ -897,32 +838,6 @@ class SparkContext(object):
         # by runJob() in order to avoid having to pass a Python lambda into
         # SparkContext#runJob.
         mappedRDD = rdd.mapPartitions(partitionFunc)
-<<<<<<< HEAD
-        it = self._jvm.PythonRDD.runJob(self._jsc.sc(), mappedRDD._jrdd, javaPartitions, allowLocal)
-        return list(mappedRDD._collect_iterator_through_file(it))
-
-    def _add_profile(self, id, profileAcc):
-        if not self._profile_stats:
-            dump_path = self._conf.get("spark.python.profile.dump")
-            if dump_path:
-                atexit.register(self.dump_profiles, dump_path)
-            else:
-                atexit.register(self.show_profiles)
-
-        self._profile_stats.append([id, profileAcc, False])
-
-    def show_profiles(self):
-        """ Print the profile stats to stdout """
-        for i, (id, acc, showed) in enumerate(self._profile_stats):
-            stats = acc.value
-            if not showed and stats:
-                print "=" * 60
-                print "Profile of RDD<id=%d>" % id
-                print "=" * 60
-                stats.sort_stats("time", "cumulative").print_stats()
-                # mark it as showed
-                self._profile_stats[i][2] = True
-=======
         port = self._jvm.PythonRDD.runJob(self._jsc.sc(), mappedRDD._jrdd, javaPartitions,
                                           allowLocal)
         return list(_load_from_socket(port, mappedRDD._jrdd_deserializer))
@@ -930,23 +845,11 @@ class SparkContext(object):
     def show_profiles(self):
         """ Print the profile stats to stdout """
         self.profiler_collector.show_profiles()
->>>>>>> githubspark/branch-1.3
 
     def dump_profiles(self, path):
         """ Dump the profile stats into directory `path`
         """
-<<<<<<< HEAD
-        if not os.path.exists(path):
-            os.makedirs(path)
-        for id, acc, _ in self._profile_stats:
-            stats = acc.value
-            if stats:
-                p = os.path.join(path, "rdd_%d.pstats" % id)
-                stats.dump_stats(p)
-        self._profile_stats = []
-=======
         self.profiler_collector.dump_profiles(path)
->>>>>>> githubspark/branch-1.3
 
 
 def _test():

@@ -15,13 +15,6 @@
 # limitations under the License.
 #
 
-<<<<<<< HEAD
-from pyspark import SparkContext
-from pyspark.mllib.common import callMLlibFunc, callJavaFunc
-from pyspark.mllib.linalg import SparseVector, _convert_to_vector
-
-__all__ = ['KMeansModel', 'KMeans']
-=======
 from numpy import array
 
 from pyspark import RDD
@@ -31,19 +24,13 @@ from pyspark.mllib.linalg import DenseVector, SparseVector, _convert_to_vector
 from pyspark.mllib.stat.distribution import MultivariateGaussian
 
 __all__ = ['KMeansModel', 'KMeans', 'GaussianMixtureModel', 'GaussianMixture']
->>>>>>> githubspark/branch-1.3
 
 
 class KMeansModel(object):
 
     """A clustering model derived from the k-means method.
 
-<<<<<<< HEAD
-    >>> from numpy import array
-    >>> data = array([0.0,0.0, 1.0,1.0, 9.0,8.0, 8.0,9.0]).reshape(4,2)
-=======
     >>> data = array([0.0,0.0, 1.0,1.0, 9.0,8.0, 8.0,9.0]).reshape(4, 2)
->>>>>>> githubspark/branch-1.3
     >>> model = KMeans.train(
     ...     sc.parallelize(data), 2, maxIterations=10, runs=30, initializationMode="random")
     >>> model.predict(array([0.0, 0.0])) == model.predict(array([1.0, 1.0]))
@@ -94,23 +81,14 @@ class KMeansModel(object):
 class KMeans(object):
 
     @classmethod
-<<<<<<< HEAD
-    def train(cls, rdd, k, maxIterations=100, runs=1, initializationMode="k-means||"):
-        """Train a k-means clustering model."""
-        model = callMLlibFunc("trainKMeansModel", rdd.map(_convert_to_vector), k, maxIterations,
-                              runs, initializationMode)
-=======
     def train(cls, rdd, k, maxIterations=100, runs=1, initializationMode="k-means||", seed=None):
         """Train a k-means clustering model."""
         model = callMLlibFunc("trainKMeansModel", rdd.map(_convert_to_vector), k, maxIterations,
                               runs, initializationMode, seed)
->>>>>>> githubspark/branch-1.3
         centers = callJavaFunc(rdd.context, model.clusterCenters)
         return KMeansModel([c.toArray() for c in centers])
 
 
-<<<<<<< HEAD
-=======
 class GaussianMixtureModel(object):
 
     """A clustering model derived from the Gaussian Mixture Model method.
@@ -192,7 +170,6 @@ class GaussianMixture(object):
         return GaussianMixtureModel(weight, mvg_obj)
 
 
->>>>>>> githubspark/branch-1.3
 def _test():
     import doctest
     globs = globals().copy()

@@ -18,11 +18,7 @@
 package org.apache.spark.sql.catalyst.optimizer
 
 import org.apache.spark.sql.catalyst.analysis
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.analysis.EliminateAnalysisOperators
-=======
 import org.apache.spark.sql.catalyst.analysis.EliminateSubQueries
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.plans.{PlanTest, LeftOuter, RightOuter}
 import org.apache.spark.sql.catalyst.rules._
@@ -33,11 +29,7 @@ class UnionPushdownSuite extends PlanTest {
   object Optimize extends RuleExecutor[LogicalPlan] {
     val batches =
       Batch("Subqueries", Once,
-<<<<<<< HEAD
-        EliminateAnalysisOperators) ::
-=======
         EliminateSubQueries) ::
->>>>>>> githubspark/branch-1.3
       Batch("Union Pushdown", Once,
         UnionPushdown) :: Nil
   }

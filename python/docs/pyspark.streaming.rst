@@ -8,8 +8,6 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
-<<<<<<< HEAD
-=======
 
 pyspark.streaming.kafka module
 ------------------------------
@@ -17,4 +15,3 @@ pyspark.streaming.kafka module
     :members:
     :undoc-members:
     :show-inheritance:
->>>>>>> githubspark/branch-1.3

@@ -100,12 +100,7 @@ public class TransportServer implements Closeable {
       }
     });
 
-<<<<<<< HEAD
-    channelFuture = bootstrap.bind(new InetSocketAddress(portToBind));
-    channelFuture.syncUninterruptibly();
-=======
     bindRightPort(portToBind);
->>>>>>> githubspark/branch-1.3
 
     port = ((InetSocketAddress) channelFuture.channel().localAddress()).getPort();
     logger.debug("Shuffle server started on port :" + port);
@@ -127,8 +122,6 @@ public class TransportServer implements Closeable {
     bootstrap = null;
   }
 
-<<<<<<< HEAD
-=======
   /**
    * Attempt to bind to the specified port up to a fixed number of retries.
    * If all attempts fail after the max number of retries, exit.
@@ -162,5 +155,4 @@ public class TransportServer implements Closeable {
       }
     }
   }
->>>>>>> githubspark/branch-1.3
 }

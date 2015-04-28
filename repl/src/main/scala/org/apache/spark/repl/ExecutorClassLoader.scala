@@ -17,15 +17,6 @@
 
 package org.apache.spark.repl
 
-<<<<<<< HEAD
-import java.io.{ByteArrayOutputStream, InputStream}
-import java.net.{URI, URL, URLEncoder}
-import java.util.concurrent.{Executors, ExecutorService}
-
-import org.apache.hadoop.fs.{FileSystem, Path}
-
-import org.apache.spark.{SparkConf, SparkEnv}
-=======
 import java.io.{IOException, ByteArrayOutputStream, InputStream}
 import java.net.{HttpURLConnection, URI, URL, URLEncoder}
 
@@ -34,7 +25,6 @@ import scala.util.control.NonFatal
 import org.apache.hadoop.fs.{FileSystem, Path}
 
 import org.apache.spark.{SparkConf, SparkEnv, Logging}
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.util.Utils
 import org.apache.spark.util.ParentClassLoader
@@ -48,28 +38,18 @@ import com.esotericsoftware.reflectasm.shaded.org.objectweb.asm.Opcodes._
  * Allows the user to specify if user class path should be first
  */
 class ExecutorClassLoader(conf: SparkConf, classUri: String, parent: ClassLoader,
-<<<<<<< HEAD
-    userClassPathFirst: Boolean) extends ClassLoader {
-=======
     userClassPathFirst: Boolean) extends ClassLoader with Logging {
->>>>>>> githubspark/branch-1.3
   val uri = new URI(classUri)
   val directory = uri.getPath
 
   val parentLoader = new ParentClassLoader(parent)
 
-<<<<<<< HEAD
-  // Hadoop FileSystem object for our URI, if it isn't using HTTP
-  var fileSystem: FileSystem = {
-    if (uri.getScheme() == "http") {
-=======
   // Allows HTTP connect and read timeouts to be controlled for testing / debugging purposes
   private[repl] var httpUrlConnectionTimeoutMillis: Int = -1
 
   // Hadoop FileSystem object for our URI, if it isn't using HTTP
   var fileSystem: FileSystem = {
     if (Set("http", "https", "ftp").contains(uri.getScheme)) {
->>>>>>> githubspark/branch-1.3
       null
     } else {
       FileSystem.get(uri, SparkHadoopUtil.get.newConfiguration(conf))
@@ -95,29 +75,6 @@ class ExecutorClassLoader(conf: SparkConf, classUri: String, parent: ClassLoader
     }
   }
 
-<<<<<<< HEAD
-  def findClassLocally(name: String): Option[Class[_]] = {
-    try {
-      val pathInDirectory = name.replace('.', '/') + ".class"
-      val inputStream = {
-        if (fileSystem != null) {
-          fileSystem.open(new Path(directory, pathInDirectory))
-        } else {
-          if (SparkEnv.get.securityManager.isAuthenticationEnabled()) {
-            val uri = new URI(classUri + "/" + urlEncode(pathInDirectory))
-            val newuri = Utils.constructURIForAuthentication(uri, SparkEnv.get.securityManager)
-            newuri.toURL().openStream()
-          } else {
-            new URL(classUri + "/" + urlEncode(pathInDirectory)).openStream()
-          }
-        }
-      }
-      val bytes = readAndTransformClass(name, inputStream)
-      inputStream.close()
-      Some(defineClass(name, bytes, 0, bytes.length))
-    } catch {
-      case e: Exception => None
-=======
   private def getClassFileInputStreamFromHttpServer(pathInDirectory: String): InputStream = {
     val url = if (SparkEnv.get.securityManager.isAuthenticationEnabled()) {
       val uri = new URI(classUri + "/" + urlEncode(pathInDirectory))
@@ -194,7 +151,6 @@ class ExecutorClassLoader(conf: SparkConf, classUri: String, parent: ClassLoader
             logError("Exception while closing inputStream", e)
         }
       }
->>>>>>> githubspark/branch-1.3
     }
   }
 

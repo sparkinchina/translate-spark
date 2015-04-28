@@ -22,19 +22,6 @@ Public classes:
 
   - :class:`SparkContext`:
       Main entry point for Spark functionality.
-<<<<<<< HEAD
-  - L{RDD}
-      A Resilient Distributed Dataset (RDD), the basic abstraction in Spark.
-  - L{Broadcast}
-      A broadcast variable that gets reused across tasks.
-  - L{Accumulator}
-      An "add-only" shared variable that tasks can only add values to.
-  - L{SparkConf}
-      For configuring Spark.
-  - L{SparkFiles}
-      Access files shipped with jobs.
-  - L{StorageLevel}
-=======
   - :class:`RDD`:
       A Resilient Distributed Dataset (RDD), the basic abstraction in Spark.
   - :class:`Broadcast`:
@@ -46,7 +33,6 @@ Public classes:
   - :class:`SparkFiles`:
       Access files shipped with jobs.
   - :class:`StorageLevel`:
->>>>>>> githubspark/branch-1.3
       Finer-grained cache persistence levels.
 
 """
@@ -59,11 +45,8 @@ from pyspark.storagelevel import StorageLevel
 from pyspark.accumulators import Accumulator, AccumulatorParam
 from pyspark.broadcast import Broadcast
 from pyspark.serializers import MarshalSerializer, PickleSerializer
-<<<<<<< HEAD
-=======
 from pyspark.status import *
 from pyspark.profiler import Profiler, BasicProfiler
->>>>>>> githubspark/branch-1.3
 
 # for back compatibility
 from pyspark.sql import SQLContext, HiveContext, SchemaRDD, Row
@@ -71,8 +54,5 @@ from pyspark.sql import SQLContext, HiveContext, SchemaRDD, Row
 __all__ = [
     "SparkConf", "SparkContext", "SparkFiles", "RDD", "StorageLevel", "Broadcast",
     "Accumulator", "AccumulatorParam", "MarshalSerializer", "PickleSerializer",
-<<<<<<< HEAD
-=======
     "StatusTracker", "SparkJobInfo", "SparkStageInfo", "Profiler", "BasicProfiler",
->>>>>>> githubspark/branch-1.3
 ]

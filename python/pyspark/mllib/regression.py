@@ -18,13 +18,6 @@
 import numpy as np
 from numpy import array
 
-<<<<<<< HEAD
-from pyspark.mllib.common import callMLlibFunc
-from pyspark.mllib.linalg import SparseVector, _convert_to_vector
-
-__all__ = ['LabeledPoint', 'LinearModel', 'LinearRegressionModel', 'RidgeRegressionModel',
-           'LinearRegressionWithSGD', 'LassoWithSGD', 'RidgeRegressionWithSGD']
-=======
 from pyspark.mllib.common import callMLlibFunc, inherit_doc
 from pyspark.mllib.linalg import SparseVector, _convert_to_vector
 
@@ -32,7 +25,6 @@ __all__ = ['LabeledPoint', 'LinearModel',
            'LinearRegressionModel', 'LinearRegressionWithSGD',
            'RidgeRegressionModel', 'RidgeRegressionWithSGD',
            'LassoModel', 'LassoWithSGD']
->>>>>>> githubspark/branch-1.3
 
 
 class LabeledPoint(object):
@@ -41,16 +33,11 @@ class LabeledPoint(object):
     The features and labels of a data point.
 
     :param label: Label for this data point.
-<<<<<<< HEAD
-    :param features: Vector of features for this point (NumPy array, list,
-        pyspark.mllib.linalg.SparseVector, or scipy.sparse column matrix)
-=======
     :param features: Vector of features for this point (NumPy array,
              list, pyspark.mllib.linalg.SparseVector, or scipy.sparse
              column matrix)
 
     Note: 'label' and 'features' are accessible as class attributes.
->>>>>>> githubspark/branch-1.3
     """
 
     def __init__(self, label, features):
@@ -87,10 +74,7 @@ class LinearModel(object):
         return "(weights=%s, intercept=%r)" % (self._coeff, self._intercept)
 
 
-<<<<<<< HEAD
-=======
 @inherit_doc
->>>>>>> githubspark/branch-1.3
 class LinearRegressionModelBase(LinearModel):
 
     """A linear regression model.
@@ -111,10 +95,7 @@ class LinearRegressionModelBase(LinearModel):
         return self.weights.dot(x) + self.intercept
 
 
-<<<<<<< HEAD
-=======
 @inherit_doc
->>>>>>> githubspark/branch-1.3
 class LinearRegressionModel(LinearRegressionModelBase):
 
     """A linear regression model derived from a least-squares fit.
@@ -154,12 +135,8 @@ def _regression_train_wrapper(train_func, modelClass, data, initial_weights):
     first = data.first()
     if not isinstance(first, LabeledPoint):
         raise ValueError("data should be an RDD of LabeledPoint, but got %s" % first)
-<<<<<<< HEAD
-    initial_weights = initial_weights or [0.0] * len(data.first().features)
-=======
     if initial_weights is None:
         initial_weights = [0.0] * len(data.first().features)
->>>>>>> githubspark/branch-1.3
     weights, intercept = train_func(data, _convert_to_vector(initial_weights))
     return modelClass(weights, intercept)
 
@@ -193,11 +170,7 @@ class LinearRegressionWithSGD(object):
         @param intercept:         Boolean parameter which indicates the use
                                   or not of the augmented representation for
                                   training data (i.e. whether bias features
-<<<<<<< HEAD
-                                  are activated or not).
-=======
                                   are activated or not). (default: False)
->>>>>>> githubspark/branch-1.3
         """
         def train(rdd, i):
             return callMLlibFunc("trainLinearRegressionModelWithSGD", rdd, int(iterations),
@@ -207,10 +180,7 @@ class LinearRegressionWithSGD(object):
         return _regression_train_wrapper(train, LinearRegressionModel, data, initialWeights)
 
 
-<<<<<<< HEAD
-=======
 @inherit_doc
->>>>>>> githubspark/branch-1.3
 class LassoModel(LinearRegressionModelBase):
 
     """A linear regression model derived from a least-squares fit with an
@@ -257,10 +227,7 @@ class LassoWithSGD(object):
         return _regression_train_wrapper(train, LassoModel, data, initialWeights)
 
 
-<<<<<<< HEAD
-=======
 @inherit_doc
->>>>>>> githubspark/branch-1.3
 class RidgeRegressionModel(LinearRegressionModelBase):
 
     """A linear regression model derived from a least-squares fit with an

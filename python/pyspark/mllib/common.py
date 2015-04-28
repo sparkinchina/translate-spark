@@ -134,8 +134,6 @@ class JavaModelWrapper(object):
     def call(self, name, *a):
         """Call method of java_model"""
         return callJavaFunc(self._sc, getattr(self._java_model, name), *a)
-<<<<<<< HEAD
-=======
 
 
 def inherit_doc(cls):
@@ -153,4 +151,3 @@ def inherit_doc(cls):
                     func.__doc__ = parent_func.__doc__
                     break
     return cls
->>>>>>> githubspark/branch-1.3

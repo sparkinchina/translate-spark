@@ -100,8 +100,6 @@ class RandomRDDs(object):
         return callMLlibFunc("normalRDD", sc._jsc, size, numPartitions, seed)
 
     @staticmethod
-<<<<<<< HEAD
-=======
     def logNormalRDD(sc, mean, std, size, numPartitions=None, seed=None):
         """
         Generates an RDD comprised of i.i.d. samples from the log normal
@@ -134,7 +132,6 @@ class RandomRDDs(object):
                              size, numPartitions, seed)
 
     @staticmethod
->>>>>>> githubspark/branch-1.3
     def poissonRDD(sc, mean, size, numPartitions=None, seed=None):
         """
         Generates an RDD comprised of i.i.d. samples from the Poisson
@@ -161,8 +158,6 @@ class RandomRDDs(object):
         return callMLlibFunc("poissonRDD", sc._jsc, float(mean), size, numPartitions, seed)
 
     @staticmethod
-<<<<<<< HEAD
-=======
     def exponentialRDD(sc, mean, size, numPartitions=None, seed=None):
         """
         Generates an RDD comprised of i.i.d. samples from the Exponential
@@ -220,7 +215,6 @@ class RandomRDDs(object):
                              float(scale), size, numPartitions, seed)
 
     @staticmethod
->>>>>>> githubspark/branch-1.3
     @toArray
     def uniformVectorRDD(sc, numRows, numCols, numPartitions=None, seed=None):
         """
@@ -272,8 +266,6 @@ class RandomRDDs(object):
 
     @staticmethod
     @toArray
-<<<<<<< HEAD
-=======
     def logNormalVectorRDD(sc, mean, std, numRows, numCols, numPartitions=None, seed=None):
         """
         Generates an RDD comprised of vectors containing i.i.d. samples drawn
@@ -308,7 +300,6 @@ class RandomRDDs(object):
 
     @staticmethod
     @toArray
->>>>>>> githubspark/branch-1.3
     def poissonVectorRDD(sc, mean, numRows, numCols, numPartitions=None, seed=None):
         """
         Generates an RDD comprised of vectors containing i.i.d. samples drawn
@@ -337,8 +328,6 @@ class RandomRDDs(object):
         return callMLlibFunc("poissonVectorRDD", sc._jsc, float(mean), numRows, numCols,
                              numPartitions, seed)
 
-<<<<<<< HEAD
-=======
     @staticmethod
     @toArray
     def exponentialVectorRDD(sc, mean, numRows, numCols, numPartitions=None, seed=None):
@@ -403,7 +392,6 @@ class RandomRDDs(object):
         return callMLlibFunc("gammaVectorRDD", sc._jsc, float(shape), float(scale),
                              numRows, numCols, numPartitions, seed)
 
->>>>>>> githubspark/branch-1.3
 
 def _test():
     import doctest

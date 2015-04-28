@@ -17,15 +17,9 @@
 
 package org.apache.spark.sql.catalyst.plans
 
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeSet, Expression}
-import org.apache.spark.sql.catalyst.trees.TreeNode
-import org.apache.spark.sql.catalyst.types.{ArrayType, DataType, StructField, StructType}
-=======
 import org.apache.spark.sql.catalyst.expressions.{VirtualColumn, Attribute, AttributeSet, Expression}
 import org.apache.spark.sql.catalyst.trees.TreeNode
 import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
->>>>>>> githubspark/branch-1.3
 
 abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanType] {
   self: PlanType with Product =>
@@ -53,17 +47,12 @@ abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanTy
    * Attributes that are referenced by expressions but not provided by this nodes children.
    * Subclasses should override this method if they produce attributes internally as it is used by
    * assertions designed to prevent the construction of invalid plans.
-<<<<<<< HEAD
-   */
-  def missingInput: AttributeSet = references -- inputSet
-=======
    *
    * Note that virtual columns should be excluded. Currently, we only support the grouping ID
    * virtual column.
    */
   def missingInput: AttributeSet =
     (references -- inputSet).filter(_.name != VirtualColumn.groupingIdName)
->>>>>>> githubspark/branch-1.3
 
   /**
    * Runs [[transform]] with `rule` on all expressions present in this query operator.
@@ -82,11 +71,7 @@ abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanTy
   def transformExpressionsDown(rule: PartialFunction[Expression, Expression]): this.type = {
     var changed = false
 
-<<<<<<< HEAD
-    @inline def transformExpressionDown(e: Expression) = {
-=======
     @inline def transformExpressionDown(e: Expression): Expression = {
->>>>>>> githubspark/branch-1.3
       val newE = e.transformDown(rule)
       if (newE.fastEquals(e)) {
         e
@@ -100,10 +85,7 @@ abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanTy
       case e: Expression => transformExpressionDown(e)
       case Some(e: Expression) => Some(transformExpressionDown(e))
       case m: Map[_,_] => m
-<<<<<<< HEAD
-=======
       case d: DataType => d // Avoid unpacking Structs
->>>>>>> githubspark/branch-1.3
       case seq: Traversable[_] => seq.map {
         case e: Expression => transformExpressionDown(e)
         case other => other
@@ -122,11 +104,7 @@ abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanTy
   def transformExpressionsUp(rule: PartialFunction[Expression, Expression]): this.type = {
     var changed = false
 
-<<<<<<< HEAD
-    @inline def transformExpressionUp(e: Expression) = {
-=======
     @inline def transformExpressionUp(e: Expression): Expression = {
->>>>>>> githubspark/branch-1.3
       val newE = e.transformUp(rule)
       if (newE.fastEquals(e)) {
         e
@@ -140,10 +118,7 @@ abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanTy
       case e: Expression => transformExpressionUp(e)
       case Some(e: Expression) => Some(transformExpressionUp(e))
       case m: Map[_,_] => m
-<<<<<<< HEAD
-=======
       case d: DataType => d // Avoid unpacking Structs
->>>>>>> githubspark/branch-1.3
       case seq: Traversable[_] => seq.map {
         case e: Expression => transformExpressionUp(e)
         case other => other
@@ -183,11 +158,6 @@ abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanTy
   /** Prints out the schema in the tree format */
   def printSchema(): Unit = println(schemaString)
 
-<<<<<<< HEAD
-  protected def statePrefix = if (missingInput.nonEmpty && children.nonEmpty) "!" else ""
-
-  override def simpleString = statePrefix + super.simpleString
-=======
   /**
    * A prefix string used when printing the plan.
    *
@@ -196,5 +166,4 @@ abstract class QueryPlan[PlanType <: TreeNode[PlanType]] extends TreeNode[PlanTy
   protected def statePrefix = if (missingInput.nonEmpty && children.nonEmpty) "!" else ""
 
   override def simpleString: String = statePrefix + super.simpleString
->>>>>>> githubspark/branch-1.3
 }

@@ -23,11 +23,7 @@ import org.apache.spark.sql.catalyst.analysis._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 
 /**
  * A very simple SQL parser.  Based loosely on:
@@ -39,12 +35,6 @@ import org.apache.spark.sql.types._
  * This is currently included mostly for illustrative purposes.  Users wanting more complete support
  * for a SQL like language should checkout the HiveQL support in the sql/hive sub-project.
  */
-<<<<<<< HEAD
-class SqlParser extends AbstractSparkSQLParser {
-  protected implicit def asParser(k: Keyword): Parser[String] =
-    lexical.allCaseVersions(k.str).map(x => x : Parser[String]).reduce(_ | _)
-
-=======
 class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
 
   def parseExpression(input: String): Expression = {
@@ -58,7 +48,6 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
 
   // Keyword is a convention with AbstractSparkSQLParser, which will scan all of the `Keyword`
   // properties via reflection the class in runtime for constructing the SqlLexical object
->>>>>>> githubspark/branch-1.3
   protected val ABS = Keyword("ABS")
   protected val ALL = Keyword("ALL")
   protected val AND = Keyword("AND")
@@ -68,23 +57,12 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
   protected val AVG = Keyword("AVG")
   protected val BETWEEN = Keyword("BETWEEN")
   protected val BY = Keyword("BY")
-<<<<<<< HEAD
-  protected val CACHE = Keyword("CACHE")
-  protected val CASE = Keyword("CASE")
-  protected val CAST = Keyword("CAST")
-  protected val COUNT = Keyword("COUNT")
-  protected val DECIMAL = Keyword("DECIMAL")
-  protected val DESC = Keyword("DESC")
-  protected val DISTINCT = Keyword("DISTINCT")
-  protected val DOUBLE = Keyword("DOUBLE")
-=======
   protected val CASE = Keyword("CASE")
   protected val CAST = Keyword("CAST")
   protected val COALESCE = Keyword("COALESCE")
   protected val COUNT = Keyword("COUNT")
   protected val DESC = Keyword("DESC")
   protected val DISTINCT = Keyword("DISTINCT")
->>>>>>> githubspark/branch-1.3
   protected val ELSE = Keyword("ELSE")
   protected val END = Keyword("END")
   protected val EXCEPT = Keyword("EXCEPT")
@@ -114,10 +92,7 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
   protected val ON = Keyword("ON")
   protected val OR = Keyword("OR")
   protected val ORDER = Keyword("ORDER")
-<<<<<<< HEAD
-=======
   protected val SORT = Keyword("SORT")
->>>>>>> githubspark/branch-1.3
   protected val OUTER = Keyword("OUTER")
   protected val OVERWRITE = Keyword("OVERWRITE")
   protected val REGEXP = Keyword("REGEXP")
@@ -126,38 +101,17 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
   protected val SELECT = Keyword("SELECT")
   protected val SEMI = Keyword("SEMI")
   protected val SQRT = Keyword("SQRT")
-<<<<<<< HEAD
-  protected val STRING = Keyword("STRING")
-=======
->>>>>>> githubspark/branch-1.3
   protected val SUBSTR = Keyword("SUBSTR")
   protected val SUBSTRING = Keyword("SUBSTRING")
   protected val SUM = Keyword("SUM")
   protected val TABLE = Keyword("TABLE")
   protected val THEN = Keyword("THEN")
-<<<<<<< HEAD
-  protected val TIMESTAMP = Keyword("TIMESTAMP")
-=======
->>>>>>> githubspark/branch-1.3
   protected val TRUE = Keyword("TRUE")
   protected val UNION = Keyword("UNION")
   protected val UPPER = Keyword("UPPER")
   protected val WHEN = Keyword("WHEN")
   protected val WHERE = Keyword("WHERE")
 
-<<<<<<< HEAD
-  // Use reflection to find the reserved words defined in this class.
-  protected val reservedWords =
-    this
-      .getClass
-      .getMethods
-      .filter(_.getReturnType == classOf[Keyword])
-      .map(_.invoke(this).asInstanceOf[Keyword].str)
-
-  override val lexical = new SqlLexical(reservedWords)
-
-=======
->>>>>>> githubspark/branch-1.3
   protected def assignAliases(exprs: Seq[Expression]): Seq[NamedExpression] = {
     exprs.zipWithIndex.map {
       case (ne: NamedExpression, _) => ne
@@ -166,11 +120,7 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
   }
 
   protected lazy val start: Parser[LogicalPlan] =
-<<<<<<< HEAD
-    ( select *
-=======
     ( (select | ("(" ~> select <~ ")")) *
->>>>>>> githubspark/branch-1.3
       ( UNION ~ ALL        ^^^ { (q1: LogicalPlan, q2: LogicalPlan) => Union(q1, q2) }
       | INTERSECT          ^^^ { (q1: LogicalPlan, q2: LogicalPlan) => Intersect(q1, q2) }
       | EXCEPT             ^^^ { (q1: LogicalPlan, q2: LogicalPlan) => Except(q1, q2)}
@@ -186,40 +136,24 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
       (WHERE  ~> expression).? ~
       (GROUP  ~  BY ~> rep1sep(expression, ",")).? ~
       (HAVING ~> expression).? ~
-<<<<<<< HEAD
-      (ORDER  ~  BY ~> ordering).? ~
-      (LIMIT  ~> expression).? ^^ {
-        case d ~ p ~ r ~ f ~ g ~ h ~ o ~ l  =>
-          val base = r.getOrElse(NoRelation)
-=======
       sortType.? ~
       (LIMIT  ~> expression).? ^^ {
         case d ~ p ~ r ~ f ~ g ~ h ~ o ~ l  =>
           val base = r.getOrElse(OneRowRelation)
->>>>>>> githubspark/branch-1.3
           val withFilter = f.map(Filter(_, base)).getOrElse(base)
           val withProjection = g
             .map(Aggregate(_, assignAliases(p), withFilter))
             .getOrElse(Project(assignAliases(p), withFilter))
           val withDistinct = d.map(_ => Distinct(withProjection)).getOrElse(withProjection)
           val withHaving = h.map(Filter(_, withDistinct)).getOrElse(withDistinct)
-<<<<<<< HEAD
-          val withOrder = o.map(Sort(_, withHaving)).getOrElse(withHaving)
-=======
           val withOrder = o.map(_(withHaving)).getOrElse(withHaving)
->>>>>>> githubspark/branch-1.3
           val withLimit = l.map(Limit(_, withOrder)).getOrElse(withOrder)
           withLimit
       }
 
   protected lazy val insert: Parser[LogicalPlan] =
-<<<<<<< HEAD
-    INSERT ~> OVERWRITE.? ~ (INTO ~> relation) ~ select ^^ {
-      case o ~ r ~ s => InsertIntoTable(r, Map.empty[String, Option[String]], s, o.isDefined)
-=======
     INSERT ~> (OVERWRITE ^^^ true | INTO ^^^ false) ~ (TABLE ~> relation) ~ select ^^ {
       case o ~ r ~ s => InsertIntoTable(r, Map.empty[String, Option[String]], s, o)
->>>>>>> githubspark/branch-1.3
     }
 
   protected lazy val projection: Parser[Expression] =
@@ -264,18 +198,6 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
     | FULL  ~ OUTER.? ^^^ FullOuter
     )
 
-<<<<<<< HEAD
-  protected lazy val ordering: Parser[Seq[SortOrder]] =
-    ( rep1sep(singleOrder, ",")
-    | rep1sep(expression, ",") ~ direction.? ^^ {
-        case exps ~ d => exps.map(SortOrder(_, d.getOrElse(Ascending)))
-      }
-    )
-
-  protected lazy val singleOrder: Parser[SortOrder] =
-    expression ~ direction ^^ { case e ~ o => SortOrder(e, o) }
-
-=======
   protected lazy val sortType: Parser[LogicalPlan => LogicalPlan] =
     ( ORDER ~ BY  ~> ordering ^^ { case o => l: LogicalPlan => Sort(o, true, l) }
     | SORT ~ BY  ~> ordering ^^ { case o => l: LogicalPlan => Sort(o, false, l) }
@@ -287,7 +209,6 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
       }
     )
 
->>>>>>> githubspark/branch-1.3
   protected lazy val direction: Parser[SortDirection] =
     ( ASC  ^^^ Ascending
     | DESC ^^^ Descending
@@ -380,10 +301,7 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
       { case s ~ p => Substring(s, p, Literal(Integer.MAX_VALUE)) }
     | (SUBSTR | SUBSTRING) ~ "(" ~> expression ~ ("," ~> expression) ~ ("," ~> expression) <~ ")" ^^
       { case s ~ p ~ l => Substring(s, p, l) }
-<<<<<<< HEAD
-=======
     | COALESCE ~ "(" ~> repsep(expression, ",") <~ ")" ^^ { case exprs => Coalesce(exprs) }
->>>>>>> githubspark/branch-1.3
     | SQRT  ~ "(" ~> expression <~ ")" ^^ { case exp => Sqrt(exp) }
     | ABS   ~ "(" ~> expression <~ ")" ^^ { case exp => Abs(exp) }
     | ident ~ ("(" ~> repsep(expression, ",")) <~ ")" ^^
@@ -391,13 +309,9 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
     )
 
   protected lazy val cast: Parser[Expression] =
-<<<<<<< HEAD
-    CAST ~ "(" ~> expression ~ (AS ~> dataType) <~ ")" ^^ { case exp ~ t => Cast(exp, t) }
-=======
     CAST ~ "(" ~> expression ~ (AS ~> dataType) <~ ")" ^^ {
       case exp ~ t => Cast(exp, t)
     }
->>>>>>> githubspark/branch-1.3
 
   protected lazy val literal: Parser[Literal] =
     ( numericLiteral
@@ -427,21 +341,13 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
     | floatLit ^^ { f => Literal(f.toDouble) }
     )
 
-<<<<<<< HEAD
-  private def toNarrowestIntegerType(value: String) = {
-=======
   private def toNarrowestIntegerType(value: String): Any = {
->>>>>>> githubspark/branch-1.3
     val bigIntValue = BigDecimal(value)
 
     bigIntValue match {
       case v if bigIntValue.isValidInt => v.toIntExact
       case v if bigIntValue.isValidLong => v.toLongExact
-<<<<<<< HEAD
-      case v => v
-=======
       case v => v.underlying()
->>>>>>> githubspark/branch-1.3
     }
   }
 
@@ -451,11 +357,7 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
     )
 
   protected lazy val baseExpression: Parser[Expression] =
-<<<<<<< HEAD
-    ( "*" ^^^ Star(None)
-=======
     ( "*" ^^^ UnresolvedStar(None)
->>>>>>> githubspark/branch-1.3
     | primary
     )
 
@@ -467,11 +369,7 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
     | expression ~ ("[" ~> expression <~ "]") ^^
       { case base ~ ordinal => GetItem(base, ordinal) }
     | (expression <~ ".") ~ ident ^^
-<<<<<<< HEAD
-      { case base ~ fieldName => GetField(base, fieldName) }
-=======
       { case base ~ fieldName => UnresolvedGetField(base, fieldName) }
->>>>>>> githubspark/branch-1.3
     | cast
     | "(" ~> expression <~ ")"
     | function
@@ -483,23 +381,6 @@ class SqlParser extends AbstractSparkSQLParser with DataTypeParser {
 
   protected lazy val dotExpressionHeader: Parser[Expression] =
     (ident <~ ".") ~ ident ~ rep("." ~> ident) ^^ {
-<<<<<<< HEAD
-      case i1 ~ i2 ~ rest => UnresolvedAttribute(i1 + "." + i2 + rest.mkString(".", ".", ""))
-    }
-
-  protected lazy val dataType: Parser[DataType] =
-    ( STRING ^^^ StringType
-    | TIMESTAMP ^^^ TimestampType
-    | DOUBLE ^^^ DoubleType
-    | fixedDecimalType
-    | DECIMAL ^^^ DecimalType.Unlimited
-    )
-
-  protected lazy val fixedDecimalType: Parser[DataType] =
-    (DECIMAL ~ "(" ~> numericLit) ~ ("," ~> numericLit <~ ")") ^^ {
-      case precision ~ scale => DecimalType(precision.toInt, scale.toInt)
-=======
       case i1 ~ i2 ~ rest => UnresolvedAttribute((Seq(i1, i2) ++ rest).mkString("."))
->>>>>>> githubspark/branch-1.3
     }
 }

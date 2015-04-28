@@ -23,11 +23,7 @@ import java.sql.{Date, Timestamp}
 import org.scalatest.FunSuite
 
 import org.apache.spark.sql.catalyst.expressions.Row
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 
 case class PrimitiveData(
     intField: Int,
@@ -47,11 +43,7 @@ case class NullableData(
     byteField: java.lang.Byte,
     booleanField: java.lang.Boolean,
     stringField: String,
-<<<<<<< HEAD
-    decimalField: BigDecimal,
-=======
     decimalField: java.math.BigDecimal,
->>>>>>> githubspark/branch-1.3
     dateField: Date,
     timestampField: Timestamp,
     binaryField: Array[Byte])
@@ -68,12 +60,6 @@ case class OptionalData(
 
 case class ComplexData(
     arrayField: Seq[Int],
-<<<<<<< HEAD
-    arrayFieldContainsNull: Seq[java.lang.Integer],
-    mapField: Map[Int, Long],
-    mapFieldValueContainsNull: Map[Int, java.lang.Long],
-    structField: PrimitiveData)
-=======
     arrayField1: Array[Int],
     arrayField2: List[Int],
     arrayFieldContainsNull: Seq[java.lang.Integer],
@@ -81,18 +67,14 @@ case class ComplexData(
     mapFieldValueContainsNull: Map[Int, java.lang.Long],
     structField: PrimitiveData,
     nestedArrayField: Array[Array[Int]])
->>>>>>> githubspark/branch-1.3
 
 case class GenericData[A](
     genericField: A)
 
-<<<<<<< HEAD
-=======
 case class MultipleConstructorsData(a: Int, b: String, c: Double) {
   def this(b: String, a: Int) = this(a, b, c = 1.0)
 }
 
->>>>>>> githubspark/branch-1.3
 class ScalaReflectionSuite extends FunSuite {
   import ScalaReflection._
 
@@ -153,8 +135,6 @@ class ScalaReflectionSuite extends FunSuite {
           ArrayType(IntegerType, containsNull = false),
           nullable = true),
         StructField(
-<<<<<<< HEAD
-=======
           "arrayField1",
           ArrayType(IntegerType, containsNull = false),
           nullable = true),
@@ -163,7 +143,6 @@ class ScalaReflectionSuite extends FunSuite {
           ArrayType(IntegerType, containsNull = false),
           nullable = true),
         StructField(
->>>>>>> githubspark/branch-1.3
           "arrayFieldContainsNull",
           ArrayType(IntegerType, containsNull = true),
           nullable = true),
@@ -185,14 +164,10 @@ class ScalaReflectionSuite extends FunSuite {
             StructField("shortField", ShortType, nullable = false),
             StructField("byteField", ByteType, nullable = false),
             StructField("booleanField", BooleanType, nullable = false))),
-<<<<<<< HEAD
-          nullable = true))),
-=======
           nullable = true),
         StructField(
           "nestedArrayField",
           ArrayType(ArrayType(IntegerType, containsNull = false), containsNull = true)))),
->>>>>>> githubspark/branch-1.3
       nullable = true))
   }
 
@@ -243,12 +218,8 @@ class ScalaReflectionSuite extends FunSuite {
     assert(DoubleType === typeOfObject(1.7976931348623157E308))
 
     // DecimalType
-<<<<<<< HEAD
-    assert(DecimalType.Unlimited === typeOfObject(BigDecimal("1.7976931348623157E318")))
-=======
     assert(DecimalType.Unlimited ===
       typeOfObject(new java.math.BigDecimal("1.7976931348623157E318")))
->>>>>>> githubspark/branch-1.3
 
     // DateType
     assert(DateType === typeOfObject(Date.valueOf("2014-07-25")))
@@ -287,11 +258,7 @@ class ScalaReflectionSuite extends FunSuite {
 
   test("convert PrimitiveData to catalyst") {
     val data = PrimitiveData(1, 1, 1, 1, 1, 1, true)
-<<<<<<< HEAD
-    val convertedData = Seq(1, 1.toLong, 1.toDouble, 1.toFloat, 1.toShort, 1.toByte, true)
-=======
     val convertedData = Row(1, 1.toLong, 1.toDouble, 1.toFloat, 1.toShort, 1.toByte, true)
->>>>>>> githubspark/branch-1.3
     val dataType = schemaFor[PrimitiveData].dataType
     assert(convertToCatalyst(data, dataType) === convertedData)
   }
@@ -305,8 +272,6 @@ class ScalaReflectionSuite extends FunSuite {
       Row(1, 1, 1, 1, 1, 1, true))
     assert(convertToCatalyst(data, dataType) === convertedData)
   }
-<<<<<<< HEAD
-=======
 
   test("infer schema from case class with multiple constructors") {
     val dataType = schemaFor[MultipleConstructorsData].dataType
@@ -317,5 +282,4 @@ class ScalaReflectionSuite extends FunSuite {
         assert(s.fields.map(_.dataType) === Seq(IntegerType, StringType, DoubleType))
     }
   }
->>>>>>> githubspark/branch-1.3
 }

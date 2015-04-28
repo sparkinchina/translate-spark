@@ -18,34 +18,20 @@
 package org.apache.spark.sql.catalyst.optimizer
 
 import org.apache.spark.sql.catalyst.analysis
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.analysis.EliminateAnalysisOperators
-=======
 import org.apache.spark.sql.catalyst.analysis.EliminateSubQueries
 import org.apache.spark.sql.catalyst.expressions.{Count, Explode}
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.plans.{PlanTest, LeftOuter, RightOuter}
 import org.apache.spark.sql.catalyst.rules._
 import org.apache.spark.sql.catalyst.dsl.plans._
 import org.apache.spark.sql.catalyst.dsl.expressions._
-<<<<<<< HEAD
-=======
 import org.apache.spark.sql.types.IntegerType
->>>>>>> githubspark/branch-1.3
 
 class FilterPushdownSuite extends PlanTest {
 
   object Optimize extends RuleExecutor[LogicalPlan] {
     val batches =
       Batch("Subqueries", Once,
-<<<<<<< HEAD
-        EliminateAnalysisOperators) ::
-      Batch("Filter Pushdown", Once,
-        CombineFilters,
-        PushPredicateThroughProject,
-        PushPredicateThroughJoin) :: Nil
-=======
         EliminateSubQueries) ::
       Batch("Filter Pushdown", Once,
         CombineFilters,
@@ -53,7 +39,6 @@ class FilterPushdownSuite extends PlanTest {
         PushPredicateThroughJoin,
         PushPredicateThroughGenerate,
         ColumnPruning) :: Nil
->>>>>>> githubspark/branch-1.3
   }
 
   val testRelation = LocalRelation('a.int, 'b.int, 'c.int)
@@ -74,8 +59,6 @@ class FilterPushdownSuite extends PlanTest {
     comparePlans(optimized, correctAnswer)
   }
 
-<<<<<<< HEAD
-=======
   test("column pruning for group") {
     val originalQuery =
       testRelation
@@ -108,7 +91,6 @@ class FilterPushdownSuite extends PlanTest {
     comparePlans(optimized, correctAnswer)
   }
 
->>>>>>> githubspark/branch-1.3
   // After this line is unimplemented.
   test("simple push down") {
     val originalQuery =
@@ -402,11 +384,7 @@ class FilterPushdownSuite extends PlanTest {
     }
     val optimized = Optimize(originalQuery.analyze)
 
-<<<<<<< HEAD
-    comparePlans(analysis.EliminateAnalysisOperators(originalQuery.analyze), optimized)
-=======
     comparePlans(analysis.EliminateSubQueries(originalQuery.analyze), optimized)
->>>>>>> githubspark/branch-1.3
   }
 
   test("joins: conjunctive predicates") {
@@ -425,11 +403,7 @@ class FilterPushdownSuite extends PlanTest {
       left.join(right, condition = Some("x.b".attr === "y.b".attr))
         .analyze
 
-<<<<<<< HEAD
-    comparePlans(optimized, analysis.EliminateAnalysisOperators(correctAnswer))
-=======
     comparePlans(optimized, analysis.EliminateSubQueries(correctAnswer))
->>>>>>> githubspark/branch-1.3
   }
 
   test("joins: conjunctive predicates #2") {
@@ -448,11 +422,7 @@ class FilterPushdownSuite extends PlanTest {
       left.join(right, condition = Some("x.b".attr === "y.b".attr))
         .analyze
 
-<<<<<<< HEAD
-    comparePlans(optimized, analysis.EliminateAnalysisOperators(correctAnswer))
-=======
     comparePlans(optimized, analysis.EliminateSubQueries(correctAnswer))
->>>>>>> githubspark/branch-1.3
   }
 
   test("joins: conjunctive predicates #3") {
@@ -475,9 +445,6 @@ class FilterPushdownSuite extends PlanTest {
           condition = Some("z.a".attr === "x.b".attr))
         .analyze
 
-<<<<<<< HEAD
-    comparePlans(optimized, analysis.EliminateAnalysisOperators(correctAnswer))
-=======
     comparePlans(optimized, analysis.EliminateSubQueries(correctAnswer))
   }
 
@@ -537,6 +504,5 @@ class FilterPushdownSuite extends PlanTest {
     val optimized = Optimize(originalQuery)
 
     comparePlans(optimized, originalQuery)
->>>>>>> githubspark/branch-1.3
   }
 }

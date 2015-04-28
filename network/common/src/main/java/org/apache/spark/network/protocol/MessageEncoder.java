@@ -72,13 +72,6 @@ public final class MessageEncoder extends MessageToMessageEncoder<Message> {
     in.encode(header);
     assert header.writableBytes() == 0;
 
-<<<<<<< HEAD
-    out.add(header);
-    if (body != null && bodyLength > 0) {
-      out.add(body);
-    }
-  }
-=======
     if (body != null && bodyLength > 0) {
       out.add(new MessageWithHeader(header, body, bodyLength));
     } else {
@@ -86,5 +79,4 @@ public final class MessageEncoder extends MessageToMessageEncoder<Message> {
     }
   }
 
->>>>>>> githubspark/branch-1.3
 }

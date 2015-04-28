@@ -22,10 +22,7 @@ import org.apache.spark.sql.catalyst.errors.TreeNodeException
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.LeafNode
 import org.apache.spark.sql.catalyst.trees.TreeNode
-<<<<<<< HEAD
-=======
 import org.apache.spark.sql.types.DataType
->>>>>>> githubspark/branch-1.3
 
 /**
  * Thrown when an invalid attempt is made to access a property of a tree that has yet to be fully
@@ -40,16 +37,12 @@ class UnresolvedException[TreeType <: TreeNode[_]](tree: TreeType, function: Str
 case class UnresolvedRelation(
     tableIdentifier: Seq[String],
     alias: Option[String] = None) extends LeafNode {
-<<<<<<< HEAD
-  override def output = Nil
-=======
 
   /** Returns a `.` separated name for this relation. */
   def tableName: String = tableIdentifier.mkString(".")
 
   override def output: Seq[Attribute] = Nil
 
->>>>>>> githubspark/branch-1.3
   override lazy val resolved = false
 }
 
@@ -57,18 +50,6 @@ case class UnresolvedRelation(
  * Holds the name of an attribute that has yet to be resolved.
  */
 case class UnresolvedAttribute(name: String) extends Attribute with trees.LeafNode[Expression] {
-<<<<<<< HEAD
-  override def exprId = throw new UnresolvedException(this, "exprId")
-  override def dataType = throw new UnresolvedException(this, "dataType")
-  override def nullable = throw new UnresolvedException(this, "nullable")
-  override def qualifiers = throw new UnresolvedException(this, "qualifiers")
-  override lazy val resolved = false
-
-  override def newInstance = this
-  override def withNullability(newNullability: Boolean) = this
-  override def withQualifiers(newQualifiers: Seq[String]) = this
-  override def withName(newName: String) = UnresolvedAttribute(name)
-=======
   override def exprId: ExprId = throw new UnresolvedException(this, "exprId")
   override def dataType: DataType = throw new UnresolvedException(this, "dataType")
   override def nullable: Boolean = throw new UnresolvedException(this, "nullable")
@@ -79,7 +60,6 @@ case class UnresolvedAttribute(name: String) extends Attribute with trees.LeafNo
   override def withNullability(newNullability: Boolean): UnresolvedAttribute = this
   override def withQualifiers(newQualifiers: Seq[String]): UnresolvedAttribute = this
   override def withName(newName: String): UnresolvedAttribute = UnresolvedAttribute(name)
->>>>>>> githubspark/branch-1.3
 
   // Unresolved attributes are transient at compile time and don't get evaluated during execution.
   override def eval(input: Row = null): EvaluatedType =
@@ -89,32 +69,20 @@ case class UnresolvedAttribute(name: String) extends Attribute with trees.LeafNo
 }
 
 case class UnresolvedFunction(name: String, children: Seq[Expression]) extends Expression {
-<<<<<<< HEAD
-  override def dataType = throw new UnresolvedException(this, "dataType")
-  override def foldable = throw new UnresolvedException(this, "foldable")
-  override def nullable = throw new UnresolvedException(this, "nullable")
-=======
   override def dataType: DataType = throw new UnresolvedException(this, "dataType")
   override def foldable: Boolean = throw new UnresolvedException(this, "foldable")
   override def nullable: Boolean = throw new UnresolvedException(this, "nullable")
->>>>>>> githubspark/branch-1.3
   override lazy val resolved = false
 
   // Unresolved functions are transient at compile time and don't get evaluated during execution.
   override def eval(input: Row = null): EvaluatedType =
     throw new TreeNodeException(this, s"No function to evaluate expression. type: ${this.nodeName}")
 
-<<<<<<< HEAD
-  override def toString = s"'$name(${children.mkString(",")})"
-=======
   override def toString: String = s"'$name(${children.mkString(",")})"
->>>>>>> githubspark/branch-1.3
 }
 
 /**
  * Represents all of the input attributes to a given relational operator, for example in
-<<<<<<< HEAD
-=======
  * "SELECT * FROM ...". A [[Star]] gets automatically expanded during analysis.
  */
 trait Star extends Attribute with trees.LeafNode[Expression] {
@@ -142,61 +110,25 @@ trait Star extends Attribute with trees.LeafNode[Expression] {
 
 /**
  * Represents all of the input attributes to a given relational operator, for example in
->>>>>>> githubspark/branch-1.3
  * "SELECT * FROM ...".
  *
  * @param table an optional table that should be the target of the expansion.  If omitted all
  *              tables' columns are produced.
  */
-<<<<<<< HEAD
-case class Star(
-    table: Option[String],
-    mapFunction: Attribute => Expression = identity[Attribute])
-  extends Attribute with trees.LeafNode[Expression] {
-
-  override def name = throw new UnresolvedException(this, "name")
-  override def exprId = throw new UnresolvedException(this, "exprId")
-  override def dataType = throw new UnresolvedException(this, "dataType")
-  override def nullable = throw new UnresolvedException(this, "nullable")
-  override def qualifiers = throw new UnresolvedException(this, "qualifiers")
-  override lazy val resolved = false
-
-  override def newInstance = this
-  override def withNullability(newNullability: Boolean) = this
-  override def withQualifiers(newQualifiers: Seq[String]) = this
-  override def withName(newName: String) = this
-
-  def expand(input: Seq[Attribute], resolver: Resolver): Seq[NamedExpression] = {
-=======
 case class UnresolvedStar(table: Option[String]) extends Star {
 
   override def expand(input: Seq[Attribute], resolver: Resolver): Seq[NamedExpression] = {
->>>>>>> githubspark/branch-1.3
     val expandedAttributes: Seq[Attribute] = table match {
       // If there is no table specified, use all input attributes.
       case None => input
       // If there is a table, pick out attributes that are part of this table.
       case Some(t) => input.filter(_.qualifiers.filter(resolver(_, t)).nonEmpty)
     }
-<<<<<<< HEAD
-    val mappedAttributes = expandedAttributes.map(mapFunction).zip(input).map {
-=======
     expandedAttributes.zip(input).map {
->>>>>>> githubspark/branch-1.3
       case (n: NamedExpression, _) => n
       case (e, originalAttribute) =>
         Alias(e, originalAttribute.name)(qualifiers = originalAttribute.qualifiers)
     }
-<<<<<<< HEAD
-    mappedAttributes
-  }
-
-  // Star gets expanded at runtime so we never evaluate a Star.
-  override def eval(input: Row = null): EvaluatedType =
-    throw new TreeNodeException(this, s"No function to evaluate expression. type: ${this.nodeName}")
-
-  override def toString = table.map(_ + ".").getOrElse("") + "*"
-=======
   }
 
   override def toString: String = table.map(_ + ".").getOrElse("") + "*"
@@ -262,5 +194,4 @@ case class UnresolvedGetField(child: Expression, fieldName: String) extends Unar
     throw new TreeNodeException(this, s"No function to evaluate expression. type: ${this.nodeName}")
 
   override def toString: String = s"$child.$fieldName"
->>>>>>> githubspark/branch-1.3
 }

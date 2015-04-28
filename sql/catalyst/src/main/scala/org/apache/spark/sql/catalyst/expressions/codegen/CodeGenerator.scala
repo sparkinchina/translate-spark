@@ -18,21 +18,13 @@
 package org.apache.spark.sql.catalyst.expressions.codegen
 
 import com.google.common.cache.{CacheLoader, CacheBuilder}
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types.decimal.Decimal
-=======
->>>>>>> githubspark/branch-1.3
 
 import scala.language.existentials
 
 import org.apache.spark.Logging
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions._
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 
 // These classes are here to avoid issues with serialization and integration with quasiquotes.
 class IntegerHashSet extends org.apache.spark.util.collection.OpenHashSet[Int]
@@ -99,11 +91,7 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
           val startTime = System.nanoTime()
           val result = create(in)
           val endTime = System.nanoTime()
-<<<<<<< HEAD
-          def timeMs = (endTime - startTime).toDouble / 1000000
-=======
           def timeMs: Double = (endTime - startTime).toDouble / 1000000
->>>>>>> githubspark/branch-1.3
           logInfo(s"Code generated expression $in in $timeMs ms")
           result
         }
@@ -133,11 +121,7 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
    * @param nullTerm A term that holds a boolean value representing whether the expression evaluated
    *                 to null.
    * @param primitiveTerm A term for a possible primitive value of the result of the evaluation. Not
-<<<<<<< HEAD
-   *                      valid if `nullTerm` is set to `false`.
-=======
    *                      valid if `nullTerm` is set to `true`.
->>>>>>> githubspark/branch-1.3
    * @param objectTerm A possibly boxed version of the result of evaluating this expression.
    */
   protected case class EvaluatedExpression(
@@ -262,12 +246,9 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
               new String(${eval.primitiveTerm}.asInstanceOf[Array[Byte]])
         """.children
 
-<<<<<<< HEAD
-=======
       case Cast(child @ DateType(), StringType) =>
         child.castOrNull(c => q"org.apache.spark.sql.types.DateUtils.toString($c)", StringType)
 
->>>>>>> githubspark/branch-1.3
       case Cast(child @ NumericType(), IntegerType) =>
         child.castOrNull(c => q"$c.toInt", IntegerType)
 
@@ -278,11 +259,7 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
         child.castOrNull(c => q"$c.toDouble", DoubleType)
 
       case Cast(child @ NumericType(), FloatType) =>
-<<<<<<< HEAD
-        child.castOrNull(c => q"$c.toFloat", IntegerType)
-=======
         child.castOrNull(c => q"$c.toFloat", FloatType)
->>>>>>> githubspark/branch-1.3
 
       // Special handling required for timestamps in hive test cases since the toString function
       // does not match the expected output.
@@ -339,22 +316,6 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
         val eval1 = expressionEvaluator(e1)
         val eval2 = expressionEvaluator(e2)
 
-<<<<<<< HEAD
-        eval1.code ++ eval2.code ++
-        q"""
-          var $nullTerm = false
-          var $primitiveTerm: ${termForType(BooleanType)} = false
-
-          if ((!${eval1.nullTerm} && !${eval1.primitiveTerm}) ||
-              (!${eval2.nullTerm} && !${eval2.primitiveTerm})) {
-            $nullTerm = false
-            $primitiveTerm = false
-          } else if (${eval1.nullTerm} || ${eval2.nullTerm} ) {
-            $nullTerm = true
-          } else {
-            $nullTerm = false
-            $primitiveTerm = true
-=======
         q"""
           ..${eval1.code}
           var $nullTerm = false
@@ -369,7 +330,6 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
             } else {
               $nullTerm = true
             }
->>>>>>> githubspark/branch-1.3
           }
          """.children
 
@@ -377,22 +337,6 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
         val eval1 = expressionEvaluator(e1)
         val eval2 = expressionEvaluator(e2)
 
-<<<<<<< HEAD
-        eval1.code ++ eval2.code ++
-        q"""
-          var $nullTerm = false
-          var $primitiveTerm: ${termForType(BooleanType)} = false
-
-          if ((!${eval1.nullTerm} && ${eval1.primitiveTerm}) ||
-              (!${eval2.nullTerm} && ${eval2.primitiveTerm})) {
-            $nullTerm = false
-            $primitiveTerm = true
-          } else if (${eval1.nullTerm} || ${eval2.nullTerm} ) {
-            $nullTerm = true
-          } else {
-            $nullTerm = false
-            $primitiveTerm = false
-=======
         q"""
           ..${eval1.code}
           var $nullTerm = false
@@ -409,7 +353,6 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
             } else {
               $nullTerm = true
             }
->>>>>>> githubspark/branch-1.3
           }
          """.children
 
@@ -434,16 +377,10 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
           } else if (${eval2.primitiveTerm} == 0)
             $nullTerm = true
           else {
-<<<<<<< HEAD
-            $nullTerm = false
-=======
->>>>>>> githubspark/branch-1.3
             $primitiveTerm = ${eval1.primitiveTerm} / ${eval2.primitiveTerm}
           }
          """.children
 
-<<<<<<< HEAD
-=======
       case Remainder(e1, e2) =>
         val eval1 = expressionEvaluator(e1)
         val eval2 = expressionEvaluator(e2)
@@ -463,7 +400,6 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
           }
          """.children
 
->>>>>>> githubspark/branch-1.3
       case IsNotNull(e) =>
         val eval = expressionEvaluator(e)
         q"""
@@ -580,10 +516,6 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
             $nullTerm = ${eval1.nullTerm}
             $primitiveTerm = ${eval1.primitiveTerm}
           } else {
-<<<<<<< HEAD
-            $nullTerm = false
-=======
->>>>>>> githubspark/branch-1.3
             if (${eval1.primitiveTerm} > ${eval2.primitiveTerm}) {
               $primitiveTerm = ${eval1.primitiveTerm}
             } else {
@@ -611,19 +543,11 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
         childEval.code ++
         q"""
          var $nullTerm = ${childEval.nullTerm}
-<<<<<<< HEAD
-         var $primitiveTerm: org.apache.spark.sql.catalyst.types.decimal.Decimal =
-           ${defaultPrimitive(DecimalType())}
-
-         if (!$nullTerm) {
-           $primitiveTerm = new org.apache.spark.sql.catalyst.types.decimal.Decimal()
-=======
          var $primitiveTerm: org.apache.spark.sql.types.Decimal =
            ${defaultPrimitive(DecimalType())}
 
          if (!$nullTerm) {
            $primitiveTerm = new org.apache.spark.sql.types.Decimal()
->>>>>>> githubspark/branch-1.3
            $primitiveTerm = $primitiveTerm.setOrNull(${childEval.primitiveTerm}, $precision, $scale)
            $nullTerm = $primitiveTerm == null
          }
@@ -702,17 +626,10 @@ abstract class CodeGenerator[InType <: AnyRef, OutType <: AnyRef] extends Loggin
     case FloatType => ru.Literal(Constant(-1.0.toFloat))
     case StringType => ru.Literal(Constant("<uninit>"))
     case ShortType => ru.Literal(Constant(-1.toShort))
-<<<<<<< HEAD
-    case LongType => ru.Literal(Constant(1L))
-    case ByteType => ru.Literal(Constant(-1.toByte))
-    case DoubleType => ru.Literal(Constant(-1.toDouble))
-    case DecimalType() => q"org.apache.spark.sql.catalyst.types.decimal.Decimal(-1)"
-=======
     case LongType => ru.Literal(Constant(-1L))
     case ByteType => ru.Literal(Constant(-1.toByte))
     case DoubleType => ru.Literal(Constant(-1.toDouble))
     case DecimalType() => q"org.apache.spark.sql.types.Decimal(-1)"
->>>>>>> githubspark/branch-1.3
     case IntegerType => ru.Literal(Constant(-1))
     case _ => ru.Literal(Constant(null))
   }

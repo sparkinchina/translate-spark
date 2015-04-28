@@ -17,12 +17,9 @@
 
 package org.apache.spark.sql.catalyst
 
-<<<<<<< HEAD
-=======
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.trees.TreeNode
 
->>>>>>> githubspark/branch-1.3
 /**
  * Provides a logical query plan [[Analyzer]] and supporting classes for performing analysis.
  * Analysis consists of translating [[UnresolvedAttribute]]s and [[UnresolvedRelation]]s
@@ -31,20 +28,13 @@ import org.apache.spark.sql.catalyst.trees.TreeNode
 package object analysis {
 
   /**
-<<<<<<< HEAD
-   * Responsible for resolving which identifiers refer to the same entity.  For example, by using
-   * case insensitive equality.
-=======
    * Resolver should return true if the first string refers to the same entity as the second string.
    * For example, by using case insensitive equality.
->>>>>>> githubspark/branch-1.3
    */
   type Resolver = (String, String) => Boolean
 
   val caseInsensitiveResolution = (a: String, b: String) => a.equalsIgnoreCase(b)
   val caseSensitiveResolution = (a: String, b: String) => a == b
-<<<<<<< HEAD
-=======
 
   implicit class AnalysisErrorAt(t: TreeNode[_]) {
     /** Fails the analysis at the point where a specific tree node was parsed. */
@@ -60,5 +50,4 @@ package object analysis {
         throw a.withPosition(t.origin.line, t.origin.startPosition)
     }
   }
->>>>>>> githubspark/branch-1.3
 }

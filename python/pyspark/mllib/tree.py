@@ -20,22 +20,6 @@ from __future__ import absolute_import
 import random
 
 from pyspark import SparkContext, RDD
-<<<<<<< HEAD
-from pyspark.mllib.common import callMLlibFunc, JavaModelWrapper
-from pyspark.mllib.linalg import _convert_to_vector
-from pyspark.mllib.regression import LabeledPoint
-
-__all__ = ['DecisionTreeModel', 'DecisionTree', 'RandomForestModel', 'RandomForest']
-
-
-class DecisionTreeModel(JavaModelWrapper):
-
-    """
-    A decision tree model for classification or regression.
-
-    EXPERIMENTAL: This is an experimental API.
-                  It will probably be modified in future.
-=======
 from pyspark.mllib.common import callMLlibFunc, inherit_doc, JavaModelWrapper
 from pyspark.mllib.linalg import _convert_to_vector
 from pyspark.mllib.regression import LabeledPoint
@@ -88,19 +72,15 @@ class DecisionTreeModel(JavaModelWrapper, JavaSaveable, JavaLoader):
     .. note:: Experimental
 
     A decision tree model for classification or regression.
->>>>>>> githubspark/branch-1.3
     """
     def predict(self, x):
         """
         Predict the label of one or more examples.
 
-<<<<<<< HEAD
-=======
         Note: In Python, predict cannot currently be used within an RDD
               transformation or action.
               Call predict directly on the RDD instead.
 
->>>>>>> githubspark/branch-1.3
         :param x:  Data point (feature vector),
                    or an RDD of data points (feature vectors).
         """
@@ -124,16 +104,6 @@ class DecisionTreeModel(JavaModelWrapper, JavaSaveable, JavaLoader):
         """ full model. """
         return self._java_model.toDebugString()
 
-<<<<<<< HEAD
-
-class DecisionTree(object):
-
-    """
-    Learning algorithm for a decision tree model for classification or regression.
-
-    EXPERIMENTAL: This is an experimental API.
-                  It will probably be modified in future.
-=======
     @classmethod
     def _java_loader_class(cls):
         return "org.apache.spark.mllib.tree.model.DecisionTreeModel"
@@ -145,7 +115,6 @@ class DecisionTree(object):
 
     Learning algorithm for a decision tree model for classification or
     regression.
->>>>>>> githubspark/branch-1.3
     """
 
     @classmethod
@@ -222,19 +191,6 @@ class DecisionTree(object):
 
         :param data: Training data: RDD of LabeledPoint.
                      Labels are real numbers.
-<<<<<<< HEAD
-        :param categoricalFeaturesInfo: Map from categorical feature index
-                                        to number of categories.
-                                        Any feature not in this map
-                                        is treated as continuous.
-        :param impurity: Supported values: "variance"
-        :param maxDepth: Max depth of tree.
-                         E.g., depth 0 means 1 leaf node.
-                         Depth 1 means 1 internal node + 2 leaf nodes.
-        :param maxBins: Number of bins used for finding splits at each node.
-        :param minInstancesPerNode: Min number of instances required at child
-                                    nodes to create the parent split
-=======
         :param categoricalFeaturesInfo: Map from categorical feature
                  index to number of categories.
                  Any feature not in this map is treated as continuous.
@@ -246,7 +202,6 @@ class DecisionTree(object):
                  node.
         :param minInstancesPerNode: Min number of instances required at
                  child nodes to create the parent split
->>>>>>> githubspark/branch-1.3
         :param minInfoGain: Min info gain required to create a split
         :return: DecisionTreeModel
 
@@ -276,45 +231,6 @@ class DecisionTree(object):
                           impurity, maxDepth, maxBins, minInstancesPerNode, minInfoGain)
 
 
-<<<<<<< HEAD
-class RandomForestModel(JavaModelWrapper):
-    """
-    Represents a random forest model.
-
-    EXPERIMENTAL: This is an experimental API.
-                  It will probably be modified in future.
-    """
-    def predict(self, x):
-        """
-        Predict values for a single data point or an RDD of points using
-        the model trained.
-        """
-        if isinstance(x, RDD):
-            return self.call("predict", x.map(_convert_to_vector))
-
-        else:
-            return self.call("predict", _convert_to_vector(x))
-
-    def numTrees(self):
-        """
-        Get number of trees in forest.
-        """
-        return self.call("numTrees")
-
-    def totalNumNodes(self):
-        """
-        Get total number of nodes, summed over all trees in the forest.
-        """
-        return self.call("totalNumNodes")
-
-    def __repr__(self):
-        """ Summary of model """
-        return self._java_model.toString()
-
-    def toDebugString(self):
-        """ Full model """
-        return self._java_model.toDebugString()
-=======
 @inherit_doc
 class RandomForestModel(TreeEnsembleModel, JavaLoader):
     """
@@ -326,22 +242,14 @@ class RandomForestModel(TreeEnsembleModel, JavaLoader):
     @classmethod
     def _java_loader_class(cls):
         return "org.apache.spark.mllib.tree.model.RandomForestModel"
->>>>>>> githubspark/branch-1.3
 
 
 class RandomForest(object):
     """
-<<<<<<< HEAD
-    Learning algorithm for a random forest model for classification or regression.
-
-    EXPERIMENTAL: This is an experimental API.
-                  It will probably be modified in future.
-=======
     .. note:: Experimental
 
     Learning algorithm for a random forest model for classification or
     regression.
->>>>>>> githubspark/branch-1.3
     """
 
     supportedFeatureSubsetStrategies = ("auto", "all", "sqrt", "log2", "onethird")
@@ -368,28 +276,6 @@ class RandomForest(object):
         Method to train a decision tree model for binary or multiclass
         classification.
 
-<<<<<<< HEAD
-        :param data: Training dataset: RDD of LabeledPoint. Labels should take
-               values {0, 1, ..., numClasses-1}.
-        :param numClasses: number of classes for classification.
-        :param categoricalFeaturesInfo: Map storing arity of categorical features.
-               E.g., an entry (n -> k) indicates that feature n is categorical
-               with k categories indexed from 0: {0, 1, ..., k-1}.
-        :param numTrees: Number of trees in the random forest.
-        :param featureSubsetStrategy: Number of features to consider for splits at
-               each node.
-               Supported: "auto" (default), "all", "sqrt", "log2", "onethird".
-               If "auto" is set, this parameter is set based on numTrees:
-               if numTrees == 1, set to "all";
-               if numTrees > 1 (forest) set to "sqrt".
-        :param impurity: Criterion used for information gain calculation.
-               Supported values: "gini" (recommended) or "entropy".
-        :param maxDepth: Maximum depth of the tree. E.g., depth 0 means 1 leaf node;
-               depth 1 means 1 internal node + 2 leaf nodes. (default: 4)
-        :param maxBins: maximum number of bins used for splitting features
-               (default: 100)
-        :param seed: Random seed for bootstrapping and choosing feature subsets.
-=======
         :param data: Training dataset: RDD of LabeledPoint. Labels
                  should take values {0, 1, ..., numClasses-1}.
         :param numClasses: number of classes for classification.
@@ -414,7 +300,6 @@ class RandomForest(object):
                  (default: 100)
         :param seed: Random seed for bootstrapping and choosing feature
                  subsets.
->>>>>>> githubspark/branch-1.3
         :return: RandomForestModel that can be used for prediction
 
         Example usage:
@@ -476,21 +361,6 @@ class RandomForest(object):
                {0, 1, ..., k-1}.
         :param numTrees: Number of trees in the random forest.
         :param featureSubsetStrategy: Number of features to consider for
-<<<<<<< HEAD
-               splits at each node.
-               Supported: "auto" (default), "all", "sqrt", "log2", "onethird".
-               If "auto" is set, this parameter is set based on numTrees:
-               if numTrees == 1, set to "all";
-               if numTrees > 1 (forest) set to "onethird" for regression.
-        :param impurity: Criterion used for information gain calculation.
-               Supported values: "variance".
-        :param maxDepth: Maximum depth of the tree. E.g., depth 0 means 1
-               leaf node; depth 1 means 1 internal node + 2 leaf nodes.
-               (default: 4)
-        :param maxBins: maximum number of bins used for splitting features
-               (default: 100)
-        :param seed: Random seed for bootstrapping and choosing feature subsets.
-=======
                  splits at each node.
                  Supported: "auto" (default), "all", "sqrt", "log2", "onethird".
                  If "auto" is set, this parameter is set based on numTrees:
@@ -506,7 +376,6 @@ class RandomForest(object):
                  features (default: 100)
         :param seed: Random seed for bootstrapping and choosing feature
                  subsets.
->>>>>>> githubspark/branch-1.3
         :return: RandomForestModel that can be used for prediction
 
         Example usage:
@@ -539,8 +408,6 @@ class RandomForest(object):
                           featureSubsetStrategy, impurity, maxDepth, maxBins, seed)
 
 
-<<<<<<< HEAD
-=======
 @inherit_doc
 class GradientBoostedTreesModel(TreeEnsembleModel, JavaLoader):
     """
@@ -686,7 +553,6 @@ class GradientBoostedTrees(object):
                           loss, numIterations, learningRate, maxDepth)
 
 
->>>>>>> githubspark/branch-1.3
 def _test():
     import doctest
     globs = globals().copy()

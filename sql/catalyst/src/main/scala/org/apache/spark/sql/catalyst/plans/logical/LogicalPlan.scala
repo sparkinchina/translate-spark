@@ -18,31 +18,6 @@
 package org.apache.spark.sql.catalyst.plans.logical
 
 import org.apache.spark.Logging
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.analysis.Resolver
-import org.apache.spark.sql.catalyst.errors.TreeNodeException
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.plans.QueryPlan
-import org.apache.spark.sql.catalyst.trees.TreeNode
-import org.apache.spark.sql.catalyst.types.StructType
-import org.apache.spark.sql.catalyst.trees
-
-/**
- * Estimates of various statistics.  The default estimation logic simply lazily multiplies the
- * corresponding statistic produced by the children.  To override this behavior, override
- * `statistics` and assign it an overriden version of `Statistics`.
- *
- * '''NOTE''': concrete and/or overriden versions of statistics fields should pay attention to the
- * performance of the implementations.  The reason is that estimations might get triggered in
- * performance-critical processes, such as query plan planning.
- *
- * @param sizeInBytes Physical size in bytes. For leaf operators this defaults to 1, otherwise it
- *                    defaults to the product of children's `sizeInBytes`.
- *
- * 各种统计数据的评估。 默认的评估逻辑
- */
-private[sql] case class Statistics(sizeInBytes: BigInt)
-=======
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.analysis.{EliminateSubQueries, UnresolvedGetField, Resolver}
 import org.apache.spark.sql.catalyst.expressions._
@@ -51,13 +26,10 @@ import org.apache.spark.sql.catalyst.trees.TreeNode
 import org.apache.spark.sql.catalyst.trees
 import org.apache.spark.sql.types.{ArrayType, StructType, StructField}
 
->>>>>>> githubspark/branch-1.3
 
 abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
   self: Product =>
 
-<<<<<<< HEAD
-=======
   /**
    * Computes [[Statistics]] for this plan. The default implementation assumes the output
    * cardinality is the product of of all child plan's cardinality, i.e. applies in the case
@@ -65,18 +37,11 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
    *
    * [[LeafNode]]s must override this.
    */
->>>>>>> githubspark/branch-1.3
   def statistics: Statistics = {
     if (children.size == 0) {
       throw new UnsupportedOperationException(s"LeafNode $nodeName must implement statistics.")
     }
-<<<<<<< HEAD
-
-    Statistics(
-      sizeInBytes = children.map(_.statistics).map(_.sizeInBytes).product)
-=======
     Statistics(sizeInBytes = children.map(_.statistics.sizeInBytes).product)
->>>>>>> githubspark/branch-1.3
   }
 
   /**
@@ -109,14 +74,6 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
    * can do better should override this function.
    */
   def sameResult(plan: LogicalPlan): Boolean = {
-<<<<<<< HEAD
-    plan.getClass == this.getClass &&
-    plan.children.size == children.size && {
-      logDebug(s"[${cleanArgs.mkString(", ")}] == [${plan.cleanArgs.mkString(", ")}]")
-      cleanArgs == plan.cleanArgs
-    } &&
-    (plan.children, children).zipped.forall(_ sameResult _)
-=======
     val cleanLeft = EliminateSubQueries(this)
     val cleanRight = EliminateSubQueries(plan)
 
@@ -127,7 +84,6 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
       cleanRight.cleanArgs == cleanLeft.cleanArgs
     } &&
     (cleanLeft.children, cleanRight.children).zipped.forall(_ sameResult _)
->>>>>>> githubspark/branch-1.3
   }
 
   /** Args that have cleaned such that differences in expression id should not affect equality */
@@ -154,26 +110,17 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
    * nodes of this LogicalPlan. The attribute is expressed as
    * as string in the following form: `[scope].AttributeName.[nested].[fields]...`.
    */
-<<<<<<< HEAD
-  def resolveChildren(name: String, resolver: Resolver): Option[NamedExpression] =
-    resolve(name, children.flatMap(_.output), resolver)
-=======
   def resolveChildren(
       name: String,
       resolver: Resolver,
       throwErrors: Boolean = false): Option[NamedExpression] =
     resolve(name, children.flatMap(_.output), resolver, throwErrors)
->>>>>>> githubspark/branch-1.3
 
   /**
    * Optionally resolves the given string to a [[NamedExpression]] based on the output of this
    * LogicalPlan. The attribute is expressed as string in the following form:
    * `[scope].AttributeName.[nested].[fields]...`.
    */
-<<<<<<< HEAD
-  def resolve(name: String, resolver: Resolver): Option[NamedExpression] =
-    resolve(name, output, resolver)
-=======
   def resolve(
       name: String,
       resolver: Resolver,
@@ -217,40 +164,11 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
       None
     }
   }
->>>>>>> githubspark/branch-1.3
 
   /** Performs attribute resolution given a name and a sequence of possible attributes. */
   protected def resolve(
       name: String,
       input: Seq[Attribute],
-<<<<<<< HEAD
-      resolver: Resolver): Option[NamedExpression] = {
-
-    val parts = name.split("\\.")
-
-    // Collect all attributes that are output by this nodes children where either the first part
-    // matches the name or where the first part matches the scope and the second part matches the
-    // name.  Return these matches along with any remaining parts, which represent dotted access to
-    // struct fields.
-    val options = input.flatMap { option =>
-      // If the first part of the desired name matches a qualifier for this possible match, drop it.
-      val remainingParts =
-        if (option.qualifiers.find(resolver(_, parts.head)).nonEmpty && parts.size > 1) {
-          parts.drop(1)
-        } else {
-          parts
-        }
-
-      if (resolver(option.name, remainingParts.head)) {
-        // Preserve the case of the user's attribute reference.
-        (option.withName(remainingParts.head), remainingParts.tail.toList) :: Nil
-      } else {
-        Nil
-      }
-    }
-
-    options.distinct match {
-=======
       resolver: Resolver,
       throwErrors: Boolean): Option[NamedExpression] = {
 
@@ -281,19 +199,11 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
     }
 
     candidates.distinct match {
->>>>>>> githubspark/branch-1.3
       // One match, no nested fields, use it.
       case Seq((a, Nil)) => Some(a)
 
       // One match, but we also need to extract the requested nested field.
       case Seq((a, nestedFields)) =>
-<<<<<<< HEAD
-        val aliased =
-          Alias(
-            resolveNesting(nestedFields, a, resolver),
-            nestedFields.last)() // Preserve the case of the user's field access.
-        Some(aliased)
-=======
         try {
 
           // The foldLeft adds UnresolvedGetField for every remaining parts of the name,
@@ -307,7 +217,6 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
         } catch {
           case a: AnalysisException if !throwErrors => None
         }
->>>>>>> githubspark/branch-1.3
 
       // No matches.
       case Seq() =>
@@ -316,42 +225,13 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
 
       // More than one match.
       case ambiguousReferences =>
-<<<<<<< HEAD
-        throw new TreeNodeException(
-          this, s"Ambiguous references to $name: ${ambiguousReferences.mkString(",")}")
-=======
         val referenceNames = ambiguousReferences.map(_._1).mkString(", ")
         throw new AnalysisException(
           s"Reference '$name' is ambiguous, could be: $referenceNames.")
->>>>>>> githubspark/branch-1.3
     }
   }
 
   /**
-<<<<<<< HEAD
-   * Given a list of successive nested field accesses, and a based expression, attempt to resolve
-   * the actual field lookups on this expression.
-   */
-  private def resolveNesting(
-      nestedFields: List[String],
-      expression: Expression,
-      resolver: Resolver): Expression = {
-
-    (nestedFields, expression.dataType) match {
-      case (Nil, _) => expression
-      case (requestedField :: rest, StructType(fields)) =>
-        val actualField = fields.filter(f => resolver(f.name, requestedField))
-        actualField match {
-          case Seq() =>
-            sys.error(
-              s"No such struct field $requestedField in ${fields.map(_.name).mkString(", ")}")
-          case Seq(singleMatch) =>
-            resolveNesting(rest, GetField(expression, singleMatch.name), resolver)
-          case multipleMatches =>
-            sys.error(s"Ambiguous reference to fields ${multipleMatches.mkString(", ")}")
-        }
-      case (_, dt) => sys.error(s"Can't access nested field in type $dt")
-=======
    * Returns the resolved `GetField`, and report error if no desired field or over one
    * desired fields are found.
    *
@@ -383,7 +263,6 @@ abstract class LogicalPlan extends QueryPlan[LogicalPlan] with Logging {
         ArrayGetField(expr, fields(ordinal), ordinal, containsNull)
       case otherType =>
         throw new AnalysisException(s"GetField is not valid on fields of type $otherType")
->>>>>>> githubspark/branch-1.3
     }
   }
 }

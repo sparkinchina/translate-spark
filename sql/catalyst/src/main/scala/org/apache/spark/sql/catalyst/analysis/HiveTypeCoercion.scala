@@ -20,11 +20,7 @@ package org.apache.spark.sql.catalyst.analysis
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project, Union}
 import org.apache.spark.sql.catalyst.rules.Rule
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 
 object HiveTypeCoercion {
   // See https://cwiki.apache.org/confluence/display/Hive/LanguageManual+Types.
@@ -82,10 +78,7 @@ trait HiveTypeCoercion {
     FunctionArgumentConversion ::
     CaseWhenCoercion ::
     Division ::
-<<<<<<< HEAD
-=======
     PropagateTypes ::
->>>>>>> githubspark/branch-1.3
     Nil
 
   /**
@@ -369,8 +362,6 @@ trait HiveTypeCoercion {
           DecimalType(min(p1 - s1, p2 - s2) + max(s1, s2), max(s1, s2))
         )
 
-<<<<<<< HEAD
-=======
       case LessThan(e1 @ DecimalType.Expression(p1, s1),
           e2 @ DecimalType.Expression(p2, s2)) if p1 != p2 || s1 != s2 =>
         LessThan(Cast(e1, DecimalType.Unlimited), Cast(e2, DecimalType.Unlimited))
@@ -387,7 +378,6 @@ trait HiveTypeCoercion {
           e2 @ DecimalType.Expression(p2, s2)) if p1 != p2 || s1 != s2 =>
         GreaterThanOrEqual(Cast(e1, DecimalType.Unlimited), Cast(e2, DecimalType.Unlimited))
 
->>>>>>> githubspark/branch-1.3
       // Promote integers inside a binary expression with fixed-precision decimals to decimals,
       // and fixed-precision decimals in an expression with floats / doubles to doubles
       case b: BinaryExpression if b.left.dataType != b.right.dataType =>
@@ -414,13 +404,8 @@ trait HiveTypeCoercion {
    * Changes Boolean values to Bytes so that expressions like true < false can be Evaluated.
    */
   object BooleanComparisons extends Rule[LogicalPlan] {
-<<<<<<< HEAD
-    val trueValues = Seq(1, 1L, 1.toByte, 1.toShort, BigDecimal(1)).map(Literal(_))
-    val falseValues = Seq(0, 0L, 0.toByte, 0.toShort, BigDecimal(0)).map(Literal(_))
-=======
     val trueValues = Seq(1, 1L, 1.toByte, 1.toShort, new java.math.BigDecimal(1)).map(Literal(_))
     val falseValues = Seq(0, 0L, 0.toByte, 0.toShort, new java.math.BigDecimal(0)).map(Literal(_))
->>>>>>> githubspark/branch-1.3
 
     def apply(plan: LogicalPlan): LogicalPlan = plan transformAllExpressions {
       // Skip nodes who's children have not been resolved yet.
@@ -519,8 +504,6 @@ trait HiveTypeCoercion {
       // Hive lets you do aggregation of timestamps... for some reason
       case Sum(e @ TimestampType()) => Sum(Cast(e, DoubleType))
       case Average(e @ TimestampType()) => Average(Cast(e, DoubleType))
-<<<<<<< HEAD
-=======
 
       // Coalesce should return the first non-null value, which could be any column
       // from the list. So we need to make sure the return type is deterministic and
@@ -537,7 +520,6 @@ trait HiveTypeCoercion {
           case None =>
             sys.error(s"Could not determine return type of Coalesce for ${types.mkString(",")}")
         }
->>>>>>> githubspark/branch-1.3
     }
   }
 

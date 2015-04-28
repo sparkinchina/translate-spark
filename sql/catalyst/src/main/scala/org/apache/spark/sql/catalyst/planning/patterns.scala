@@ -91,18 +91,6 @@ object PhysicalOperation extends PredicateHelper {
         (None, Nil, other, Map.empty)
     }
 
-<<<<<<< HEAD
-  def collectAliases(fields: Seq[Expression]) = fields.collect {
-    case a @ Alias(child, _) => a.toAttribute.asInstanceOf[Attribute] -> child
-  }.toMap
-
-  def substitute(aliases: Map[Attribute, Expression])(expr: Expression) = expr.transform {
-    case a @ Alias(ref: AttributeReference, name) =>
-      aliases.get(ref).map(Alias(_, name)(a.exprId, a.qualifiers)).getOrElse(a)
-
-    case a: AttributeReference =>
-      aliases.get(a).map(Alias(_, a.name)(a.exprId, a.qualifiers)).getOrElse(a)
-=======
   def collectAliases(fields: Seq[Expression]): Map[Attribute, Expression] = fields.collect {
     case a @ Alias(child, _) => a.toAttribute.asInstanceOf[Attribute] -> child
   }.toMap
@@ -115,7 +103,6 @@ object PhysicalOperation extends PredicateHelper {
       case a: AttributeReference =>
         aliases.get(a).map(Alias(_, a.name)(a.exprId, a.qualifiers)).getOrElse(a)
     }
->>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -156,18 +143,11 @@ object PartialAggregation {
         // We need to pass all grouping expressions though so the grouping can happen a second
         // time. However some of them might be unnamed so we alias them allowing them to be
         // referenced in the second aggregation.
-<<<<<<< HEAD
-        val namedGroupingExpressions: Map[Expression, NamedExpression] = groupingExpressions.map {
-          case n: NamedExpression => (n, n)
-          case other => (other, Alias(other, "PartialGroup")())
-        }.toMap
-=======
         val namedGroupingExpressions: Map[Expression, NamedExpression] =
           groupingExpressions.filter(!_.isInstanceOf[Literal]).map {
             case n: NamedExpression => (n, n)
             case other => (other, Alias(other, "PartialGroup")())
           }.toMap
->>>>>>> githubspark/branch-1.3
 
         // Replace aggregations with a new expression that computes the result from the already
         // computed partial evaluations and grouping values.

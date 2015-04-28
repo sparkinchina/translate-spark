@@ -15,11 +15,7 @@ import scala.tools.nsc.ast.parser.Tokens.EOF
 
 import org.apache.spark.Logging
 
-<<<<<<< HEAD
-trait SparkExprTyper extends Logging {
-=======
 private[repl] trait SparkExprTyper extends Logging {
->>>>>>> githubspark/branch-1.3
   val repl: SparkIMain
 
   import repl._

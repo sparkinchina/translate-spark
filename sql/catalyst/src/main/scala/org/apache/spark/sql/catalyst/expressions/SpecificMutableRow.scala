@@ -17,11 +17,7 @@
 
 package org.apache.spark.sql.catalyst.expressions
 
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types._
-=======
 import org.apache.spark.sql.types._
->>>>>>> githubspark/branch-1.3
 
 /**
  * A parent class for mutable container objects that are reused when the values are changed,
@@ -66,27 +62,11 @@ abstract class MutableValue extends Serializable {
   var isNull: Boolean = true
   def boxed: Any
   def update(v: Any)
-<<<<<<< HEAD
-  def copy(): this.type
-=======
   def copy(): MutableValue
->>>>>>> githubspark/branch-1.3
 }
 
 final class MutableInt extends MutableValue {
   var value: Int = 0
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Int]
-  }
-  def copy() = {
-    val newCopy = new MutableInt
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = {
     isNull = false
@@ -97,24 +77,11 @@ final class MutableInt extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableInt]
->>>>>>> githubspark/branch-1.3
   }
 }
 
 final class MutableFloat extends MutableValue {
   var value: Float = 0
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Float]
-  }
-  def copy() = {
-    val newCopy = new MutableFloat
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = {
     isNull = false
@@ -125,24 +92,11 @@ final class MutableFloat extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableFloat]
->>>>>>> githubspark/branch-1.3
   }
 }
 
 final class MutableBoolean extends MutableValue {
   var value: Boolean = false
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Boolean]
-  }
-  def copy() = {
-    val newCopy = new MutableBoolean
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = {
     isNull = false
@@ -153,24 +107,11 @@ final class MutableBoolean extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableBoolean]
->>>>>>> githubspark/branch-1.3
   }
 }
 
 final class MutableDouble extends MutableValue {
   var value: Double = 0
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Double]
-  }
-  def copy() = {
-    val newCopy = new MutableDouble
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = {
     isNull = false
@@ -181,24 +122,11 @@ final class MutableDouble extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableDouble]
->>>>>>> githubspark/branch-1.3
   }
 }
 
 final class MutableShort extends MutableValue {
   var value: Short = 0
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Short]
-  }
-  def copy() = {
-    val newCopy = new MutableShort
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = value = {
     isNull = false
@@ -209,24 +137,11 @@ final class MutableShort extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableShort]
->>>>>>> githubspark/branch-1.3
   }
 }
 
 final class MutableLong extends MutableValue {
   var value: Long = 0
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Long]
-  }
-  def copy() = {
-    val newCopy = new MutableLong
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = value = {
     isNull = false
@@ -237,24 +152,11 @@ final class MutableLong extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableLong]
->>>>>>> githubspark/branch-1.3
   }
 }
 
 final class MutableByte extends MutableValue {
   var value: Byte = 0
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Byte]
-  }
-  def copy() = {
-    val newCopy = new MutableByte
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = value = {
     isNull = false
@@ -265,24 +167,11 @@ final class MutableByte extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableByte]
->>>>>>> githubspark/branch-1.3
   }
 }
 
 final class MutableAny extends MutableValue {
   var value: Any = _
-<<<<<<< HEAD
-  def boxed = if (isNull) null else value
-  def update(v: Any) = value = {
-    isNull = false
-    v.asInstanceOf[Any]
-  }
-  def copy() = {
-    val newCopy = new MutableAny
-    newCopy.isNull = isNull
-    newCopy.value = value
-    newCopy.asInstanceOf[this.type]
-=======
   override def boxed: Any = if (isNull) null else value
   override def update(v: Any): Unit = {
     isNull = false
@@ -293,7 +182,6 @@ final class MutableAny extends MutableValue {
     newCopy.isNull = isNull
     newCopy.value = value
     newCopy.asInstanceOf[MutableAny]
->>>>>>> githubspark/branch-1.3
   }
 }
 
@@ -321,11 +209,8 @@ final class SpecificMutableRow(val values: Array[MutableValue]) extends MutableR
 
   override def length: Int = values.length
 
-<<<<<<< HEAD
-=======
   override def toSeq: Seq[Any] = values.map(_.boxed).toSeq
 
->>>>>>> githubspark/branch-1.3
   override def setNullAt(i: Int): Unit = {
     values(i).isNull = true
   }
@@ -335,15 +220,6 @@ final class SpecificMutableRow(val values: Array[MutableValue]) extends MutableR
   override def isNullAt(i: Int): Boolean = values(i).isNull
 
   override def copy(): Row = {
-<<<<<<< HEAD
-    val newValues = new Array[MutableValue](values.length)
-    var i = 0
-    while (i < values.length) {
-      newValues(i) = values(i).copy()
-      i += 1
-    }
-    new SpecificMutableRow(newValues)
-=======
     val newValues = new Array[Any](values.length)
     var i = 0
     while (i < values.length) {
@@ -352,24 +228,15 @@ final class SpecificMutableRow(val values: Array[MutableValue]) extends MutableR
     }
 
     new GenericRow(newValues)
->>>>>>> githubspark/branch-1.3
   }
 
   override def update(ordinal: Int, value: Any): Unit = {
     if (value == null) setNullAt(ordinal) else values(ordinal).update(value)
   }
 
-<<<<<<< HEAD
-  override def iterator: Iterator[Any] = values.map(_.boxed).iterator
-
-  override def setString(ordinal: Int, value: String) = update(ordinal, value)
-
-  override def getString(ordinal: Int) = apply(ordinal).asInstanceOf[String]
-=======
   override def setString(ordinal: Int, value: String): Unit = update(ordinal, value)
 
   override def getString(ordinal: Int): String = apply(ordinal).asInstanceOf[String]
->>>>>>> githubspark/branch-1.3
 
   override def setInt(ordinal: Int, value: Int): Unit = {
     val currentValue = values(ordinal).asInstanceOf[MutableInt]

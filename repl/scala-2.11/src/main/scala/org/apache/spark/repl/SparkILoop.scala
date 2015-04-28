@@ -66,10 +66,6 @@ class SparkILoop(in0: Option[BufferedReader], protected val out: JPrintWriter)
            println("Spark context available as sc.")
            _sc
          }
-<<<<<<< HEAD
-               """)
-      command("import org.apache.spark.SparkContext._")
-=======
         """)
       command( """
          @transient val sqlContext = {
@@ -82,7 +78,6 @@ class SparkILoop(in0: Option[BufferedReader], protected val out: JPrintWriter)
       command("import sqlContext.implicits._")
       command("import sqlContext.sql")
       command("import org.apache.spark.sql.functions._")
->>>>>>> githubspark/branch-1.3
     }
   }
 

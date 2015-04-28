@@ -18,11 +18,7 @@
 import numpy as np
 import warnings
 
-<<<<<<< HEAD
-from pyspark.mllib.common import callMLlibFunc
-=======
 from pyspark.mllib.common import callMLlibFunc, JavaModelWrapper, inherit_doc
->>>>>>> githubspark/branch-1.3
 from pyspark.mllib.linalg import Vectors, SparseVector, _convert_to_vector
 from pyspark.mllib.regression import LabeledPoint
 
@@ -172,8 +168,6 @@ class MLUtils(object):
         return callMLlibFunc("loadLabeledPoints", sc, path, minPartitions)
 
 
-<<<<<<< HEAD
-=======
 class Saveable(object):
     """
     Mixin for models and transformers which may be saved as files.
@@ -261,7 +255,6 @@ class JavaLoader(Loader):
         return cls(java_model)
 
 
->>>>>>> githubspark/branch-1.3
 def _test():
     import doctest
     from pyspark.context import SparkContext

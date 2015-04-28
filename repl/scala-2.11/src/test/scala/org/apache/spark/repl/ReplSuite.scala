@@ -128,15 +128,9 @@ class ReplSuite extends FunSuite {
     val output = runInterpreter("local",
       """
         |var v = 7
-<<<<<<< HEAD
-        |sc.parallelize(1 to 10).map(x => v).collect.reduceLeft(_+_)
-        |v = 10
-        |sc.parallelize(1 to 10).map(x => v).collect.reduceLeft(_+_)
-=======
         |sc.parallelize(1 to 10).map(x => v).collect().reduceLeft(_+_)
         |v = 10
         |sc.parallelize(1 to 10).map(x => v).collect().reduceLeft(_+_)
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
@@ -150,11 +144,7 @@ class ReplSuite extends FunSuite {
         |class C {
         |def foo = 5
         |}
-<<<<<<< HEAD
-        |sc.parallelize(1 to 10).map(x => (new C).foo).collect.reduceLeft(_+_)
-=======
         |sc.parallelize(1 to 10).map(x => (new C).foo).collect().reduceLeft(_+_)
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
@@ -165,11 +155,7 @@ class ReplSuite extends FunSuite {
     val output = runInterpreter("local",
       """
         |def double(x: Int) = x + x
-<<<<<<< HEAD
-        |sc.parallelize(1 to 10).map(x => double(x)).collect.reduceLeft(_+_)
-=======
         |sc.parallelize(1 to 10).map(x => double(x)).collect().reduceLeft(_+_)
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
@@ -181,15 +167,9 @@ class ReplSuite extends FunSuite {
       """
         |var v = 7
         |def getV() = v
-<<<<<<< HEAD
-        |sc.parallelize(1 to 10).map(x => getV()).collect.reduceLeft(_+_)
-        |v = 10
-        |sc.parallelize(1 to 10).map(x => getV()).collect.reduceLeft(_+_)
-=======
         |sc.parallelize(1 to 10).map(x => getV()).collect().reduceLeft(_+_)
         |v = 10
         |sc.parallelize(1 to 10).map(x => getV()).collect().reduceLeft(_+_)
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
@@ -205,15 +185,9 @@ class ReplSuite extends FunSuite {
       """
         |var array = new Array[Int](5)
         |val broadcastArray = sc.broadcast(array)
-<<<<<<< HEAD
-        |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect
-        |array(0) = 5
-        |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect
-=======
         |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect()
         |array(0) = 5
         |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect()
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
@@ -250,16 +224,6 @@ class ReplSuite extends FunSuite {
       """
         |var v = 7
         |def getV() = v
-<<<<<<< HEAD
-        |sc.parallelize(1 to 10).map(x => getV()).collect.reduceLeft(_+_)
-        |v = 10
-        |sc.parallelize(1 to 10).map(x => getV()).collect.reduceLeft(_+_)
-        |var array = new Array[Int](5)
-        |val broadcastArray = sc.broadcast(array)
-        |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect
-        |array(0) = 5
-        |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect
-=======
         |sc.parallelize(1 to 10).map(x => getV()).collect().reduceLeft(_+_)
         |v = 10
         |sc.parallelize(1 to 10).map(x => getV()).collect().reduceLeft(_+_)
@@ -268,7 +232,6 @@ class ReplSuite extends FunSuite {
         |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect()
         |array(0) = 5
         |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect()
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
@@ -300,24 +263,14 @@ class ReplSuite extends FunSuite {
     assertDoesNotContain("Exception", output)
   }
 
-<<<<<<< HEAD
-  test("SPARK-2576 importing SQLContext.createSchemaRDD.") {
-=======
   test("SPARK-2576 importing SQLContext.createDataFrame.") {
->>>>>>> githubspark/branch-1.3
     // We need to use local-cluster to test this case.
     val output = runInterpreter("local-cluster[1,1,512]",
       """
         |val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-<<<<<<< HEAD
-        |import sqlContext.createSchemaRDD
-        |case class TestCaseClass(value: Int)
-        |sc.parallelize(1 to 10).map(x => TestCaseClass(x)).toSchemaRDD.collect
-=======
         |import sqlContext.implicits._
         |case class TestCaseClass(value: Int)
         |sc.parallelize(1 to 10).map(x => TestCaseClass(x)).toDF().collect()
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
@@ -330,36 +283,18 @@ class ReplSuite extends FunSuite {
       |val t = new TestClass
       |import t.testMethod
       |case class TestCaseClass(value: Int)
-<<<<<<< HEAD
-      |sc.parallelize(1 to 10).map(x => TestCaseClass(x)).collect
-=======
       |sc.parallelize(1 to 10).map(x => TestCaseClass(x)).collect()
->>>>>>> githubspark/branch-1.3
     """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
   }
 
-<<<<<<< HEAD
-  if (System.getenv("MESOS_NATIVE_LIBRARY") != null) {
-=======
   if (System.getenv("MESOS_NATIVE_JAVA_LIBRARY") != null) {
->>>>>>> githubspark/branch-1.3
     test("running on Mesos") {
       val output = runInterpreter("localquiet",
         """
           |var v = 7
           |def getV() = v
-<<<<<<< HEAD
-          |sc.parallelize(1 to 10).map(x => getV()).collect.reduceLeft(_+_)
-          |v = 10
-          |sc.parallelize(1 to 10).map(x => getV()).collect.reduceLeft(_+_)
-          |var array = new Array[Int](5)
-          |val broadcastArray = sc.broadcast(array)
-          |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect
-          |array(0) = 5
-          |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect
-=======
           |sc.parallelize(1 to 10).map(x => getV()).collect().reduceLeft(_+_)
           |v = 10
           |sc.parallelize(1 to 10).map(x => getV()).collect().reduceLeft(_+_)
@@ -368,7 +303,6 @@ class ReplSuite extends FunSuite {
           |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect()
           |array(0) = 5
           |sc.parallelize(0 to 4).map(x => broadcastArray.value(x)).collect()
->>>>>>> githubspark/branch-1.3
         """.stripMargin)
       assertDoesNotContain("error:", output)
       assertDoesNotContain("Exception", output)
@@ -383,18 +317,12 @@ class ReplSuite extends FunSuite {
     val output = runInterpreter("local[2]",
       """
         |case class Foo(i: Int)
-<<<<<<< HEAD
-        |val ret = sc.parallelize((1 to 100).map(Foo), 10).collect
-=======
         |val ret = sc.parallelize((1 to 100).map(Foo), 10).collect()
->>>>>>> githubspark/branch-1.3
       """.stripMargin)
     assertDoesNotContain("error:", output)
     assertDoesNotContain("Exception", output)
     assertContains("ret: Array[Foo] = Array(Foo(1),", output)
   }
-<<<<<<< HEAD
-=======
   
   test("collecting objects of class defined in repl - shuffling") {
     val output = runInterpreter("local-cluster[1,1,512]",
@@ -407,5 +335,4 @@ class ReplSuite extends FunSuite {
     assertDoesNotContain("Exception", output)
     assertContains("ret: Array[(Int, Iterable[Foo])] = Array((1,", output)
   }
->>>>>>> githubspark/branch-1.3
 }

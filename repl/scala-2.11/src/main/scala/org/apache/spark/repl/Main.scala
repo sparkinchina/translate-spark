@@ -19,10 +19,7 @@ package org.apache.spark.repl
 
 import org.apache.spark.util.Utils
 import org.apache.spark._
-<<<<<<< HEAD
-=======
 import org.apache.spark.sql.SQLContext
->>>>>>> githubspark/branch-1.3
 
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter.SparkILoop
@@ -38,10 +35,7 @@ object Main extends Logging {
     "-Yrepl-outdir", s"${outputDir.getAbsolutePath}", "-Yrepl-sync"), true)
   val classServer = new HttpServer(conf, outputDir, new SecurityManager(conf))
   var sparkContext: SparkContext = _
-<<<<<<< HEAD
-=======
   var sqlContext: SQLContext = _
->>>>>>> githubspark/branch-1.3
   var interp = new SparkILoop // this is a public var because tests reset it.
 
   def main(args: Array[String]) {
@@ -57,12 +51,9 @@ object Main extends Logging {
 
   def getAddedJars: Array[String] = {
     val envJars = sys.env.get("ADD_JARS")
-<<<<<<< HEAD
-=======
     if (envJars.isDefined) {
       logWarning("ADD_JARS environment variable is deprecated, use --jar spark submit argument instead")
     }
->>>>>>> githubspark/branch-1.3
     val propJars = sys.props.get("spark.jars").flatMap { p => if (p == "") None else Some(p) }
     val jars = propJars.orElse(envJars).getOrElse("")
     Utils.resolveURIs(jars).split(",").filter(_.nonEmpty)
@@ -88,8 +79,6 @@ object Main extends Logging {
     sparkContext
   }
 
-<<<<<<< HEAD
-=======
   def createSQLContext(): SQLContext = {
     val name = "org.apache.spark.sql.hive.HiveContext"
     val loader = Utils.getContextOrSparkClassLoader
@@ -106,7 +95,6 @@ object Main extends Logging {
     sqlContext
   }
 
->>>>>>> githubspark/branch-1.3
   private def getMaster: String = {
     val master = {
       val envMaster = sys.env.get("MASTER")

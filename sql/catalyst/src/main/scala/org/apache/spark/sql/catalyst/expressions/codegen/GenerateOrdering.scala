@@ -19,11 +19,7 @@ package org.apache.spark.sql.catalyst.expressions.codegen
 
 import org.apache.spark.Logging
 import org.apache.spark.sql.catalyst.expressions._
-<<<<<<< HEAD
-import org.apache.spark.sql.catalyst.types.{StringType, NumericType}
-=======
 import org.apache.spark.sql.types.{StringType, NumericType}
->>>>>>> githubspark/branch-1.3
 
 /**
  * Generates bytecode for an [[Ordering]] of [[Row Rows]] for a given set of

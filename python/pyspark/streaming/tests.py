@@ -21,10 +21,7 @@ import time
 import operator
 import unittest
 import tempfile
-<<<<<<< HEAD
-=======
 import struct
->>>>>>> githubspark/branch-1.3
 
 from pyspark.context import SparkConf, SparkContext, RDD
 from pyspark.streaming.context import StreamingContext
@@ -459,8 +456,6 @@ class StreamingContextTests(PySparkStreamingTestCase):
         self.wait_for(result, 2)
         self.assertEqual([range(10), range(10)], result)
 
-<<<<<<< HEAD
-=======
     def test_binary_records_stream(self):
         d = tempfile.mkdtemp()
         self.ssc = StreamingContext(self.sc, self.duration)
@@ -475,7 +470,6 @@ class StreamingContextTests(PySparkStreamingTestCase):
         self.wait_for(result, 2)
         self.assertEqual([range(10), range(10)], map(lambda v: list(v[0]), result))
 
->>>>>>> githubspark/branch-1.3
     def test_union(self):
         input = [range(i + 1) for i in range(3)]
         dstream = self.ssc.queueStream(input)

@@ -76,12 +76,9 @@ public class YarnShuffleService extends AuxiliaryService {
   // The actual server that serves shuffle files
   private TransportServer shuffleServer = null;
 
-<<<<<<< HEAD
-=======
   // Handles registering executors and opening shuffle blocks
   private ExternalShuffleBlockHandler blockHandler;
 
->>>>>>> githubspark/branch-1.3
   public YarnShuffleService() {
     super("spark_shuffle");
     logger.info("Initializing YARN shuffle service for Spark");
@@ -105,12 +102,8 @@ public class YarnShuffleService extends AuxiliaryService {
     // If authentication is enabled, set up the shuffle server to use a
     // special RPC handler that filters out unauthenticated fetch requests
     boolean authEnabled = conf.getBoolean(SPARK_AUTHENTICATE_KEY, DEFAULT_SPARK_AUTHENTICATE);
-<<<<<<< HEAD
-    RpcHandler rpcHandler = new ExternalShuffleBlockHandler(transportConf);
-=======
     blockHandler = new ExternalShuffleBlockHandler(transportConf);
     RpcHandler rpcHandler = blockHandler;
->>>>>>> githubspark/branch-1.3
     if (authEnabled) {
       secretManager = new ShuffleSecretManager();
       rpcHandler = new SaslRpcHandler(rpcHandler, secretManager);
@@ -147,10 +140,7 @@ public class YarnShuffleService extends AuxiliaryService {
       if (isAuthenticationEnabled()) {
         secretManager.unregisterApp(appId);
       }
-<<<<<<< HEAD
-=======
       blockHandler.applicationRemoved(appId, false /* clean up local dirs */);
->>>>>>> githubspark/branch-1.3
     } catch (Exception e) {
       logger.error("Exception when stopping application {}", appId, e);
     }

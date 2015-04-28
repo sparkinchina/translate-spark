@@ -41,11 +41,7 @@ class LinearBinaryClassificationModel(LinearModel):
 
     def setThreshold(self, value):
         """
-<<<<<<< HEAD
-        :: Experimental ::
-=======
         .. note:: Experimental
->>>>>>> githubspark/branch-1.3
 
         Sets the threshold that separates positive predictions from negative
         predictions. An example with prediction score greater than or equal
@@ -55,11 +51,7 @@ class LinearBinaryClassificationModel(LinearModel):
 
     def clearThreshold(self):
         """
-<<<<<<< HEAD
-        :: Experimental ::
-=======
         .. note:: Experimental
->>>>>>> githubspark/branch-1.3
 
         Clears the threshold so that `predict` will output raw prediction scores.
         """
@@ -215,11 +207,7 @@ class LogisticRegressionWithLBFGS(object):
         """
         def train(rdd, i):
             return callMLlibFunc("trainLogisticRegressionModelWithLBFGS", rdd, int(iterations), i,
-<<<<<<< HEAD
-                                 float(regParam), str(regType), bool(intercept), int(corrections),
-=======
                                  float(regParam), regType, bool(intercept), int(corrections),
->>>>>>> githubspark/branch-1.3
                                  float(tolerance))
 
         return _regression_train_wrapper(train, LogisticRegressionModel, data, initialWeights)

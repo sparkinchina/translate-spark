@@ -27,38 +27,19 @@ trait FunctionRegistry {
   def registerFunction(name: String, builder: FunctionBuilder): Unit
 
   def lookupFunction(name: String, children: Seq[Expression]): Expression
-<<<<<<< HEAD
-=======
 
   def caseSensitive: Boolean
->>>>>>> githubspark/branch-1.3
 }
 
 trait OverrideFunctionRegistry extends FunctionRegistry {
 
-<<<<<<< HEAD
-  val functionBuilders = new mutable.HashMap[String, FunctionBuilder]()
-
-  def registerFunction(name: String, builder: FunctionBuilder) = {
-=======
   val functionBuilders = StringKeyHashMap[FunctionBuilder](caseSensitive)
 
   override def registerFunction(name: String, builder: FunctionBuilder): Unit = {
->>>>>>> githubspark/branch-1.3
     functionBuilders.put(name, builder)
   }
 
   abstract override def lookupFunction(name: String, children: Seq[Expression]): Expression = {
-<<<<<<< HEAD
-    functionBuilders.get(name).map(_(children)).getOrElse(super.lookupFunction(name,children))
-  }
-}
-
-class SimpleFunctionRegistry extends FunctionRegistry {
-  val functionBuilders = new mutable.HashMap[String, FunctionBuilder]()
-
-  def registerFunction(name: String, builder: FunctionBuilder) = {
-=======
     functionBuilders.get(name).map(_(children)).getOrElse(super.lookupFunction(name, children))
   }
 }
@@ -67,7 +48,6 @@ class SimpleFunctionRegistry(val caseSensitive: Boolean) extends FunctionRegistr
   val functionBuilders = StringKeyHashMap[FunctionBuilder](caseSensitive)
 
   override def registerFunction(name: String, builder: FunctionBuilder): Unit = {
->>>>>>> githubspark/branch-1.3
     functionBuilders.put(name, builder)
   }
 
@@ -81,14 +61,6 @@ class SimpleFunctionRegistry(val caseSensitive: Boolean) extends FunctionRegistr
  * functions are already filled in and the analyser needs only to resolve attribute references.
  */
 object EmptyFunctionRegistry extends FunctionRegistry {
-<<<<<<< HEAD
-  def registerFunction(name: String, builder: FunctionBuilder) = ???
-
-  def lookupFunction(name: String, children: Seq[Expression]): Expression = {
-    throw new UnsupportedOperationException
-  }
-}
-=======
   override def registerFunction(name: String, builder: FunctionBuilder): Unit = {
     throw new UnsupportedOperationException
   }
@@ -123,4 +95,3 @@ class StringKeyHashMap[T](normalizer: (String) => String) {
   def iterator: Iterator[(String, T)] = base.toIterator
 }
 
->>>>>>> githubspark/branch-1.3

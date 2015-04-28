@@ -17,24 +17,6 @@
 
 import atexit
 import os
-<<<<<<< HEAD
-import sys
-import signal
-import shlex
-import platform
-from subprocess import Popen, PIPE
-from threading import Thread
-from py4j.java_gateway import java_import, JavaGateway, GatewayClient
-
-
-def launch_gateway():
-    SPARK_HOME = os.environ["SPARK_HOME"]
-
-    gateway_port = -1
-    if "PYSPARK_GATEWAY_PORT" in os.environ:
-        gateway_port = int(os.environ["PYSPARK_GATEWAY_PORT"])
-    else:
-=======
 import select
 import signal
 import shlex
@@ -51,7 +33,6 @@ def launch_gateway():
         gateway_port = int(os.environ["PYSPARK_GATEWAY_PORT"])
     else:
         SPARK_HOME = os.environ["SPARK_HOME"]
->>>>>>> githubspark/branch-1.3
         # Launch the Py4j gateway using Spark's run command so that we pick up the
         # proper classpath and settings from spark-env.sh
         on_windows = platform.system() == "Windows"
@@ -60,8 +41,6 @@ def launch_gateway():
         submit_args = submit_args if submit_args is not None else ""
         submit_args = shlex.split(submit_args)
         command = [os.path.join(SPARK_HOME, script)] + submit_args + ["pyspark-shell"]
-<<<<<<< HEAD
-=======
 
         # Start a socket that will be used by PythonGatewayServer to communicate its port to us
         callback_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -74,39 +53,10 @@ def launch_gateway():
 
         # Launch the Java gateway.
         # We open a pipe to stdin so that the Java gateway can die when the pipe is broken
->>>>>>> githubspark/branch-1.3
         if not on_windows:
             # Don't send ctrl-c / SIGINT to the Java gateway:
             def preexec_func():
                 signal.signal(signal.SIGINT, signal.SIG_IGN)
-<<<<<<< HEAD
-            env = dict(os.environ)
-            env["IS_SUBPROCESS"] = "1"  # tell JVM to exit after python exits
-            proc = Popen(command, stdout=PIPE, stdin=PIPE, preexec_fn=preexec_func, env=env)
-        else:
-            # preexec_fn not supported on Windows
-            proc = Popen(command, stdout=PIPE, stdin=PIPE)
-
-        try:
-            # Determine which ephemeral port the server started on:
-            gateway_port = proc.stdout.readline()
-            gateway_port = int(gateway_port)
-        except ValueError:
-            # Grab the remaining lines of stdout
-            (stdout, _) = proc.communicate()
-            exit_code = proc.poll()
-            error_msg = "Launching GatewayServer failed"
-            error_msg += " with exit code %d!\n" % exit_code if exit_code else "!\n"
-            error_msg += "Warning: Expected GatewayServer to output a port, but found "
-            if gateway_port == "" and stdout == "":
-                error_msg += "no output.\n"
-            else:
-                error_msg += "the following:\n\n"
-                error_msg += "--------------------------------------------------------------\n"
-                error_msg += gateway_port + stdout
-                error_msg += "--------------------------------------------------------------\n"
-            raise Exception(error_msg)
-=======
             env["IS_SUBPROCESS"] = "1"  # tell JVM to exit after python exits
             proc = Popen(command, stdin=PIPE, preexec_fn=preexec_func, env=env)
         else:
@@ -127,7 +77,6 @@ def launch_gateway():
                 callback_socket.close()
         if gateway_port is None:
             raise Exception("Java gateway process exited before sending the driver its port number")
->>>>>>> githubspark/branch-1.3
 
         # In Windows, ensure the Java child processes do not linger after Python has exited.
         # In UNIX-based systems, the child process can kill itself on broken pipe (i.e. when
@@ -145,24 +94,6 @@ def launch_gateway():
                 Popen(["cmd", "/c", "taskkill", "/f", "/t", "/pid", str(proc.pid)])
             atexit.register(killChild)
 
-<<<<<<< HEAD
-        # Create a thread to echo output from the GatewayServer, which is required
-        # for Java log output to show up:
-        class EchoOutputThread(Thread):
-
-            def __init__(self, stream):
-                Thread.__init__(self)
-                self.daemon = True
-                self.stream = stream
-
-            def run(self):
-                while True:
-                    line = self.stream.readline()
-                    sys.stderr.write(line)
-        EchoOutputThread(proc.stdout).start()
-
-=======
->>>>>>> githubspark/branch-1.3
     # Connect to the gateway
     gateway = JavaGateway(GatewayClient(port=gateway_port), auto_convert=False)
 
@@ -171,16 +102,9 @@ def launch_gateway():
     java_import(gateway.jvm, "org.apache.spark.api.java.*")
     java_import(gateway.jvm, "org.apache.spark.api.python.*")
     java_import(gateway.jvm, "org.apache.spark.mllib.api.python.*")
-<<<<<<< HEAD
-    java_import(gateway.jvm, "org.apache.spark.sql.SQLContext")
-    java_import(gateway.jvm, "org.apache.spark.sql.hive.HiveContext")
-    java_import(gateway.jvm, "org.apache.spark.sql.hive.LocalHiveContext")
-    java_import(gateway.jvm, "org.apache.spark.sql.hive.TestHiveContext")
-=======
     # TODO(davies): move into sql
     java_import(gateway.jvm, "org.apache.spark.sql.*")
     java_import(gateway.jvm, "org.apache.spark.sql.hive.*")
->>>>>>> githubspark/branch-1.3
     java_import(gateway.jvm, "scala.Tuple2")
 
     return gateway

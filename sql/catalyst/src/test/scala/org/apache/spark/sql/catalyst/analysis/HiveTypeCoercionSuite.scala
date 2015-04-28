@@ -17,15 +17,6 @@
 
 package org.apache.spark.sql.catalyst.analysis
 
-<<<<<<< HEAD
-import org.scalatest.FunSuite
-
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Project}
-import org.apache.spark.sql.catalyst.types._
-
-class HiveTypeCoercionSuite extends FunSuite {
-=======
 import org.apache.spark.sql.catalyst.plans.PlanTest
 
 import org.apache.spark.sql.catalyst.expressions._
@@ -33,7 +24,6 @@ import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Project}
 import org.apache.spark.sql.types._
 
 class HiveTypeCoercionSuite extends PlanTest {
->>>>>>> githubspark/branch-1.3
 
   test("tightest common bound for types") {
     def widenTest(t1: DataType, t2: DataType, tightestCommon: Option[DataType]) {
@@ -116,12 +106,8 @@ class HiveTypeCoercionSuite extends PlanTest {
     val booleanCasts = new HiveTypeCoercion { }.BooleanCasts
     def ruleTest(initial: Expression, transformed: Expression) {
       val testRelation = LocalRelation(AttributeReference("a", IntegerType)())
-<<<<<<< HEAD
-      assert(booleanCasts(Project(Seq(Alias(initial, "a")()), testRelation)) ==
-=======
       comparePlans(
         booleanCasts(Project(Seq(Alias(initial, "a")()), testRelation)),
->>>>>>> githubspark/branch-1.3
         Project(Seq(Alias(transformed, "a")()), testRelation))
     }
     // Remove superflous boolean -> boolean casts.
@@ -129,8 +115,6 @@ class HiveTypeCoercionSuite extends PlanTest {
     // Stringify boolean when casting to string.
     ruleTest(Cast(Literal(false), StringType), If(Literal(false), Literal("true"), Literal("false")))
   }
-<<<<<<< HEAD
-=======
 
   test("coalesce casts") {
     val fac = new HiveTypeCoercion { }.FunctionArgumentConversion
@@ -159,5 +143,4 @@ class HiveTypeCoercionSuite extends PlanTest {
         :: Cast(Literal(new java.math.BigDecimal("1000000000000000000000")), DecimalType())
         :: Nil))
   }
->>>>>>> githubspark/branch-1.3
 }

@@ -157,20 +157,6 @@ class DStream(object):
         api = self._ssc._jvm.PythonDStream
         api.callForeachRDD(self._jdstream, jfunc)
 
-<<<<<<< HEAD
-    def pprint(self):
-        """
-        Print the first ten elements of each RDD generated in this DStream.
-        """
-        def takeAndPrint(time, rdd):
-            taken = rdd.take(11)
-            print "-------------------------------------------"
-            print "Time: %s" % time
-            print "-------------------------------------------"
-            for record in taken[:10]:
-                print record
-            if len(taken) > 10:
-=======
     def pprint(self, num=10):
         """
         Print the first num elements of each RDD generated in this DStream.
@@ -185,7 +171,6 @@ class DStream(object):
             for record in taken[:num]:
                 print record
             if len(taken) > num:
->>>>>>> githubspark/branch-1.3
                 print "..."
             print
 
@@ -593,11 +578,7 @@ class DStream(object):
             if a is None:
                 g = b.groupByKey(numPartitions).mapValues(lambda vs: (list(vs), None))
             else:
-<<<<<<< HEAD
-                g = a.cogroup(b, numPartitions)
-=======
                 g = a.cogroup(b.partitionBy(numPartitions), numPartitions)
->>>>>>> githubspark/branch-1.3
                 g = g.mapValues(lambda (va, vb): (list(vb), list(va)[0] if len(va) else None))
             state = g.mapValues(lambda (vs, s): updateFunc(vs, s))
             return state.filter(lambda (k, v): v is not None)

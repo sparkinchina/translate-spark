@@ -17,9 +17,6 @@
 
 package scala.tools.nsc
 
-<<<<<<< HEAD
-object SparkHelper {
-=======
 import org.apache.spark.annotation.DeveloperApi
 
 // NOTE: Forced to be public (and in scala.tools.nsc package) to access the
@@ -38,6 +35,5 @@ object SparkHelper {
    * @return The Optional classloader representing the explicit parent loader
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def explicitParentLoader(settings: Settings) = settings.explicitParentLoader
 }

@@ -39,10 +39,7 @@ import scala.util.control.ControlThrowable
 
 import org.apache.spark.{Logging, HttpServer, SecurityManager, SparkConf}
 import org.apache.spark.util.Utils
-<<<<<<< HEAD
-=======
 import org.apache.spark.annotation.DeveloperApi
->>>>>>> githubspark/branch-1.3
 
 // /** directory to save .class files to */
 // private class ReplVirtualDirectory(out: JPrintWriter) extends VirtualDirectory("((memory))", None) {
@@ -88,29 +85,18 @@ import org.apache.spark.annotation.DeveloperApi
    *  @author Moez A. Abdel-Gawad
    *  @author Lex Spoon
    */
-<<<<<<< HEAD
-=======
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   class SparkIMain(
       initialSettings: Settings,
       val out: JPrintWriter,
       propagateExceptions: Boolean = false)
     extends SparkImports with Logging { imain =>
 
-<<<<<<< HEAD
-    val conf = new SparkConf()
-
-    val SPARK_DEBUG_REPL: Boolean = (System.getenv("SPARK_DEBUG_REPL") == "1")
-    /** Local directory to save .class files too */
-    lazy val outputDir = {
-=======
     private val conf = new SparkConf()
 
     private val SPARK_DEBUG_REPL: Boolean = (System.getenv("SPARK_DEBUG_REPL") == "1")
     /** Local directory to save .class files too */
     private lazy val outputDir = {
->>>>>>> githubspark/branch-1.3
       val tmp = System.getProperty("java.io.tmpdir")
       val rootDir = conf.get("spark.repl.classdir",  tmp)
       Utils.createTempDir(rootDir)
@@ -119,15 +105,6 @@ import org.apache.spark.annotation.DeveloperApi
       echo("Output directory: " + outputDir)
     }
 
-<<<<<<< HEAD
-    val virtualDirectory                              = new PlainFile(outputDir) // "directory" for classfiles
-    /** Jetty server that will serve our classes to worker nodes */
-    val classServerPort                               = conf.getInt("spark.replClassServer.port", 0)
-    val classServer                                   = new HttpServer(conf, outputDir, new SecurityManager(conf), classServerPort, "HTTP class server")
-    private var currentSettings: Settings             = initialSettings
-    var printResults                                  = true      // whether to print result lines
-    var totalSilence                                  = false     // whether to print anything
-=======
     /**
      * Returns the path to the output directory containing all generated
      * class files that will be served by the REPL class server.
@@ -142,7 +119,6 @@ import org.apache.spark.annotation.DeveloperApi
     private var currentSettings: Settings             = initialSettings
     private var printResults                                  = true      // whether to print result lines
     private var totalSilence                                  = false     // whether to print anything
->>>>>>> githubspark/branch-1.3
     private var _initializeComplete                   = false     // compiler is initialized
     private var _isInitialized: Future[Boolean]       = null      // set up initialization future
     private var bindExceptions                        = true      // whether to bind the lastException variable
@@ -156,8 +132,6 @@ import org.apache.spark.annotation.DeveloperApi
       echo("Class server started, URI = " + classServer.uri)
     }
 
-<<<<<<< HEAD
-=======
     /**
      * URI of the class server used to feed REPL compiled classes.
      *
@@ -166,7 +140,6 @@ import org.apache.spark.annotation.DeveloperApi
     @DeveloperApi
     def classServerUri = classServer.uri
 
->>>>>>> githubspark/branch-1.3
     /** We're going to go to some trouble to initialize the compiler asynchronously.
      *  It's critical that nothing call into it until it's been initialized or we will
      *  run into unrecoverable issues, but the perceived repl startup time goes
@@ -185,14 +158,6 @@ import org.apache.spark.annotation.DeveloperApi
       () => { counter += 1 ; counter }
     }
 
-<<<<<<< HEAD
-    def compilerClasspath: Seq[URL] = (
-      if (isInitializeComplete) global.classPath.asURLs
-      else new PathResolver(settings).result.asURLs  // the compiler's classpath
-      )
-    def settings = currentSettings
-    def mostRecentLine = prevRequestList match {
-=======
     private def compilerClasspath: Seq[URL] = (
       if (isInitializeComplete) global.classPath.asURLs
       else new PathResolver(settings).result.asURLs  // the compiler's classpath
@@ -200,16 +165,11 @@ import org.apache.spark.annotation.DeveloperApi
     // NOTE: Exposed to repl package since accessed indirectly from SparkIMain
     private[repl] def settings = currentSettings
     private def mostRecentLine = prevRequestList match {
->>>>>>> githubspark/branch-1.3
       case Nil      => ""
       case req :: _ => req.originalLine
     }
     // Run the code body with the given boolean settings flipped to true.
-<<<<<<< HEAD
-    def withoutWarnings[T](body: => T): T = beQuietDuring {
-=======
     private def withoutWarnings[T](body: => T): T = beQuietDuring {
->>>>>>> githubspark/branch-1.3
       val saved = settings.nowarn.value
       if (!saved)
         settings.nowarn.value = true
@@ -222,22 +182,12 @@ import org.apache.spark.annotation.DeveloperApi
     def this(settings: Settings) = this(settings, new NewLinePrintWriter(new ConsoleWriter, true))
     def this() = this(new Settings())
 
-<<<<<<< HEAD
-    lazy val repllog: Logger = new Logger {
-=======
     private lazy val repllog: Logger = new Logger {
->>>>>>> githubspark/branch-1.3
       val out: JPrintWriter = imain.out
       val isInfo: Boolean  = BooleanProp keyExists "scala.repl.info"
       val isDebug: Boolean = BooleanProp keyExists "scala.repl.debug"
       val isTrace: Boolean = BooleanProp keyExists "scala.repl.trace"
     }
-<<<<<<< HEAD
-    lazy val formatting: Formatting = new Formatting {
-      val prompt = Properties.shellPromptString
-    }
-    lazy val reporter: ConsoleReporter = new SparkIMain.ReplReporter(this)
-=======
     private[repl] lazy val formatting: Formatting = new Formatting {
       val prompt = Properties.shellPromptString
     }
@@ -254,7 +204,6 @@ import org.apache.spark.annotation.DeveloperApi
      */
     @DeveloperApi
     def isReportingErrors = reporter.hasErrors
->>>>>>> githubspark/branch-1.3
 
     import formatting._
     import reporter.{ printMessage, withoutTruncating }
@@ -274,12 +223,8 @@ import org.apache.spark.annotation.DeveloperApi
     private def tquoted(s: String) = "\"\"\"" + s + "\"\"\""
 
     // argument is a thunk to execute after init is done
-<<<<<<< HEAD
-    def initialize(postInitSignal: => Unit) {
-=======
     // NOTE: Exposed to repl package since used by SparkILoop
     private[repl] def initialize(postInitSignal: => Unit) {
->>>>>>> githubspark/branch-1.3
       synchronized {
         if (_isInitialized == null) {
           _isInitialized = io.spawn {
@@ -289,8 +234,6 @@ import org.apache.spark.annotation.DeveloperApi
         }
       }
     }
-<<<<<<< HEAD
-=======
 
     /**
      * Initializes the underlying compiler/interpreter in a blocking fashion.
@@ -298,18 +241,12 @@ import org.apache.spark.annotation.DeveloperApi
      * @note Must be executed before using SparkIMain!
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     def initializeSynchronous(): Unit = {
       if (!isInitializeComplete) {
         _initialize()
         assert(global != null, global)
       }
     }
-<<<<<<< HEAD
-    def isInitializeComplete = _initializeComplete
-
-    /** the public, go through the future compiler */
-=======
     private def isInitializeComplete = _initializeComplete
 
     /** the public, go through the future compiler */
@@ -318,7 +255,6 @@ import org.apache.spark.annotation.DeveloperApi
      * The underlying compiler used to generate ASTs and execute code.
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     lazy val global: Global = {
       if (isInitializeComplete) _compiler
       else {
@@ -333,21 +269,13 @@ import org.apache.spark.annotation.DeveloperApi
       }
     }
     @deprecated("Use `global` for access to the compiler instance.", "2.9.0")
-<<<<<<< HEAD
-    lazy val compiler: global.type = global
-=======
     private lazy val compiler: global.type = global
->>>>>>> githubspark/branch-1.3
 
     import global._
     import definitions.{ScalaPackage, JavaLangPackage, termMember, typeMember}
     import rootMirror.{RootClass, getClassIfDefined, getModuleIfDefined, getRequiredModule, getRequiredClass}
 
-<<<<<<< HEAD
-    implicit class ReplTypeOps(tp: Type) {
-=======
     private implicit class ReplTypeOps(tp: Type) {
->>>>>>> githubspark/branch-1.3
       def orElse(other: => Type): Type    = if (tp ne NoType) tp else other
       def andAlso(fn: Type => Type): Type = if (tp eq NoType) tp else fn(tp)
     }
@@ -355,12 +283,8 @@ import org.apache.spark.annotation.DeveloperApi
     // TODO: If we try to make naming a lazy val, we run into big time
     // scalac unhappiness with what look like cycles.  It has not been easy to
     // reduce, but name resolution clearly takes different paths.
-<<<<<<< HEAD
-    object naming extends {
-=======
     // NOTE: Exposed to repl package since used by SparkExprTyper
     private[repl] object naming extends {
->>>>>>> githubspark/branch-1.3
       val global: imain.global.type = imain.global
     } with Naming {
       // make sure we don't overwrite their unwisely named res3 etc.
@@ -374,13 +298,6 @@ import org.apache.spark.annotation.DeveloperApi
     }
     import naming._
 
-<<<<<<< HEAD
-    object deconstruct extends {
-      val global: imain.global.type = imain.global
-    } with StructuredTypeStrings
-
-    lazy val memberHandlers = new {
-=======
     // NOTE: Exposed to repl package since used by SparkILoop
     private[repl] object deconstruct extends {
       val global: imain.global.type = imain.global
@@ -388,14 +305,10 @@ import org.apache.spark.annotation.DeveloperApi
 
     // NOTE: Exposed to repl package since used by SparkImports
     private[repl] lazy val memberHandlers = new {
->>>>>>> githubspark/branch-1.3
       val intp: imain.type = imain
     } with SparkMemberHandlers
     import memberHandlers._
 
-<<<<<<< HEAD
-    /** Temporarily be quiet */
-=======
     /**
      * Suppresses overwriting print results during the operation.
      *
@@ -405,15 +318,12 @@ import org.apache.spark.annotation.DeveloperApi
      * @return The result from executing the block
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     def beQuietDuring[T](body: => T): T = {
       val saved = printResults
       printResults = false
       try body
       finally printResults = saved
     }
-<<<<<<< HEAD
-=======
 
     /**
      * Completely masks all output during the operation (minus JVM standard
@@ -425,7 +335,6 @@ import org.apache.spark.annotation.DeveloperApi
      * @return The result from executing the block
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     def beSilentDuring[T](operation: => T): T = {
       val saved = totalSilence
       totalSilence = true
@@ -433,17 +342,10 @@ import org.apache.spark.annotation.DeveloperApi
       finally totalSilence = saved
     }
 
-<<<<<<< HEAD
-    def quietRun[T](code: String) = beQuietDuring(interpret(code))
-
-
-     private def logAndDiscard[T](label: String, alt: => T): PartialFunction[Throwable, T] = {
-=======
     // NOTE: Exposed to repl package since used by SparkILoop
     private[repl] def quietRun[T](code: String) = beQuietDuring(interpret(code))
 
     private def logAndDiscard[T](label: String, alt: => T): PartialFunction[Throwable, T] = {
->>>>>>> githubspark/branch-1.3
       case t: ControlThrowable => throw t
       case t: Throwable        =>
         logDebug(label + ": " + unwrap(t))
@@ -461,16 +363,6 @@ import org.apache.spark.annotation.DeveloperApi
       finally bindExceptions = true
     }
 
-<<<<<<< HEAD
-    def executionWrapper = _executionWrapper
-    def setExecutionWrapper(code: String) = _executionWrapper = code
-    def clearExecutionWrapper() = _executionWrapper = ""
-
-    /** interpreter settings */
-    lazy val isettings = new SparkISettings(this)
-
-    /** Instantiate a compiler.  Overridable. */
-=======
     /**
      * Contains the code (in string form) representing a wrapper around all
      * code executed by this instance.
@@ -509,7 +401,6 @@ import org.apache.spark.annotation.DeveloperApi
      * @return The compiler as a Global
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     protected def newCompiler(settings: Settings, reporter: Reporter): ReplGlobal = {
       settings.outputDirs setSingleOutput virtualDirectory
       settings.exposeEmptyPackage.value = true
@@ -524,21 +415,14 @@ import org.apache.spark.annotation.DeveloperApi
      * @note Currently only supports jars, not directories
      * @param urls The list of items to add to the compile and runtime classpaths
      */
-<<<<<<< HEAD
-=======
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     def addUrlsToClassPath(urls: URL*): Unit = {
       new Run // Needed to force initialization of "something" to correctly load Scala classes from jars
       urls.foreach(_runtimeClassLoader.addNewUrl) // Add jars/classes to runtime for execution
       updateCompilerClassPath(urls: _*)           // Add jars/classes to compile time for compiling
     }
 
-<<<<<<< HEAD
-    protected def updateCompilerClassPath(urls: URL*): Unit = {
-=======
     private def updateCompilerClassPath(urls: URL*): Unit = {
->>>>>>> githubspark/branch-1.3
       require(!global.forMSIL) // Only support JavaPlatform
 
       val platform = global.platform.asInstanceOf[JavaPlatform]
@@ -554,11 +438,7 @@ import org.apache.spark.annotation.DeveloperApi
       global.invalidateClassPathEntries(urls.map(_.getPath): _*)
     }
 
-<<<<<<< HEAD
-    protected def mergeUrlsIntoClassPath(platform: JavaPlatform, urls: URL*): MergedClassPath[AbstractFile] = {
-=======
     private def mergeUrlsIntoClassPath(platform: JavaPlatform, urls: URL*): MergedClassPath[AbstractFile] = {
->>>>>>> githubspark/branch-1.3
       // Collect our new jars/directories and add them to the existing set of classpaths
       val allClassPaths = (
         platform.classPath.asInstanceOf[MergedClassPath[AbstractFile]].entries ++
@@ -581,9 +461,6 @@ import org.apache.spark.annotation.DeveloperApi
       new MergedClassPath(allClassPaths, platform.classPath.context)
     }
 
-<<<<<<< HEAD
-    /** Parent classloader.  Overridable. */
-=======
     /**
      * Represents the parent classloader used by this instance. Can be
      * overridden to provide alternative classloader.
@@ -591,7 +468,6 @@ import org.apache.spark.annotation.DeveloperApi
      * @return The classloader used as the parent loader of this instance
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     protected def parentClassLoader: ClassLoader =
       SparkHelper.explicitParentLoader(settings).getOrElse( this.getClass.getClassLoader() )
 
@@ -608,22 +484,11 @@ import org.apache.spark.annotation.DeveloperApi
     shadow the old ones, and old code objects refer to the old
     definitions.
     */
-<<<<<<< HEAD
-    def resetClassLoader() = {
-=======
     private def resetClassLoader() = {
->>>>>>> githubspark/branch-1.3
       logDebug("Setting new classloader: was " + _classLoader)
       _classLoader = null
       ensureClassLoader()
     }
-<<<<<<< HEAD
-    final def ensureClassLoader() {
-      if (_classLoader == null)
-        _classLoader = makeClassLoader()
-    }
-    def classLoader: AbstractFileClassLoader = {
-=======
     private final def ensureClassLoader() {
       if (_classLoader == null)
         _classLoader = makeClassLoader()
@@ -631,7 +496,6 @@ import org.apache.spark.annotation.DeveloperApi
 
     // NOTE: Exposed to repl package since used by SparkILoop
     private[repl] def classLoader: AbstractFileClassLoader = {
->>>>>>> githubspark/branch-1.3
       ensureClassLoader()
       _classLoader
     }
@@ -658,19 +522,6 @@ import org.apache.spark.annotation.DeveloperApi
           _runtimeClassLoader
       })
 
-<<<<<<< HEAD
-    def getInterpreterClassLoader() = classLoader
-
-    // Set the current Java "context" class loader to this interpreter's class loader
-    def setContextClassLoader() = classLoader.setAsContext()
-
-    /** Given a simple repl-defined name, returns the real name of
-     *  the class representing it, e.g. for "Bippy" it may return
-     *  {{{
-     *    $line19.$read$$iw$$iw$$iw$$iw$$iw$$iw$$iw$$iw$Bippy
-     *  }}}
-     */
-=======
     private def getInterpreterClassLoader() = classLoader
 
     // Set the current Java "context" class loader to this interpreter's class loader
@@ -692,19 +543,10 @@ import org.apache.spark.annotation.DeveloperApi
      * @return Some real name if the simple name exists, else None
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     def generatedName(simpleName: String): Option[String] = {
       if (simpleName endsWith nme.MODULE_SUFFIX_STRING) optFlatName(simpleName.init) map (_ + nme.MODULE_SUFFIX_STRING)
       else optFlatName(simpleName)
     }
-<<<<<<< HEAD
-    def flatName(id: String)    = optFlatName(id) getOrElse id
-    def optFlatName(id: String) = requestForIdent(id) map (_ fullFlatName id)
-
-    def allDefinedNames = definedNameMap.keys.toList.sorted
-    def pathToType(id: String): String = pathToName(newTypeName(id))
-    def pathToTerm(id: String): String = pathToName(newTermName(id))
-=======
 
     // NOTE: Exposed to repl package since used by SparkILoop
     private[repl] def flatName(id: String)    = optFlatName(id) getOrElse id
@@ -732,7 +574,6 @@ import org.apache.spark.annotation.DeveloperApi
      * @return The full path used to access the specified target (name)
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     def pathToName(name: Name): String = {
       if (definedNameMap contains name)
         definedNameMap(name) fullPath name
@@ -751,21 +592,13 @@ import org.apache.spark.annotation.DeveloperApi
     }
 
     /** Stubs for work in progress. */
-<<<<<<< HEAD
-    def handleTypeRedefinition(name: TypeName, old: Request, req: Request) = {
-=======
     private def handleTypeRedefinition(name: TypeName, old: Request, req: Request) = {
->>>>>>> githubspark/branch-1.3
       for (t1 <- old.simpleNameOfType(name) ; t2 <- req.simpleNameOfType(name)) {
         logDebug("Redefining type '%s'\n  %s -> %s".format(name, t1, t2))
       }
     }
 
-<<<<<<< HEAD
-    def handleTermRedefinition(name: TermName, old: Request, req: Request) = {
-=======
     private def handleTermRedefinition(name: TermName, old: Request, req: Request) = {
->>>>>>> githubspark/branch-1.3
       for (t1 <- old.compilerTypeOf get name ; t2 <- req.compilerTypeOf get name) {
     //    Printing the types here has a tendency to cause assertion errors, like
         //   assertion failed: fatal: <refinement> has owner value x, but a class owner is required
@@ -775,11 +608,7 @@ import org.apache.spark.annotation.DeveloperApi
       }
     }
 
-<<<<<<< HEAD
-    def recordRequest(req: Request) {
-=======
     private def recordRequest(req: Request) {
->>>>>>> githubspark/branch-1.3
       if (req == null || referencedNameMap == null)
         return
 
@@ -810,20 +639,12 @@ import org.apache.spark.annotation.DeveloperApi
       }
     }
 
-<<<<<<< HEAD
-    def replwarn(msg: => String) {
-=======
     private def replwarn(msg: => String) {
->>>>>>> githubspark/branch-1.3
       if (!settings.nowarnings.value)
         printMessage(msg)
     }
 
-<<<<<<< HEAD
-    def isParseable(line: String): Boolean = {
-=======
     private def isParseable(line: String): Boolean = {
->>>>>>> githubspark/branch-1.3
       beSilentDuring {
         try parse(line) match {
           case Some(xs) => xs.nonEmpty  // parses as-is
@@ -836,28 +657,13 @@ import org.apache.spark.annotation.DeveloperApi
       }
     }
 
-<<<<<<< HEAD
-    def compileSourcesKeepingRun(sources: SourceFile*) = {
-=======
     private def compileSourcesKeepingRun(sources: SourceFile*) = {
->>>>>>> githubspark/branch-1.3
       val run = new Run()
       reporter.reset()
       run compileSources sources.toList
       (!reporter.hasErrors, run)
     }
 
-<<<<<<< HEAD
-    /** Compile an nsc SourceFile.  Returns true if there are
-     *  no compilation errors, or false otherwise.
-     */
-    def compileSources(sources: SourceFile*): Boolean =
-      compileSourcesKeepingRun(sources: _*)._1
-
-    /** Compile a string.  Returns true if there are no
-     *  compilation errors, or false otherwise.
-     */
-=======
     /**
      * Compiles specified source files.
      *
@@ -877,7 +683,6 @@ import org.apache.spark.annotation.DeveloperApi
      * @return True if successful, otherwise false
      */
     @DeveloperApi
->>>>>>> githubspark/branch-1.3
     def compileString(code: String): Boolean =
       compileSources(new BatchSourceFile("<script>", code))
 
@@ -902,11 +707,7 @@ import org.apache.spark.annotation.DeveloperApi
 
   private def safePos(t: Tree, alt: Int): Int =
     try t.pos.startOrPoint
-<<<<<<< HEAD
-  catch { case _: UnsupportedOperationException => alt }
-=======
     catch { case _: UnsupportedOperationException => alt }
->>>>>>> githubspark/branch-1.3
 
   // Given an expression like 10 * 10 * 10 we receive the parent tree positioned
   // at a '*'.  So look at each subtree and find the earliest of all positions.
@@ -997,28 +798,12 @@ import org.apache.spark.annotation.DeveloperApi
   }
 
   // normalize non-public types so we don't see protected aliases like Self
-<<<<<<< HEAD
-  def normalizeNonPublic(tp: Type) = tp match {
-=======
   private def normalizeNonPublic(tp: Type) = tp match {
->>>>>>> githubspark/branch-1.3
     case TypeRef(_, sym, _) if sym.isAliasType && !sym.isPublic => tp.dealias
     case _                                                      => tp
   }
 
   /**
-<<<<<<< HEAD
-   *  Interpret one line of input. All feedback, including parse errors
-   *  and evaluation results, are printed via the supplied compiler's
-   *  reporter. Values defined are available for future interpreted strings.
-   *
-   *  The return value is whether the line was interpreter successfully,
-   *  e.g. that there were no parse errors.
-   */
-  def interpret(line: String): IR.Result = interpret(line, false)
-  def interpretSynthetic(line: String): IR.Result = interpret(line, true)
-  def interpret(line: String, synthetic: Boolean): IR.Result = {
-=======
    * Interpret one line of input. All feedback, including parse errors
    * and evaluation results, are printed via the supplied compiler's
    * reporter. Values defined are available for future interpreted strings.
@@ -1050,7 +835,6 @@ import org.apache.spark.annotation.DeveloperApi
   def interpretSynthetic(line: String): IR.Result = interpret(line, true)
 
   private def interpret(line: String, synthetic: Boolean): IR.Result = {
->>>>>>> githubspark/branch-1.3
     def loadAndRunReq(req: Request) = {
       classLoader.setAsContext()
       val (result, succeeded) = req.loadAndRun
@@ -1088,16 +872,6 @@ import org.apache.spark.annotation.DeveloperApi
     }
   }
 
-<<<<<<< HEAD
-  /** Bind a specified name to a specified value.  The name may
-   *  later be used by expressions passed to interpret.
-   *
-   *  @param name      the variable name to bind
-   *  @param boundType the type of the variable, as a string
-   *  @param value     the object value to bind to it
-   *  @return          an indication of whether the binding succeeded
-   */
-=======
   /**
    * Bind a specified name to a specified value.  The name may
    * later be used by expressions passed to interpret.
@@ -1112,7 +886,6 @@ import org.apache.spark.annotation.DeveloperApi
    *         using interpreter results
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def bind(name: String, boundType: String, value: Any, modifiers: List[String] = Nil): IR.Result = {
     val bindRep = new ReadEvalPrint()
     val run = bindRep.compile("""
@@ -1134,8 +907,6 @@ import org.apache.spark.annotation.DeveloperApi
       interpret(line)
     }
   }
-<<<<<<< HEAD
-=======
 
   /**
    * Bind a specified name to a specified value directly.
@@ -1150,18 +921,12 @@ import org.apache.spark.annotation.DeveloperApi
    *         using interpreter results
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def directBind(name: String, boundType: String, value: Any): IR.Result = {
     val result = bind(name, boundType, value)
     if (result == IR.Success)
       directlyBoundNames += newTermName(name)
     result
   }
-<<<<<<< HEAD
-  def directBind(p: NamedParam): IR.Result                                    = directBind(p.name, p.tpe, p.value)
-  def directBind[T: ru.TypeTag : ClassTag](name: String, value: T): IR.Result = directBind((name, value))
-
-=======
 
   private def directBind(p: NamedParam): IR.Result                                    = directBind(p.name, p.tpe, p.value)
   private def directBind[T: ru.TypeTag : ClassTag](name: String, value: T): IR.Result = directBind((name, value))
@@ -1174,7 +939,6 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The results of rebinding the named val
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def rebind(p: NamedParam): IR.Result = {
     val name     = p.name
     val oldType  = typeOfTerm(name) orElse { return IR.Error }
@@ -1184,9 +948,6 @@ import org.apache.spark.annotation.DeveloperApi
     quietRun("val %s = %s".format(tempName, name))
     quietRun("val %s = %s.asInstanceOf[%s]".format(name, tempName, newType))
   }
-<<<<<<< HEAD
-  def quietImport(ids: String*): IR.Result = beQuietDuring(addImports(ids: _*))
-=======
   private def quietImport(ids: String*): IR.Result = beQuietDuring(addImports(ids: _*))
 
   /**
@@ -1199,21 +960,10 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The results of importing the series of "id" strings
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def addImports(ids: String*): IR.Result =
     if (ids.isEmpty) IR.Success
     else interpret("import " + ids.mkString(", "))
 
-<<<<<<< HEAD
-  def quietBind(p: NamedParam): IR.Result                               = beQuietDuring(bind(p))
-  def bind(p: NamedParam): IR.Result                                    = bind(p.name, p.tpe, p.value)
-  def bind[T: ru.TypeTag : ClassTag](name: String, value: T): IR.Result = bind((name, value))
-  def bindSyntheticValue(x: Any): IR.Result                             = bindValue(freshInternalVarName(), x)
-  def bindValue(x: Any): IR.Result                                      = bindValue(freshUserVarName(), x)
-  def bindValue(name: String, x: Any): IR.Result                        = bind(name, TypeStrings.fromValue(x), x)
-
-  /** Reset this interpreter, forgetting all user-specified requests. */
-=======
   // NOTE: Exposed to repl package since used by SparkILoop
   private[repl] def quietBind(p: NamedParam): IR.Result                               = beQuietDuring(bind(p))
   private def bind(p: NamedParam): IR.Result                                    = bind(p.name, p.tpe, p.value)
@@ -1226,7 +976,6 @@ import org.apache.spark.annotation.DeveloperApi
    * Reset this interpreter, forgetting all user-specified requests.
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def reset() {
     clearExecutionWrapper()
     resetClassLoader()
@@ -1238,17 +987,11 @@ import org.apache.spark.annotation.DeveloperApi
     virtualDirectory.create()
   }
 
-<<<<<<< HEAD
-  /** This instance is no longer needed, so release any resources
-   *  it is using.  The reporter's output gets flushed.
-   */
-=======
   /**
    * Stops the underlying REPL class server and flushes the reporter used
    * for compiler output.
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def close() {
     reporter.flush()
     classServer.stop()
@@ -1257,10 +1000,7 @@ import org.apache.spark.annotation.DeveloperApi
   /**
    * Captures the session names (which are set by system properties) once, instead of for each line.
    */
-<<<<<<< HEAD
-=======
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   object FixedSessionNames {
     val lineName    = sessionNames.line
     val readName    = sessionNames.read
@@ -1602,12 +1342,6 @@ import org.apache.spark.annotation.DeveloperApi
     override def toString = "Request(line=%s, %s trees)".format(line, trees.size)
   }
 
-<<<<<<< HEAD
-  /** Returns the name of the most recent interpreter result.
-   *  Mostly this exists so you can conveniently invoke methods on
-   *  the previous result.
-   */
-=======
   /**
    * Returns the name of the most recent interpreter result. Useful for
    * for extracting information regarding the previous result.
@@ -1615,7 +1349,6 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The simple name of the result (such as res0)
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def mostRecentVar: String =
     if (mostRecentlyHandledTree.isEmpty) ""
     else "" + (mostRecentlyHandledTree.get match {
@@ -1626,8 +1359,6 @@ import org.apache.spark.annotation.DeveloperApi
     })
 
   private var mostRecentWarnings: List[(global.Position, String)] = Nil
-<<<<<<< HEAD
-=======
 
   /**
    * Returns a list of recent warnings from compiler execution.
@@ -1635,7 +1366,6 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The list of tuples (compiler position, warning)
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def lastWarnings = mostRecentWarnings
 
   def treesForRequestId(id: Int): List[Tree] =
@@ -1662,14 +1392,6 @@ import org.apache.spark.annotation.DeveloperApi
       req.handlers find (_.definedNames contains name)
     }
 
-<<<<<<< HEAD
-  def valueOfTerm(id: String): Option[AnyRef] =
-    requestForName(newTermName(id)) flatMap (_.getEval)
-
-  def classOfTerm(id: String): Option[JClass] =
-    valueOfTerm(id) map (_.getClass)
-
-=======
   /**
    * Retrieves the object representing the id (variable name, method name,
    * class name, etc) provided.
@@ -1706,20 +1428,11 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The Type information about the term name (id) provided
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def typeOfTerm(id: String): Type = newTermName(id) match {
     case nme.ROOTPKG  => RootClass.tpe
     case name         => requestForName(name).fold(NoType: Type)(_ compilerTypeOf name)
   }
 
-<<<<<<< HEAD
-  def symbolOfType(id: String): Symbol =
-    requestForName(newTypeName(id)).fold(NoSymbol: Symbol)(_ definedTypeSymbol id)
-
-  def symbolOfTerm(id: String): Symbol =
-    requestForIdent(newTermName(id)).fold(NoSymbol: Symbol)(_ definedTermSymbol id)
-
-=======
   /**
    * Retrieves the symbol representing the id (variable name, method name,
    * class name, etc) provided.
@@ -1748,7 +1461,6 @@ import org.apache.spark.annotation.DeveloperApi
    *         provided term name if it exists, else None
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def runtimeClassAndTypeOfTerm(id: String): Option[(JClass, Type)] = {
     classOfTerm(id) flatMap { clazz =>
       new RichClass(clazz).supers find(c => !(new RichClass(c).isScalaAnonymous)) map { nonAnon =>
@@ -1757,8 +1469,6 @@ import org.apache.spark.annotation.DeveloperApi
     }
   }
 
-<<<<<<< HEAD
-=======
   /**
    * Retrieves the runtime type representing the id (variable name,
    * method name, class name, etc) provided.
@@ -1769,7 +1479,6 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The runtime Type information about the term name (id) provided
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def runtimeTypeOfTerm(id: String): Type = {
     typeOfTerm(id) andAlso { tpe =>
       val clazz      = classOfTerm(id) getOrElse { return NoType }
@@ -1781,12 +1490,8 @@ import org.apache.spark.annotation.DeveloperApi
       else NoType
     }
   }
-<<<<<<< HEAD
-  def cleanMemberDecl(owner: Symbol, member: Name): Type = afterTyper {
-=======
 
   private def cleanMemberDecl(owner: Symbol, member: Name): Type = afterTyper {
->>>>>>> githubspark/branch-1.3
     normalizeNonPublic {
       owner.info.nonPrivateDecl(member).tpe match {
         case NullaryMethodType(tp) => tp
@@ -1795,17 +1500,6 @@ import org.apache.spark.annotation.DeveloperApi
     }
   }
 
-<<<<<<< HEAD
-  object exprTyper extends {
-    val repl: SparkIMain.this.type = imain
-  } with SparkExprTyper { }
-
-  def parse(line: String): Option[List[Tree]] = exprTyper.parse(line)
-
-  def symbolOfLine(code: String): Symbol =
-    exprTyper.symbolOfLine(code)
-
-=======
   private object exprTyper extends {
     val repl: SparkIMain.this.type = imain
   } with SparkExprTyper { }
@@ -1843,22 +1537,12 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The type information or an error
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def typeOfExpression(expr: String, silent: Boolean = true): Type =
     exprTyper.typeOfExpression(expr, silent)
 
   protected def onlyTerms(xs: List[Name]) = xs collect { case x: TermName => x }
   protected def onlyTypes(xs: List[Name]) = xs collect { case x: TypeName => x }
 
-<<<<<<< HEAD
-  def definedTerms      = onlyTerms(allDefinedNames) filterNot isInternalTermName
-  def definedTypes      = onlyTypes(allDefinedNames)
-  def definedSymbols    = prevRequestList.flatMap(_.definedSymbols.values).toSet[Symbol]
-  def definedSymbolList = prevRequestList flatMap (_.definedSymbolList) filterNot (s => isInternalTermName(s.name))
-
-  // Terms with user-given names (i.e. not res0 and not synthetic)
-    def namedDefinedTerms = definedTerms filterNot (x => isUserVarName("" + x) || directlyBoundNames(x))
-=======
   /**
    * Retrieves the defined, public names in the compiler.
    *
@@ -1900,22 +1584,11 @@ import org.apache.spark.annotation.DeveloperApi
    */
   @DeveloperApi
   def namedDefinedTerms = definedTerms filterNot (x => isUserVarName("" + x) || directlyBoundNames(x))
->>>>>>> githubspark/branch-1.3
 
   private def findName(name: Name) = definedSymbols find (_.name == name) getOrElse NoSymbol
 
   /** Translate a repl-defined identifier into a Symbol.
    */
-<<<<<<< HEAD
-  def apply(name: String): Symbol =
-    types(name) orElse terms(name)
-
-  def types(name: String): Symbol = {
-    val tpname = newTypeName(name)
-    findName(tpname) orElse getClassIfDefined(tpname)
-  }
-  def terms(name: String): Symbol = {
-=======
   private def apply(name: String): Symbol =
     types(name) orElse terms(name)
 
@@ -1924,18 +1597,10 @@ import org.apache.spark.annotation.DeveloperApi
     findName(tpname) orElse getClassIfDefined(tpname)
   }
   private def terms(name: String): Symbol = {
->>>>>>> githubspark/branch-1.3
     val termname = newTypeName(name)
     findName(termname) orElse getModuleIfDefined(termname)
   }
   // [Eugene to Paul] possibly you could make use of TypeTags here
-<<<<<<< HEAD
-  def types[T: ClassTag] : Symbol = types(classTag[T].runtimeClass.getName)
-  def terms[T: ClassTag] : Symbol = terms(classTag[T].runtimeClass.getName)
-  def apply[T: ClassTag] : Symbol = apply(classTag[T].runtimeClass.getName)
-
-  def classSymbols  = allDefSymbols collect { case x: ClassSymbol => x }
-=======
   private def types[T: ClassTag] : Symbol = types(classTag[T].runtimeClass.getName)
   private def terms[T: ClassTag] : Symbol = terms(classTag[T].runtimeClass.getName)
   private def apply[T: ClassTag] : Symbol = apply(classTag[T].runtimeClass.getName)
@@ -1954,7 +1619,6 @@ import org.apache.spark.annotation.DeveloperApi
    * @return The list of matching MethodSymbol instances
    */
   @DeveloperApi
->>>>>>> githubspark/branch-1.3
   def methodSymbols = allDefSymbols collect { case x: MethodSymbol => x }
 
   /** the previous requests this interpreter has processed */
@@ -1964,27 +1628,6 @@ import org.apache.spark.annotation.DeveloperApi
   private val definedNameMap     = mutable.Map[Name, Request]()
   private val directlyBoundNames = mutable.Set[Name]()
 
-<<<<<<< HEAD
-  def allHandlers    = prevRequestList flatMap (_.handlers)
-  def allDefHandlers = allHandlers collect { case x: MemberDefHandler => x }
-  def allDefSymbols  = allDefHandlers map (_.symbol) filter (_ ne NoSymbol)
-
-  def lastRequest         = if (prevRequests.isEmpty) null else prevRequests.last
-  def prevRequestList     = prevRequests.toList
-  def allSeenTypes        = prevRequestList flatMap (_.typeOf.values.toList) distinct
-  def allImplicits        = allHandlers filter (_.definesImplicit) flatMap (_.definedNames)
-  def importHandlers      = allHandlers collect { case x: ImportHandler => x }
-
-  def visibleTermNames: List[Name] = definedTerms ++ importedTerms distinct
-
-  /** Another entry point for tab-completion, ids in scope */
-  def unqualifiedIds = visibleTermNames map (_.toString) filterNot (_ contains "$") sorted
-
-  /** Parse the ScalaSig to find type aliases */
-  def aliasForType(path: String) = ByteCode.aliasForType(path)
-
-  def withoutUnwrapping(op: => Unit): Unit = {
-=======
   private def allHandlers    = prevRequestList flatMap (_.handlers)
   private def allDefHandlers = allHandlers collect { case x: MemberDefHandler => x }
   private def allDefSymbols  = allDefHandlers map (_.symbol) filter (_ ne NoSymbol)
@@ -2012,19 +1655,14 @@ import org.apache.spark.annotation.DeveloperApi
   private def aliasForType(path: String) = ByteCode.aliasForType(path)
 
   private def withoutUnwrapping(op: => Unit): Unit = {
->>>>>>> githubspark/branch-1.3
     val saved = isettings.unwrapStrings
     isettings.unwrapStrings = false
     try op
     finally isettings.unwrapStrings = saved
   }
 
-<<<<<<< HEAD
-  def symbolDefString(sym: Symbol) = {
-=======
   // NOTE: Exposed to repl package since used by SparkILoop
   private[repl] def symbolDefString(sym: Symbol) = {
->>>>>>> githubspark/branch-1.3
     TypeStrings.quieter(
       afterTyper(sym.defString),
       sym.owner.name + ".this.",
@@ -2032,11 +1670,7 @@ import org.apache.spark.annotation.DeveloperApi
     )
   }
 
-<<<<<<< HEAD
-  def showCodeIfDebugging(code: String) {
-=======
   private def showCodeIfDebugging(code: String) {
->>>>>>> githubspark/branch-1.3
     /** Secret bookcase entrance for repl debuggers: end the line
      *  with "// show" and see what's going on.
      */
@@ -2055,13 +1689,9 @@ import org.apache.spark.annotation.DeveloperApi
   }
 
   // debugging
-<<<<<<< HEAD
-  def debugging[T](msg: String)(res: T) = {
-=======
   // NOTE: Exposed to repl package since accessed indirectly from SparkIMain
   //       and SparkJLineCompletion
   private[repl] def debugging[T](msg: String)(res: T) = {
->>>>>>> githubspark/branch-1.3
     logDebug(msg + " " + res)
     res
   }
