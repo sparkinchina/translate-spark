@@ -20,13 +20,8 @@ package org.apache.spark.streaming.dstream
 
 import java.io.{IOException, ObjectInputStream, ObjectOutputStream}
 
-<<<<<<< HEAD
-import scala.deprecated
-import scala.collection.mutable.HashMap
-=======
 import scala.collection.mutable.HashMap
 import scala.language.implicitConversions
->>>>>>> githubspark/branch-1.3
 import scala.reflect.ClassTag
 import scala.util.matching.Regex
 
@@ -34,11 +29,7 @@ import org.apache.spark.{Logging, SparkException}
 import org.apache.spark.rdd.{BlockRDD, PairRDDFunctions, RDD}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming._
-<<<<<<< HEAD
-import org.apache.spark.streaming.StreamingContext._
-=======
 import org.apache.spark.streaming.StreamingContext.rddToFileName
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.streaming.scheduler.Job
 import org.apache.spark.util.{CallSite, MetadataCleaner, Utils}
 
@@ -57,17 +48,30 @@ import org.apache.spark.util.{CallSite, MetadataCleaner, Utils}
  * `window`. In addition, [[org.apache.spark.streaming.dstream.PairDStreamFunctions]] contains
  * operations available only on DStreams of key-value pairs, such as `groupByKeyAndWindow` and
  * `join`. These operations are automatically available on any DStream of pairs
-<<<<<<< HEAD
- * (e.g., DStream[(Int, Int)] through implicit conversions when
- * `org.apache.spark.streaming.StreamingContext._` is imported.
-=======
  * (e.g., DStream[(Int, Int)] through implicit conversions.
->>>>>>> githubspark/branch-1.3
  *
  * DStreams internally is characterized by a few basic properties:
  *  - A list of other DStreams that the DStream depends on
  *  - A time interval at which the DStream generates an RDD
  *  - A function that is used to generate an RDD after each time interval
+ *
+ *  一个离散流(DStream)， Spark Streaming 中的一个基本的抽象，内部对应一个持续的 RDDs （相同类型）序列，
+ *  表示一个持续的流数据。
+ *  DStreams 的构建：
+ *  1. 可以通过一个 [[org.apache.spark.streaming.StreamingContext]] 实例，
+ *     从实时数据（如，来自TCP sockets， Kafka， Flume等的数据）构建；
+ *  2. 通过在现有的 DStreams 上执行转换操作来构建，比如 `map`, `window` 和 `reduceByKeyAndWindow` 等转换操作。
+ *
+ *  在一个 Spark Streaming 应用运行过程中，每个 DStream 实例会周期性地生成一个 RDD 实例，
+ *  该 RDD 实例可以从实时数据构建，或通过转换一个父 DStream 构建的RDD得到。
+ *
+ *  DStream 类包含所有 DSteams 上的基本操作， 另外，PairDStreamFunctions 包含了针对 key-value 对的 DStreams 的操作。
+ *  这些操作可以通过隐式转换用于任何元素类型为 pairs 的 DStream。
+ *
+ *  DStreams 内部特征对应的一些基本属性：
+ *  1. DStream 依赖的父 DStreams 列表；
+ *  2. DStream 构建一个 RDD 实例的时间间隔；
+ *  3. 在每个时间间隔后用于构建一个 RDD 实例的 function。
  */
 
 abstract class DStream[T: ClassTag] (
@@ -79,29 +83,37 @@ abstract class DStream[T: ClassTag] (
   // =======================================================================
 
   /** Time interval after which the DStream generates a RDD */
+  /** DStream 构建一个 RDD 实例的时间间隔， 即批数据的时间间隔 */
   def slideDuration: Duration
 
   /** List of parent DStreams on which this DStream depends on */
+  /** DStream 依赖的父 DStreams 列表 */
   def dependencies: List[DStream[_]]
 
   /** Method that generates a RDD for the given time */
+  /** 在指定时间构建一个 RDD 实例的方法 */
   def compute (validTime: Time): Option[RDD[T]]
 
   // =======================================================================
   // Methods and fields available on all DStreams
+  // 在所有的 DStreams 上可以获取的方法和字段
   // =======================================================================
 
   // RDDs generated, marked as private[streaming] so that testsuites can access it
+  // 构建的 RDDs，标识为 private[streaming]，所以在 streaming 包中的 testsuites 可以访问它。
   @transient
   private[streaming] var generatedRDDs = new HashMap[Time, RDD[T]] ()
 
   // Time zero for the DStream
+  // DStream 的初始时间，表示一个流的起始时间
   private[streaming] var zeroTime: Time = null
 
   // Duration for which the DStream will remember each RDD created
+  // 持续时间段，DStream 会记住该时间段中构建的每个 RDD。 对应的，内存需要能装载这些 RDD。
   private[streaming] var rememberDuration: Duration = null
 
   // Storage level of the RDDs in the stream
+  // 流中的 RDDs 的存储级别
   private[streaming] var storageLevel: StorageLevel = StorageLevel.NONE
 
   // Checkpoint details
@@ -124,6 +136,7 @@ abstract class DStream[T: ClassTag] (
   private[streaming] val creationSite = DStream.getCreationSite()
 
   /** Persist the RDDs of this DStream with the given storage level */
+  /** 以指定的存储级别持久化 DStream 中的 RDDs。 需要注意的是，在 sc.start 后就不能再修改存储级别了。 */
   def persist(level: StorageLevel): DStream[T] = {
     if (this.isInitialized) {
       throw new UnsupportedOperationException(
@@ -134,6 +147,7 @@ abstract class DStream[T: ClassTag] (
   }
 
   /** Persist RDDs of this DStream with the default storage level (MEMORY_ONLY_SER) */
+  /** RDD 的默认存储级别为 StorageLevel.MEMORY_ONLY，即没有_SER，序列化过程。这和流的数据量有关。 */
   def persist(): DStream[T] = persist(StorageLevel.MEMORY_ONLY_SER)
 
   /** Persist RDDs of this DStream with the default storage level (MEMORY_ONLY_SER) */
@@ -142,6 +156,11 @@ abstract class DStream[T: ClassTag] (
   /**
    * Enable periodic checkpointing of RDDs of this DStream
    * @param interval Time interval after which generated RDD will be checkpointed
+   *
+   *  对 DStrream 的 RDDs 启动周期性地 checkpointing 处理。
+   *  参数 interval ：是 checkpoint 的时间间隔。
+   *
+   *  补充：和 RDDs 的缓存级别一样，在 sc.start 后不能修改 checkpoint 的时间间隔。
    */
   def checkpoint(interval: Duration): DStream[T] = {
     if (isInitialized) {
@@ -157,6 +176,9 @@ abstract class DStream[T: ClassTag] (
    * Initialize the DStream by setting the "zero" time, based on which
    * the validity of future times is calculated. This method also recursively initializes
    * its parent DStreams.
+   *
+   * 通过设置一个 "zero" time 来初始化 DStream， 基于 "zero" time 来计算之后的时间的有效性。
+   * 该方法会递归地应用到父 DStreams。
    */
   private[streaming] def initialize(time: Time) {
     if (zeroTime != null && zeroTime != time) {
@@ -166,12 +188,18 @@ abstract class DStream[T: ClassTag] (
     zeroTime = time
 
     // Set the checkpoint interval to be slideDuration or 10 seconds, which ever is larger
+    // 设置 checkpoint 时间间隔为 slideDuration（批数据的时间间隔） 或 10s（这里10s是最小的时间间隔）。
+    // 补充：查看 DStream 的具体子类， 可以知道在窗口操作对应的 DStream （ReducedWindowedDStream）
+    // 和状态更新操作对应的 DStream （StateDStream） 中，mustCheckpoint 值被重载为 true，此时，
+    // 必须使用 DStream.checkpoint() 来设置 checkpoint 的时间间隔。
+    // 另外还有对应 Python 的两个类似的 DStream 具体子类。
     if (mustCheckpoint && checkpointDuration == null) {
       checkpointDuration = slideDuration * math.ceil(Seconds(10) / slideDuration).toInt
       logInfo("Checkpoint interval automatically set to " + checkpointDuration)
     }
 
     // Set the minimum value of the rememberDuration if not already set
+    // 设置 rememberDuration（即缓存到内存中的时间跨度）的最小值，如果还没有设置的话。
     var minRememberDuration = slideDuration
     if (checkpointDuration != null && minRememberDuration <= checkpointDuration) {
       // times 2 just to be sure that the latest checkpoint is not forgotten (#paranoia)
@@ -625,15 +653,6 @@ abstract class DStream[T: ClassTag] (
    * operator, so this DStream will be registered as an output stream and there materialized.
    */
   def print() {
-<<<<<<< HEAD
-    def foreachFunc = (rdd: RDD[T], time: Time) => {
-      val first11 = rdd.take(11)
-      println ("-------------------------------------------")
-      println ("Time: " + time)
-      println ("-------------------------------------------")
-      first11.take(10).foreach(println)
-      if (first11.size > 10) println("...")
-=======
     print(10)
   }
 
@@ -649,7 +668,6 @@ abstract class DStream[T: ClassTag] (
       println ("-------------------------------------------")
       firstNum.take(num).foreach(println)
       if (firstNum.size > num) println("...")
->>>>>>> githubspark/branch-1.3
       println()
     }
     new ForEachDStream(this, context.sparkContext.clean(foreachFunc)).register()
@@ -839,12 +857,6 @@ abstract class DStream[T: ClassTag] (
   }
 }
 
-<<<<<<< HEAD
-private[streaming] object DStream {
-
-  /** Get the creation site of a DStream from the stack trace of when the DStream is created. */
-  def getCreationSite(): CallSite = {
-=======
 object DStream {
 
   // `toPairDStreamFunctions` was in SparkContext before 1.3 and users had to
@@ -860,7 +872,6 @@ object DStream {
 
   /** Get the creation site of a DStream from the stack trace of when the DStream is created. */
   private[streaming] def getCreationSite(): CallSite = {
->>>>>>> githubspark/branch-1.3
     val SPARK_CLASS_REGEX = """^org\.apache\.spark""".r
     val SPARK_STREAMING_TESTCLASS_REGEX = """^org\.apache\.spark\.streaming\.test""".r
     val SPARK_EXAMPLES_CLASS_REGEX = """^org\.apache\.spark\.examples""".r
