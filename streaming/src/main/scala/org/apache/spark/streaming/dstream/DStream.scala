@@ -55,23 +55,23 @@ import org.apache.spark.util.{CallSite, MetadataCleaner, Utils}
  *  - A time interval at which the DStream generates an RDD
  *  - A function that is used to generate an RDD after each time interval
  *
- *  Ò»¸öÀëÉ¢Á÷(DStream)£¬ Spark Streaming ÖĞµÄÒ»¸ö»ù±¾µÄ³éÏó£¬ÄÚ²¿¶ÔÓ¦Ò»¸ö³ÖĞøµÄ RDDs £¨ÏàÍ¬ÀàĞÍ£©ĞòÁĞ£¬
- *  ±íÊ¾Ò»¸ö³ÖĞøµÄÁ÷Êı¾İ¡£
- *  DStreams µÄ¹¹½¨£º
- *  1. ¿ÉÒÔÍ¨¹ıÒ»¸ö [[org.apache.spark.streaming.StreamingContext]] ÊµÀı£¬
- *     ´ÓÊµÊ±Êı¾İ£¨Èç£¬À´×ÔTCP sockets£¬ Kafka£¬ FlumeµÈµÄÊı¾İ£©¹¹½¨£»
- *  2. Í¨¹ıÔÚÏÖÓĞµÄ DStreams ÉÏÖ´ĞĞ×ª»»²Ù×÷À´¹¹½¨£¬±ÈÈç `map`, `window` ºÍ `reduceByKeyAndWindow` µÈ×ª»»²Ù×÷¡£
+ *  ä¸€ä¸ªç¦»æ•£æµ(DStream)ï¼Œ Spark Streaming ä¸­çš„ä¸€ä¸ªåŸºæœ¬çš„æŠ½è±¡ï¼Œå†…éƒ¨å¯¹åº”ä¸€ä¸ªæŒç»­çš„ RDDs ï¼ˆç›¸åŒç±»å‹ï¼‰åºåˆ—ï¼Œ
+ *  è¡¨ç¤ºä¸€ä¸ªæŒç»­çš„æµæ•°æ®ã€‚
+ *  DStreams çš„æ„å»ºï¼š
+ *  1. å¯ä»¥é€šè¿‡ä¸€ä¸ª [[org.apache.spark.streaming.StreamingContext]] å®ä¾‹ï¼Œ
+ *     ä»å®æ—¶æ•°æ®ï¼ˆå¦‚ï¼Œæ¥è‡ªTCP socketsï¼Œ Kafkaï¼Œ Flumeç­‰çš„æ•°æ®ï¼‰æ„å»ºï¼›
+ *  2. é€šè¿‡åœ¨ç°æœ‰çš„ DStreams ä¸Šæ‰§è¡Œè½¬æ¢æ“ä½œæ¥æ„å»ºï¼Œæ¯”å¦‚ `map`, `window` å’Œ `reduceByKeyAndWindow` ç­‰è½¬æ¢æ“ä½œã€‚
  *
- *  ÔÚÒ»¸ö Spark Streaming Ó¦ÓÃÔËĞĞ¹ı³ÌÖĞ£¬Ã¿¸ö DStream ÊµÀı»áÖÜÆÚĞÔµØÉú³ÉÒ»¸ö RDD ÊµÀı£¬
- *  ¸Ã RDD ÊµÀı¿ÉÒÔ´ÓÊµÊ±Êı¾İ¹¹½¨£¬»òÍ¨¹ı×ª»»Ò»¸ö¸¸ DStream ¹¹½¨µÄRDDµÃµ½¡£
+ *  åœ¨ä¸€ä¸ª Spark Streaming åº”ç”¨è¿è¡Œè¿‡ç¨‹ä¸­ï¼Œæ¯ä¸ª DStream å®ä¾‹ä¼šå‘¨æœŸæ€§åœ°ç”Ÿæˆä¸€ä¸ª RDD å®ä¾‹ï¼Œ
+ *  è¯¥ RDD å®ä¾‹å¯ä»¥ä»å®æ—¶æ•°æ®æ„å»ºï¼Œæˆ–é€šè¿‡è½¬æ¢ä¸€ä¸ªçˆ¶ DStream æ„å»ºçš„RDDå¾—åˆ°ã€‚
  *
- *  DStream Àà°üº¬ËùÓĞ DSteams ÉÏµÄ»ù±¾²Ù×÷£¬ ÁíÍâ£¬PairDStreamFunctions °üº¬ÁËÕë¶Ô key-value ¶ÔµÄ DStreams µÄ²Ù×÷¡£
- *  ÕâĞ©²Ù×÷¿ÉÒÔÍ¨¹ıÒşÊ½×ª»»ÓÃÓÚÈÎºÎÔªËØÀàĞÍÎª pairs µÄ DStream¡£
+ *  DStream ç±»åŒ…å«æ‰€æœ‰ DSteams ä¸Šçš„åŸºæœ¬æ“ä½œï¼Œ å¦å¤–ï¼ŒPairDStreamFunctions åŒ…å«äº†é’ˆå¯¹ key-value å¯¹çš„ DStreams çš„æ“ä½œã€‚
+ *  è¿™äº›æ“ä½œå¯ä»¥é€šè¿‡éšå¼è½¬æ¢ç”¨äºä»»ä½•å…ƒç´ ç±»å‹ä¸º pairs çš„ DStreamã€‚
  *
- *  DStreams ÄÚ²¿ÌØÕ÷¶ÔÓ¦µÄÒ»Ğ©»ù±¾ÊôĞÔ£º
- *  1. DStream ÒÀÀµµÄ¸¸ DStreams ÁĞ±í£»
- *  2. DStream ¹¹½¨Ò»¸ö RDD ÊµÀıµÄÊ±¼ä¼ä¸ô£»
- *  3. ÔÚÃ¿¸öÊ±¼ä¼ä¸ôºóÓÃÓÚ¹¹½¨Ò»¸ö RDD ÊµÀıµÄ function¡£
+ *  DStreams å†…éƒ¨ç‰¹å¾å¯¹åº”çš„ä¸€äº›åŸºæœ¬å±æ€§ï¼š
+ *  1. DStream ä¾èµ–çš„çˆ¶ DStreams åˆ—è¡¨ï¼›
+ *  2. DStream æ„å»ºä¸€ä¸ª RDD å®ä¾‹çš„æ—¶é—´é—´éš”ï¼›
+ *  3. åœ¨æ¯ä¸ªæ—¶é—´é—´éš”åç”¨äºæ„å»ºä¸€ä¸ª RDD å®ä¾‹çš„ functionã€‚
  */
 
 abstract class DStream[T: ClassTag] (
@@ -83,37 +83,37 @@ abstract class DStream[T: ClassTag] (
   // =======================================================================
 
   /** Time interval after which the DStream generates a RDD */
-  /** DStream ¹¹½¨Ò»¸ö RDD ÊµÀıµÄÊ±¼ä¼ä¸ô£¬ ¼´ÅúÊı¾İµÄÊ±¼ä¼ä¸ô */
+  /** DStream æ„å»ºä¸€ä¸ª RDD å®ä¾‹çš„æ—¶é—´é—´éš”ï¼Œ å³æ‰¹æ•°æ®çš„æ—¶é—´é—´éš” */
   def slideDuration: Duration
 
   /** List of parent DStreams on which this DStream depends on */
-  /** DStream ÒÀÀµµÄ¸¸ DStreams ÁĞ±í */
+  /** DStream ä¾èµ–çš„çˆ¶ DStreams åˆ—è¡¨ */
   def dependencies: List[DStream[_]]
 
   /** Method that generates a RDD for the given time */
-  /** ÔÚÖ¸¶¨Ê±¼ä¹¹½¨Ò»¸ö RDD ÊµÀıµÄ·½·¨ */
+  /** åœ¨æŒ‡å®šæ—¶é—´æ„å»ºä¸€ä¸ª RDD å®ä¾‹çš„æ–¹æ³• */
   def compute (validTime: Time): Option[RDD[T]]
 
   // =======================================================================
   // Methods and fields available on all DStreams
-  // ÔÚËùÓĞµÄ DStreams ÉÏ¿ÉÒÔ»ñÈ¡µÄ·½·¨ºÍ×Ö¶Î
+  // åœ¨æ‰€æœ‰çš„ DStreams ä¸Šå¯ä»¥è·å–çš„æ–¹æ³•å’Œå­—æ®µ
   // =======================================================================
 
   // RDDs generated, marked as private[streaming] so that testsuites can access it
-  // ¹¹½¨µÄ RDDs£¬±êÊ¶Îª private[streaming]£¬ËùÒÔÔÚ streaming °üÖĞµÄ testsuites ¿ÉÒÔ·ÃÎÊËü¡£
+  // æ„å»ºçš„ RDDsï¼Œæ ‡è¯†ä¸º private[streaming]ï¼Œæ‰€ä»¥åœ¨ streaming åŒ…ä¸­çš„ testsuites å¯ä»¥è®¿é—®å®ƒã€‚
   @transient
   private[streaming] var generatedRDDs = new HashMap[Time, RDD[T]] ()
 
   // Time zero for the DStream
-  // DStream µÄ³õÊ¼Ê±¼ä£¬±íÊ¾Ò»¸öÁ÷µÄÆğÊ¼Ê±¼ä
+  // DStream çš„åˆå§‹æ—¶é—´ï¼Œè¡¨ç¤ºä¸€ä¸ªæµçš„èµ·å§‹æ—¶é—´
   private[streaming] var zeroTime: Time = null
 
   // Duration for which the DStream will remember each RDD created
-  // ³ÖĞøÊ±¼ä¶Î£¬DStream »á¼Ç×¡¸ÃÊ±¼ä¶ÎÖĞ¹¹½¨µÄÃ¿¸ö RDD¡£ ¶ÔÓ¦µÄ£¬ÄÚ´æĞèÒªÄÜ×°ÔØÕâĞ© RDD¡£
+  // æŒç»­æ—¶é—´æ®µï¼ŒDStream ä¼šè®°ä½è¯¥æ—¶é—´æ®µä¸­æ„å»ºçš„æ¯ä¸ª RDDã€‚ å¯¹åº”çš„ï¼Œå†…å­˜éœ€è¦èƒ½è£…è½½è¿™æ®µæ—¶é—´å†…æ„å»ºçš„ RDDsã€‚
   private[streaming] var rememberDuration: Duration = null
 
   // Storage level of the RDDs in the stream
-  // Á÷ÖĞµÄ RDDs µÄ´æ´¢¼¶±ğ
+  // æµä¸­çš„ RDDs çš„å­˜å‚¨çº§åˆ«
   private[streaming] var storageLevel: StorageLevel = StorageLevel.NONE
 
   // Checkpoint details
@@ -136,7 +136,7 @@ abstract class DStream[T: ClassTag] (
   private[streaming] val creationSite = DStream.getCreationSite()
 
   /** Persist the RDDs of this DStream with the given storage level */
-  /** ÒÔÖ¸¶¨µÄ´æ´¢¼¶±ğ³Ö¾Ã»¯ DStream ÖĞµÄ RDDs¡£ ĞèÒª×¢ÒâµÄÊÇ£¬ÔÚ sc.start ºó¾Í²»ÄÜÔÙĞŞ¸Ä´æ´¢¼¶±ğÁË¡£ */
+  /** ä»¥æŒ‡å®šçš„å­˜å‚¨çº§åˆ«æŒä¹…åŒ– DStream ä¸­çš„ RDDsã€‚ éœ€è¦æ³¨æ„çš„æ˜¯ï¼Œåœ¨ sc.start åå°±ä¸èƒ½å†ä¿®æ”¹å­˜å‚¨çº§åˆ«äº†ã€‚ */
   def persist(level: StorageLevel): DStream[T] = {
     if (this.isInitialized) {
       throw new UnsupportedOperationException(
@@ -147,7 +147,7 @@ abstract class DStream[T: ClassTag] (
   }
 
   /** Persist RDDs of this DStream with the default storage level (MEMORY_ONLY_SER) */
-  /** RDD µÄÄ¬ÈÏ´æ´¢¼¶±ğÎª StorageLevel.MEMORY_ONLY£¬¼´Ã»ÓĞ_SER£¬ĞòÁĞ»¯¹ı³Ì¡£ÕâºÍÁ÷µÄÊı¾İÁ¿ÓĞ¹Ø¡£ */
+  /** RDD çš„é»˜è®¤å­˜å‚¨çº§åˆ«ä¸º StorageLevel.MEMORY_ONLYï¼Œå³æ²¡æœ‰_SERï¼Œåºåˆ—åŒ–è¿‡ç¨‹ã€‚è¿™å’Œæµçš„æ•°æ®é‡æœ‰å…³ã€‚ */
   def persist(): DStream[T] = persist(StorageLevel.MEMORY_ONLY_SER)
 
   /** Persist RDDs of this DStream with the default storage level (MEMORY_ONLY_SER) */
@@ -157,10 +157,10 @@ abstract class DStream[T: ClassTag] (
    * Enable periodic checkpointing of RDDs of this DStream
    * @param interval Time interval after which generated RDD will be checkpointed
    *
-   *  ¶Ô DStrream µÄ RDDs Æô¶¯ÖÜÆÚĞÔµØ checkpointing ´¦Àí¡£
-   *  ²ÎÊı interval £ºÊÇ checkpoint µÄÊ±¼ä¼ä¸ô¡£
+   *  å¯¹ DStrream çš„ RDDs å¯åŠ¨å‘¨æœŸæ€§åœ° checkpointing å¤„ç†ã€‚
+   *  å‚æ•° interval ï¼šæ˜¯ checkpoint çš„æ—¶é—´é—´éš”ã€‚
    *
-   *  ²¹³ä£ººÍ RDDs µÄ»º´æ¼¶±ğÒ»Ñù£¬ÔÚ sc.start ºó²»ÄÜĞŞ¸Ä checkpoint µÄÊ±¼ä¼ä¸ô¡£
+   *  è¡¥å……ï¼šå’Œ RDDs çš„ç¼“å­˜çº§åˆ«ä¸€æ ·ï¼Œåœ¨ sc.start åä¸èƒ½ä¿®æ”¹ checkpoint çš„æ—¶é—´è·¨åº¦ã€‚
    */
   def checkpoint(interval: Duration): DStream[T] = {
     if (isInitialized) {
@@ -177,8 +177,8 @@ abstract class DStream[T: ClassTag] (
    * the validity of future times is calculated. This method also recursively initializes
    * its parent DStreams.
    *
-   * Í¨¹ıÉèÖÃÒ»¸ö "zero" time À´³õÊ¼»¯ DStream£¬ »ùÓÚ "zero" time À´¼ÆËãÖ®ºóµÄÊ±¼äµÄÓĞĞ§ĞÔ¡£
-   * ¸Ã·½·¨»áµİ¹éµØÓ¦ÓÃµ½¸¸ DStreams¡£
+   * é€šè¿‡è®¾ç½®ä¸€ä¸ª "zero" time æ¥åˆå§‹åŒ– DStreamï¼Œ åŸºäº "zero" time æ¥è®¡ç®—ä¹‹åçš„æ—¶é—´çš„æœ‰æ•ˆæ€§ã€‚
+   * è¯¥æ–¹æ³•ä¼šé€’å½’åœ°åº”ç”¨åˆ°çˆ¶ DStreamsã€‚
    */
   private[streaming] def initialize(time: Time) {
     if (zeroTime != null && zeroTime != time) {
@@ -188,18 +188,18 @@ abstract class DStream[T: ClassTag] (
     zeroTime = time
 
     // Set the checkpoint interval to be slideDuration or 10 seconds, which ever is larger
-    // ÉèÖÃ checkpoint Ê±¼ä¼ä¸ôÎª slideDuration£¨ÅúÊı¾İµÄÊ±¼ä¼ä¸ô£© »ò 10s£¨ÕâÀï10sÊÇ×îĞ¡µÄÊ±¼ä¼ä¸ô£©¡£
-    // ²¹³ä£º²é¿´ DStream µÄ¾ßÌå×ÓÀà£¬ ¿ÉÒÔÖªµÀÔÚ´°¿Ú²Ù×÷¶ÔÓ¦µÄ DStream £¨ReducedWindowedDStream£©
-    // ºÍ×´Ì¬¸üĞÂ²Ù×÷¶ÔÓ¦µÄ DStream £¨StateDStream£© ÖĞ£¬mustCheckpoint Öµ±»ÖØÔØÎª true£¬´ËÊ±£¬
-    // ±ØĞëÊ¹ÓÃ DStream.checkpoint() À´ÉèÖÃ checkpoint µÄÊ±¼ä¼ä¸ô¡£
-    // ÁíÍâ»¹ÓĞ¶ÔÓ¦ Python µÄÁ½¸öÀàËÆµÄ DStream ¾ßÌå×ÓÀà¡£
+    // è®¾ç½® checkpoint æ—¶é—´é—´éš”ä¸º slideDurationï¼ˆæ‰¹æ•°æ®çš„æ—¶é—´é—´éš”ï¼‰ æˆ– 10sï¼ˆè¿™é‡Œ10sæ˜¯æœ€å°çš„æ—¶é—´é—´éš”ï¼‰ã€‚
+    // è¡¥å……ï¼šæŸ¥çœ‹ DStream çš„å…·ä½“å­ç±»ï¼Œ å¯ä»¥çŸ¥é“åœ¨çª—å£æ“ä½œå¯¹åº”çš„ DStream ï¼ˆReducedWindowedDStreamï¼‰
+    // å’ŒçŠ¶æ€æ›´æ–°æ“ä½œå¯¹åº”çš„ DStream ï¼ˆStateDStreamï¼‰ ä¸­ï¼ŒmustCheckpoint å€¼è¢«é‡è½½ä¸º trueï¼Œæ­¤æ—¶ï¼Œ
+    // å¿…é¡»ä½¿ç”¨ DStream.checkpoint() æ¥è®¾ç½® checkpoint çš„æ—¶é—´é—´éš”ã€‚
+    // å¦å¤–è¿˜æœ‰å¯¹åº” Python çš„ä¸¤ä¸ªç±»ä¼¼çš„ DStream å…·ä½“å­ç±»ã€‚
     if (mustCheckpoint && checkpointDuration == null) {
       checkpointDuration = slideDuration * math.ceil(Seconds(10) / slideDuration).toInt
       logInfo("Checkpoint interval automatically set to " + checkpointDuration)
     }
 
     // Set the minimum value of the rememberDuration if not already set
-    // ÉèÖÃ rememberDuration£¨¼´»º´æµ½ÄÚ´æÖĞµÄÊ±¼ä¿ç¶È£©µÄ×îĞ¡Öµ£¬Èç¹û»¹Ã»ÓĞÉèÖÃµÄ»°¡£
+    // è®¾ç½® rememberDurationï¼ˆå³ç¼“å­˜åˆ°å†…å­˜ä¸­çš„æ—¶é—´è·¨åº¦ï¼‰çš„æœ€å°å€¼ï¼Œå¦‚æœè¿˜æ²¡æœ‰è®¾ç½®çš„è¯ã€‚
     var minRememberDuration = slideDuration
     if (checkpointDuration != null && minRememberDuration <= checkpointDuration) {
       // times 2 just to be sure that the latest checkpoint is not forgotten (#paranoia)
@@ -216,6 +216,7 @@ abstract class DStream[T: ClassTag] (
   private[streaming] def validate() {
     assert(rememberDuration != null, "Remember duration is set to null")
 
+    // å¿…é¡» checkpoint æ—¶ï¼Œå¯¹åº”çš„ Checkpoint æ—¶é—´è·¨åº¦ä¸èƒ½ä¸ºç©º
     assert(
       !mustCheckpoint || checkpointDuration != null,
       "The checkpoint interval for " + this.getClass.getSimpleName + " has not been set." +
@@ -256,6 +257,8 @@ abstract class DStream[T: ClassTag] (
         checkpointDuration + "). Please set it to higher than " + checkpointDuration + "."
     )
 
+    // å¦‚æœè®¾ç½®äº†æ¸…ç†çš„å­˜æ´»æ—¶é—´ï¼ˆ"spark.cleaner.ttl"ï¼‰ï¼Œé‚£ä¹ˆè¯¥æ—¶é—´å¿…é¡»æ¯” rememberDuration çš„æ—¶é—´é•¿
+    //
     val metadataCleanerDelay = MetadataCleaner.getDelaySeconds(ssc.conf)
     logInfo("metadataCleanupDelay = " + metadataCleanerDelay)
     assert(
@@ -863,6 +866,7 @@ object DStream {
   // `import StreamingContext._` to enable it. Now we move it here to make the compiler find
   // it automatically. However, we still keep the old function in StreamingContext for backward
   // compatibility and forward to the following function directly.
+  // å°†éšå¼è½¬æ¢ç§»åˆ° DStream objectï¼Œä¸ç”¨å†æ‰‹åŠ¨å¯¼å…¥ï¼ŒåŒæ—¶ä¸ºäº†æ”¯æŒå‘åå…¼å®¹æ€§ï¼ŒåŸæ¥çš„ SparkContext ä¸­ä¹Ÿä¼šä¿ç•™ã€‚
 
   implicit def toPairDStreamFunctions[K, V](stream: DStream[(K, V)])
       (implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null):

@@ -50,6 +50,15 @@ import org.apache.spark.streaming.ui.{StreamingJobProgressListener, StreamingTab
  * using `context.start()` and `context.stop()`, respectively.
  * `context.awaitTermination()` allows the current thread to wait for the termination
  * of the context by `stop()` or by an exception.
+ *
+ * Spark Streaming 功能的主入口点。 提供了从各种输入源构建 DStreams 的方法。
+ * 构建方法：
+ * 1. 通过提供一个 Spark master URL 和 应用名字来构建
+ * 2. 从一个 SparkConf 配置来构建
+ * 3. 或者基于现有的 SparkContext 来构建。
+ *
+ * 在创建或转换 DStreams 后，可以通过 `context.start()` 和 `context.stop()` 来分别启动和停止流计算。
+ * `context.awaitTermination()` 可以让当前线程等待由于`stop()` 调用或异常而停止 context。
  */
 class StreamingContext private[streaming] (
     sc_ : SparkContext,
@@ -97,6 +106,8 @@ class StreamingContext private[streaming] (
    * @param path Path to the directory that was specified as the checkpoint directory
    * @param hadoopConf Optional, configuration object if necessary for reading from
    *                   HDFS compatible filesystems
+   *
+   * 从 Checkpoint 文件重构出一个 StreamingContext 实例。
    */
   def this(path: String, hadoopConf: Configuration) =
     this(null, CheckpointReader.read(path, new SparkConf(), hadoopConf).get, null)
@@ -196,6 +207,10 @@ class StreamingContext private[streaming] (
    * collection. This method allows the developer to specify how long to remember the RDDs (
    * if the developer wishes to query old data outside the DStream computation).
    * @param duration Minimum duration that each DStream should remember its RDDs
+   *
+   * 为 context 中的每个 DStreams 设置时间跨度，在上一个该时间跨度内构建的 RDDs 会保留在内存中。
+   * DStreams 仅在有限的时间跨度内记住这些 RDDs， 之后通过 GC 来释放。
+   * 该方法允许开发者指定 RDDs 在内存中保留的时间跨度（这可以让开发者查询那些旧的数据）
    */
   def remember(duration: Duration) {
     graph.remember(duration)
@@ -206,6 +221,9 @@ class StreamingContext private[streaming] (
    * fault-tolerance.
    * @param directory HDFS-compatible directory where the checkpoint data will be reliably stored.
    *                  Note that this must be a fault-tolerant file system like HDFS for
+   *
+   * 设置 contex，使其能周期性地 Checkpoint DStream 操作，用于 driver 容错。
+   * 参数 directory ： 使用 HDFS 兼容文件系统的目录，来提高数据存储的可靠性。
    */
   def checkpoint(directory: String) {
     if (directory != null) {
@@ -230,6 +248,8 @@ class StreamingContext private[streaming] (
    * Create an input stream with any arbitrary user implemented receiver.
    * Find more details at: http://spark.apache.org/docs/latest/streaming-custom-receivers.html
    * @param receiver Custom implementation of Receiver
+   *
+   * 用任意的用户实现的 receiver 来构建一个 input stream 实例。
    */
   @deprecated("Use receiverStream", "1.0.0")
   def networkStream[T: ClassTag](
@@ -258,6 +278,10 @@ class StreamingContext private[streaming] (
    *       Since Actor may exist outside the spark framework, It is thus user's responsibility
    *       to ensure the type safety, i.e parametrized type of data received and actorStream
    *       should be same.
+   *
+   * 用任意的用户实现的 actor receiver 来构建一个 input stream 实例。
+   * 注意：由于 Actor 可能不属于 spark 框架， 因此需要用户来保证类型安全性，比如接受数据的参数化类
+   *       必须和 sctorStream 的一样。
    */
   def actorStream[T: ClassTag](
       props: Props,
@@ -276,6 +300,9 @@ class StreamingContext private[streaming] (
    * @param port          Port to connect to for receiving data
    * @param storageLevel  Storage level to use for storing the received objects
    *                      (default: StorageLevel.MEMORY_AND_DISK_SER_2)
+   *
+   * 从 TCP 源创建一个 input stream 实例。数据通过一个 TCP socket来接收，
+   * 并且接收的 bytes 使用 UTF-8 编码，行间分隔符为 '\n'。
    */
   def socketTextStream(
       hostname: String,
@@ -294,6 +321,9 @@ class StreamingContext private[streaming] (
    * @param converter     Function to convert the byte stream to objects
    * @param storageLevel  Storage level to use for storing the received objects
    * @tparam T            Type of the objects received (after converting bytes to objects)
+   *
+   * 从 TCP 源创建一个 input stream 实例。数据通过一个 TCP socket来接收，
+   * 并且接收的 bytes 作为一个 object，需要使用 conveter 来转换。
    */
   def socketStream[T: ClassTag](
       hostname: String,
@@ -314,6 +344,9 @@ class StreamingContext private[streaming] (
    * @param storageLevel  Storage level to use for storing the received objects
    *                      (default: StorageLevel.MEMORY_AND_DISK_SER_2)
    * @tparam T            Type of the objects in the received blocks
+   *
+   * 从网络源构建一个 input stream， 其数据是使用 Spark 的序列化器序列化后的序列化块， 可以直接放到
+   * 块管理器，而不需要进行反序列化。 这是接收数据最有效的方式。
    */
   def rawSocketStream[T: ClassTag](
       hostname: String,
@@ -332,6 +365,11 @@ class StreamingContext private[streaming] (
    * @tparam K Key type for reading HDFS file
    * @tparam V Value type for reading HDFS file
    * @tparam F Input format for reading HDFS file
+   *
+   * 创建一个 input stream，该 input stream 会监控 Hadoop 兼容文件系统的新增文件，并且以指定的
+   * key-value类型和 input format 读取文件。
+   * 文件必须通过从相同文件系统的另一个位置以 "moving" 方式写入监控目录。
+   * 文件名以 . 开头的隐藏文件将被忽略。
    */
   def fileStream[
     K: ClassTag,
@@ -434,6 +472,8 @@ class StreamingContext private[streaming] (
    * @param queue      Queue of RDDs
    * @param oneAtATime Whether only one RDD should be consumed from the queue in every interval
    * @tparam T         Type of objects in the RDD
+   *
+   * 从一个 RDDs 队列构建一个 input stream。 在每一个批次，处理队列的一个或全部的 RDD。
    */
   def queueStream[T: ClassTag](
       queue: Queue[RDD[T]],
@@ -461,6 +501,8 @@ class StreamingContext private[streaming] (
 
   /**
    * Create a unified DStream from multiple DStreams of the same type and same slide duration.
+   *
+   * 创建一个新的DStream， 合并多个具有相同类型和相同滑动时间跨度的 DStreams。
    */
   def union[T: ClassTag](streams: Seq[DStream[T]]): DStream[T] = {
     new UnionDStream[T](streams.toArray)
@@ -469,6 +511,8 @@ class StreamingContext private[streaming] (
   /**
    * Create a new DStream in which each RDD is generated by applying a function on RDDs of
    * the DStreams.
+   *
+   * 创建一个新的DStream，其中每个 RDD 由指定的 transformFunc 作用在 DStreams 的 RDDs 上得到。
    */
   def transform[T: ClassTag](
       dstreams: Seq[DStream[_]],
@@ -550,6 +594,10 @@ class StreamingContext private[streaming] (
    * @param stopSparkContext if true, stops the associated SparkContext. The underlying SparkContext
    *                         will be stopped regardless of whether this StreamingContext has been
    *                         started.
+   *
+   * 立即停止流的执行（不会等到处理完所有接收到的数据）。
+   * 参数 stopSparkContext ： 如果设置为 true， 停止关联的 SparkContext。 停止底层的 SparkContext不会考虑
+   *                          这个 StreamingContext 是否已经启动。
    */
   def stop(stopSparkContext: Boolean = true): Unit = synchronized {
     stop(stopSparkContext, false)
@@ -564,6 +612,9 @@ class StreamingContext private[streaming] (
    *                         started.
    * @param stopGracefully if true, stops gracefully by waiting for the processing of all
    *                       received data to be completed
+   *
+   * 停止流的执行，并带了可以确保所有接收到的数据被处理完毕的选项。
+   * 参数 stopGracefully ： 如果设置为 true， 会等待所有接收到的数据被处理完之后再停止。
    */
   def stop(stopSparkContext: Boolean, stopGracefully: Boolean): Unit = synchronized {
     state match {
@@ -580,6 +631,7 @@ class StreamingContext private[streaming] (
     if (stopSparkContext) sc.stop()
     uiTab.foreach(_.detach())
     // The state should always be Stopped after calling `stop()`, even if we haven't started yet:
+    // 即使流还没有启动，在调用 `stop()` 后仍然需要将状态设置为 Stopped。
     state = Stopped
   }
 }
@@ -593,6 +645,7 @@ object StreamingContext extends Logging {
 
   private[streaming] val DEFAULT_CLEANER_TTL = 3600
 
+  // 为了向后兼容性而保留，隐式转换方法已经移植到 DStream 伴生对象中。
   @deprecated("Replaced by implicit functions in the DStream companion object. This is " +
     "kept here only for backward compatibility.", "1.3.0")
   def toPairDStreamFunctions[K, V](stream: DStream[(K, V)])
@@ -613,6 +666,10 @@ object StreamingContext extends Logging {
    * @param createOnError  Optional, whether to create a new StreamingContext if there is an
    *                       error in reading checkpoint data. By default, an exception will be
    *                       thrown on error.
+   *
+   * 从 Checkpoint 数据中创建 StreamingContext 实例或创建一个新的 StreamingContext 实例。
+   * 如果在指定的 `checkpointPath` 路径中存在 Checkpoint 数据，将从这些数据中重构出 StreamingContext。
+   * 如果 Checkpoint 数据不存在的话，由提供的 `creatingFunc` 方法来构建 StreamingContext。
    */
   def getOrCreate(
       checkpointPath: String,
@@ -636,6 +693,9 @@ object StreamingContext extends Logging {
   /**
    * Find the JAR from which a given class was loaded, to make it easy for users to pass
    * their JARs to StreamingContext.
+   *
+   * 查找要加载的指定 class 所在的 JAR 包， 让用户更方便地将他们的 JARs 传递到 StreamingContext。
+   * 说明：可以在 StreamingContext 构造函数中代替 jars: Seq[String] 参数来使用（加 .toSeq）。
    */
   def jarOfClass(cls: Class[_]): Option[String] = SparkContext.jarOfClass(cls)
 
@@ -655,6 +715,7 @@ object StreamingContext extends Logging {
     createNewSparkContext(conf)
   }
 
+  // 将 DStream 持久化到文件系统时，内部每个 RDD 对应的文件名
   private[streaming] def rddToFileName[T](prefix: String, suffix: String, time: Time): String = {
     if (prefix == null) {
       time.milliseconds.toString

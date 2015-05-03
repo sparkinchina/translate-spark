@@ -19,6 +19,7 @@ package org.apache.spark.streaming
 
 import org.apache.spark.util.Utils
 
+/** 持续时间或时间跨度的样本类 */
 case class Duration (private val millis: Long) {
 
   def < (that: Duration): Boolean = (this.millis < that.millis)
@@ -78,6 +79,8 @@ case class Duration (private val millis: Long) {
 /**
  * Helper object that creates instance of [[org.apache.spark.streaming.Duration]] representing
  * a given number of milliseconds.
+ *
+ * 工厂对象，用于构建毫秒单位对应的时间跨度样本类
  */
 object Milliseconds {
   def apply(milliseconds: Long) = new Duration(milliseconds)
@@ -86,6 +89,8 @@ object Milliseconds {
 /**
  * Helper object that creates instance of [[org.apache.spark.streaming.Duration]] representing
  * a given number of seconds.
+ *
+ * 工厂对象，用于构建秒单位对应的时间跨度样本类
  */
 object Seconds {
   def apply(seconds: Long) = new Duration(seconds * 1000)
@@ -94,6 +99,8 @@ object Seconds {
 /**
  * Helper object that creates instance of [[org.apache.spark.streaming.Duration]] representing
  * a given number of minutes.
+ *
+ * 工厂对象，用于构建毫分钟单位对应的时间跨度样本类
  */
 object Minutes {
   def apply(minutes: Long) = new Duration(minutes * 60000)
@@ -101,7 +108,7 @@ object Minutes {
 
 // Java-friendlier versions of the objects above.
 // Named "Durations" instead of "Duration" to avoid changing the case class's implied API.
-
+// Duration 样本类的工厂对象
 object Durations {
 
   /**
