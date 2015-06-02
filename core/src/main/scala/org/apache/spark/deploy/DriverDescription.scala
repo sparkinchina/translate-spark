@@ -25,8 +25,6 @@ private[spark] class DriverDescription(
     val command: Command)
   extends Serializable {
 
-<<<<<<< HEAD
-=======
   def copy(
       jarUrl: String = jarUrl,
       mem: Int = mem,
@@ -35,6 +33,5 @@ private[spark] class DriverDescription(
       command: Command = command): DriverDescription =
     new DriverDescription(jarUrl, mem, cores, supervise, command)
 
->>>>>>> githubspark/branch-1.3
   override def toString: String = s"DriverDescription (${command.mainClass})"
 }

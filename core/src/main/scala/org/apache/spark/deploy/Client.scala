@@ -31,10 +31,7 @@ import org.apache.spark.util.{ActorLogReceive, AkkaUtils, Utils}
 
 /**
  * Proxy that relays messages to the driver.
-<<<<<<< HEAD
  * 职能： 消息代理，转发消息到Driver。从main函数看出，该类将要被标记为deprecated
-=======
->>>>>>> githubspark/branch-1.3
  */
 private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
   extends Actor with ActorLogReceive with Logging {
@@ -43,16 +40,13 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
   val timeout = AkkaUtils.askTimeout(conf)
 
   override def preStart() = {
-<<<<<<< HEAD
     // 这里需要把master的地址转换成akka的地址，然后通过这个akka地址获得指定的actor
     // 它的格式是"akka.tcp://%s@%s:%s/user/%s".format(systemName, host, port, actorName)
     masterActor = context.actorSelection(Master.toAkkaUrl(driverArgs.master))
     // 把自身设置成远程生命周期的事件
-=======
     masterActor = context.actorSelection(
       Master.toAkkaUrl(driverArgs.master, AkkaUtils.protocol(context.system)))
 
->>>>>>> githubspark/branch-1.3
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
 
     println(s"Sending ${driverArgs.cmd} command to ${driverArgs.master}")
@@ -79,14 +73,9 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
           .map(Utils.splitCommandString).getOrElse(Seq.empty)
         val sparkJavaOpts = Utils.sparkJavaOpts(conf)
         val javaOpts = sparkJavaOpts ++ extraJavaOpts
-<<<<<<< HEAD
-        val command = new Command(mainClass, Seq("{{WORKER_URL}}", driverArgs.mainClass) ++
-          driverArgs.driverOptions, sys.env, classPathEntries, libraryPathEntries, javaOpts)
-=======
         val command = new Command(mainClass,
           Seq("{{WORKER_URL}}", "{{USER_JAR}}", driverArgs.mainClass) ++ driverArgs.driverOptions,
           sys.env, classPathEntries, libraryPathEntries, javaOpts)
->>>>>>> githubspark/branch-1.3
 
         val driverDescription = new DriverDescription(
           driverArgs.jarUrl,
@@ -94,11 +83,8 @@ private class ClientActor(driverArgs: ClientArguments, conf: SparkConf)
           driverArgs.cores,
           driverArgs.supervise,
           command)
-<<<<<<< HEAD
         // 向master发送提交Driver的请求，把driverDescription传过去
-=======
 
->>>>>>> githubspark/branch-1.3
         masterActor ! RequestSubmitDriver(driverDescription)
 
       case "kill" =>
@@ -182,11 +168,8 @@ object Client {
     val (actorSystem, _) = AkkaUtils.createActorSystem(
       "driverClient", Utils.localHostName(), 0, conf, new SecurityManager(conf))
 
-<<<<<<< HEAD
-=======
     // Verify driverArgs.master is a valid url so that we can use it in ClientActor safely
     Master.toAkkaUrl(driverArgs.master, AkkaUtils.protocol(actorSystem))
->>>>>>> githubspark/branch-1.3
     actorSystem.actorOf(Props(classOf[ClientActor], driverArgs, conf))
 
     actorSystem.awaitTermination()
