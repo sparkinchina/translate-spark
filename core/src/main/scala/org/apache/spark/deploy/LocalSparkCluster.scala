@@ -31,13 +31,8 @@ import org.apache.spark.util.Utils
  * spark.deploy.master.Master and spark.deploy.worker.Workers in the same JVMs). Executors launched
  * by the Workers still run in separate JVMs. This can be used to test distributed operation and
  * fault recovery without spinning up a lot of processes.
-<<<<<<< HEAD
  * 测试类，生成一个单进程的Spark Standalone集群（也就是说Master和所有的Worker运行在同一个JVM中）。Executors
  * 仍就运行在一个独立的JVM中。在、该类用来测试分布式操作和错误恢复，同时却不用衍生出很多进程
- */
-private[spark]
-class LocalSparkCluster(numWorkers: Int, coresPerWorker: Int, memoryPerWorker: Int)
-=======
  */
 private[spark]
 class LocalSparkCluster(
@@ -45,7 +40,6 @@ class LocalSparkCluster(
     coresPerWorker: Int,
     memoryPerWorker: Int,
     conf: SparkConf)
->>>>>>> githubspark/branch-1.3
   extends Logging {
 
   private val localHostname = Utils.localHostName()
@@ -55,17 +49,11 @@ class LocalSparkCluster(
   def start(): Array[String] = {
     logInfo("Starting a local Spark cluster with " + numWorkers + " workers.")
 
-<<<<<<< HEAD
-    /* Start the Master */
-    val conf = new SparkConf(false)
-    val (masterSystem, masterPort, _) = Master.startSystemAndActor(localHostname, 0, 0, conf)
-=======
     // Disable REST server on Master in this mode unless otherwise specified
     val _conf = conf.clone().setIfMissing("spark.master.rest.enabled", "false")
 
     /* Start the Master */
     val (masterSystem, masterPort, _, _) = Master.startSystemAndActor(localHostname, 0, 0, _conf)
->>>>>>> githubspark/branch-1.3
     masterActorSystems += masterSystem
     val masterUrl = "spark://" + localHostname + ":" + masterPort
     val masters = Array(masterUrl)
@@ -73,11 +61,7 @@ class LocalSparkCluster(
     /* Start the Workers */
     for (workerNum <- 1 to numWorkers) {
       val (workerSystem, _) = Worker.startSystemAndActor(localHostname, 0, 0, coresPerWorker,
-<<<<<<< HEAD
-        memoryPerWorker, masters, null, Some(workerNum))
-=======
         memoryPerWorker, masters, null, Some(workerNum), _conf)
->>>>>>> githubspark/branch-1.3
       workerActorSystems += workerSystem
     }
 

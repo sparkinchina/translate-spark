@@ -22,10 +22,7 @@ import java.util.jar.JarFile
 
 import scala.collection.mutable.{ArrayBuffer, HashMap}
 
-<<<<<<< HEAD
-=======
 import org.apache.spark.deploy.SparkSubmitAction._
->>>>>>> githubspark/branch-1.3
 import org.apache.spark.util.Utils
 
 /**
@@ -43,11 +40,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
   var driverExtraClassPath: String = null
   var driverExtraLibraryPath: String = null
   var driverExtraJavaOptions: String = null
-<<<<<<< HEAD
-  var driverCores: String = null
-  var supervise: Boolean = false
-=======
->>>>>>> githubspark/branch-1.3
   var queue: String = null
   var numExecutors: String = null
   var files: String = null
@@ -57,12 +49,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
   var name: String = null
   var childArgs: ArrayBuffer[String] = new ArrayBuffer[String]()
   var jars: String = null
-<<<<<<< HEAD
-  var verbose: Boolean = false
-  var isPython: Boolean = false
-  var pyFiles: String = null
-  val sparkProperties: HashMap[String, String] = new HashMap[String, String]()
-=======
   var packages: String = null
   var repositories: String = null
   var ivyRepoPath: String = null
@@ -79,7 +65,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
   var submissionToKill: String = null
   var submissionToRequestStatusFor: String = null
   var useRest: Boolean = true // used internally
->>>>>>> githubspark/branch-1.3
 
   /** Default properties present in the currently defined defaults file. */
   lazy val defaultSparkProperties: HashMap[String, String] = {
@@ -105,11 +90,7 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
   // Use `sparkProperties` map along with env vars to fill in any missing parameters
   loadEnvironmentArguments()
 
-<<<<<<< HEAD
-  checkRequiredArguments()
-=======
   validateArguments()
->>>>>>> githubspark/branch-1.3
 
   /**
    * Merge values from the default properties file with those specified through --conf.
@@ -134,8 +115,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
       .orElse(sparkProperties.get("spark.master"))
       .orElse(env.get("MASTER"))
       .orNull
-<<<<<<< HEAD
-=======
     driverExtraClassPath = Option(driverExtraClassPath)
       .orElse(sparkProperties.get("spark.driver.extraClassPath"))
       .orNull
@@ -145,17 +124,13 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
     driverExtraLibraryPath = Option(driverExtraLibraryPath)
       .orElse(sparkProperties.get("spark.driver.extraLibraryPath"))
       .orNull
->>>>>>> githubspark/branch-1.3
     driverMemory = Option(driverMemory)
       .orElse(sparkProperties.get("spark.driver.memory"))
       .orElse(env.get("SPARK_DRIVER_MEMORY"))
       .orNull
-<<<<<<< HEAD
-=======
     driverCores = Option(driverCores)
       .orElse(sparkProperties.get("spark.driver.cores"))
       .orNull
->>>>>>> githubspark/branch-1.3
     executorMemory = Option(executorMemory)
       .orElse(sparkProperties.get("spark.executor.memory"))
       .orElse(env.get("SPARK_EXECUTOR_MEMORY"))
@@ -168,10 +143,7 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
       .orNull
     name = Option(name).orElse(sparkProperties.get("spark.app.name")).orNull
     jars = Option(jars).orElse(sparkProperties.get("spark.jars")).orNull
-<<<<<<< HEAD
-=======
     ivyRepoPath = sparkProperties.get("spark.jars.ivy").orNull
->>>>>>> githubspark/branch-1.3
     deployMode = Option(deployMode).orElse(env.get("DEPLOY_MODE")).orNull
     numExecutors = Option(numExecutors)
       .getOrElse(sparkProperties.get("spark.executor.instances").orNull)
@@ -201,25 +173,16 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
     // Global defaults. These should be keep to minimum to avoid confusing behavior.
     master = Option(master).getOrElse("local[*]")
 
-<<<<<<< HEAD
-=======
     // In YARN mode, app name can be set via SPARK_YARN_APP_NAME (see SPARK-5222)
     if (master.startsWith("yarn")) {
       name = Option(name).orElse(env.get("SPARK_YARN_APP_NAME")).orNull
     }
 
->>>>>>> githubspark/branch-1.3
     // Set name from main class if not given
     name = Option(name).orElse(Option(mainClass)).orNull
     if (name == null && primaryResource != null) {
       name = Utils.stripDirectory(primaryResource)
     }
-<<<<<<< HEAD
-  }
-
-  /** Ensure that required fields exists. Call this only once all defaults are loaded. */
-  private def checkRequiredArguments(): Unit = {
-=======
 
     // Action should be SUBMIT unless otherwise specified
     action = Option(action).getOrElse(SUBMIT)
@@ -235,7 +198,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
   }
 
   private def validateSubmitArguments(): Unit = {
->>>>>>> githubspark/branch-1.3
     if (args.length == 0) {
       printUsageAndExit(-1)
     }
@@ -249,21 +211,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
       SparkSubmit.printErrorAndExit("--py-files given but primary resource is not a Python script")
     }
 
-<<<<<<< HEAD
-    // Require all python files to be local, so we can add them to the PYTHONPATH
-    if (isPython) {
-      if (Utils.nonLocalPaths(primaryResource).nonEmpty) {
-        SparkSubmit.printErrorAndExit(s"Only local python files are supported: $primaryResource")
-      }
-      val nonLocalPyFiles = Utils.nonLocalPaths(pyFiles).mkString(",")
-      if (nonLocalPyFiles.nonEmpty) {
-        SparkSubmit.printErrorAndExit(
-          s"Only local additional python files are supported: $nonLocalPyFiles")
-      }
-    }
-
-=======
->>>>>>> githubspark/branch-1.3
     if (master.startsWith("yarn")) {
       val hasHadoopEnv = env.contains("HADOOP_CONF_DIR") || env.contains("YARN_CONF_DIR")
       if (!hasHadoopEnv && !Utils.isTesting) {
@@ -273,8 +220,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
     }
   }
 
-<<<<<<< HEAD
-=======
   private def validateKillArguments(): Unit = {
     if (!master.startsWith("spark://")) {
       SparkSubmit.printErrorAndExit("Killing submissions is only supported in standalone mode!")
@@ -298,7 +243,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
     master.startsWith("spark://") && deployMode == "cluster"
   }
 
->>>>>>> githubspark/branch-1.3
   override def toString = {
     s"""Parsed arguments:
     |  master                  $master
@@ -323,11 +267,8 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
     |  name                    $name
     |  childArgs               [${childArgs.mkString(" ")}]
     |  jars                    $jars
-<<<<<<< HEAD
-=======
     |  packages                $packages
     |  repositories            $repositories
->>>>>>> githubspark/branch-1.3
     |  verbose                 $verbose
     |
     |Spark properties used, including those specified through
@@ -410,8 +351,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         propertiesFile = value
         parse(tail)
 
-<<<<<<< HEAD
-=======
       case ("--kill") :: value :: tail =>
         submissionToKill = value
         if (action != null) {
@@ -428,7 +367,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         action = REQUEST_STATUS
         parse(tail)
 
->>>>>>> githubspark/branch-1.3
       case ("--supervise") :: tail =>
         supervise = true
         parse(tail)
@@ -453,8 +391,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         jars = Utils.resolveURIs(value)
         parse(tail)
 
-<<<<<<< HEAD
-=======
       case ("--packages") :: value :: tail =>
         packages = value
         parse(tail)
@@ -463,7 +399,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         repositories = value
         parse(tail)
 
->>>>>>> githubspark/branch-1.3
       case ("--conf" | "-c") :: value :: tail =>
         value.split("=", 2).toSeq match {
           case Seq(k, v) => sparkProperties(k) = v
@@ -471,13 +406,10 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         }
         parse(tail)
 
-<<<<<<< HEAD
-=======
       case ("--proxy-user") :: value :: tail =>
         proxyUser = value
         parse(tail)
 
->>>>>>> githubspark/branch-1.3
       case ("--help" | "-h") :: tail =>
         printUsageAndExit(0)
 
@@ -485,12 +417,9 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         verbose = true
         parse(tail)
 
-<<<<<<< HEAD
-=======
       case ("--version") :: tail =>
         SparkSubmit.printVersionAndExit()
 
->>>>>>> githubspark/branch-1.3
       case EQ_SEPARATED_OPT(opt, value) :: tail =>
         parse(opt :: value :: tail)
 
@@ -517,14 +446,10 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
       outStream.println("Unknown/unsupported param " + unknownParam)
     }
     outStream.println(
-<<<<<<< HEAD
-      """Usage: spark-submit [options] <app jar | python file> [app options]
-=======
       """Usage: spark-submit [options] <app jar | python file> [app arguments]
         |Usage: spark-submit --kill [submission ID] --master [spark://...]
         |Usage: spark-submit --status [submission ID] --master [spark://...]
         |
->>>>>>> githubspark/branch-1.3
         |Options:
         |  --master MASTER_URL         spark://host:port, mesos://host:port, yarn, or local.
         |  --deploy-mode DEPLOY_MODE   Whether to launch the driver program locally ("client") or
@@ -534,8 +459,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         |  --name NAME                 A name of your application.
         |  --jars JARS                 Comma-separated list of local jars to include on the driver
         |                              and executor classpaths.
-<<<<<<< HEAD
-=======
         |  --packages                  Comma-separated list of maven coordinates of jars to include
         |                              on the driver and executor classpaths. Will search the local
         |                              maven repo, then maven central and any additional remote
@@ -543,7 +466,6 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         |                              coordinates should be groupId:artifactId:version.
         |  --repositories              Comma-separated list of additional remote repositories to
         |                              search for the maven coordinates given with --packages.
->>>>>>> githubspark/branch-1.3
         |  --py-files PY_FILES         Comma-separated list of .zip, .egg, or .py files to place
         |                              on the PYTHONPATH for Python apps.
         |  --files FILES               Comma-separated list of files to be placed in the working
@@ -562,45 +484,30 @@ private[spark] class SparkSubmitArguments(args: Seq[String], env: Map[String, St
         |
         |  --executor-memory MEM       Memory per executor (e.g. 1000M, 2G) (Default: 1G).
         |
-<<<<<<< HEAD
-        |  --help, -h                  Show this help message and exit
-        |  --verbose, -v               Print additional debug output
-=======
         |  --proxy-user NAME           User to impersonate when submitting the application.
         |
         |  --help, -h                  Show this help message and exit
         |  --verbose, -v               Print additional debug output
         |  --version,                  Print the version of current Spark
->>>>>>> githubspark/branch-1.3
         |
         | Spark standalone with cluster deploy mode only:
         |  --driver-cores NUM          Cores for driver (Default: 1).
         |  --supervise                 If given, restarts the driver on failure.
-<<<<<<< HEAD
-=======
         |  --kill SUBMISSION_ID        If given, kills the driver specified.
         |  --status SUBMISSION_ID      If given, requests the status of the driver specified.
->>>>>>> githubspark/branch-1.3
         |
         | Spark standalone and Mesos only:
         |  --total-executor-cores NUM  Total cores for all executors.
         |
         | YARN-only:
-<<<<<<< HEAD
-=======
         |  --driver-cores NUM          Number of cores used by the driver, only in cluster mode
         |                              (Default: 1).
->>>>>>> githubspark/branch-1.3
         |  --executor-cores NUM        Number of cores per executor (Default: 1).
         |  --queue QUEUE_NAME          The YARN queue to submit to (Default: "default").
         |  --num-executors NUM         Number of executors to launch (Default: 2).
         |  --archives ARCHIVES         Comma separated list of archives to be extracted into the
-<<<<<<< HEAD
-        |                              working directory of each executor.""".stripMargin
-=======
         |                              working directory of each executor.
       """.stripMargin
->>>>>>> githubspark/branch-1.3
     )
     SparkSubmit.exitFn()
   }

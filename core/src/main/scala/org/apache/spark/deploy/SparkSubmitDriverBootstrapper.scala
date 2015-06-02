@@ -17,11 +17,6 @@
 
 package org.apache.spark.deploy
 
-<<<<<<< HEAD
-import java.io.File
-
-=======
->>>>>>> githubspark/branch-1.3
 import scala.collection.JavaConversions._
 
 import org.apache.spark.util.{RedirectThread, Utils}
@@ -167,11 +162,8 @@ private[spark] object SparkSubmitDriverBootstrapper {
       }
     }
     val returnCode = process.waitFor()
-<<<<<<< HEAD
-=======
     stdoutThread.join()
     stderrThread.join()
->>>>>>> githubspark/branch-1.3
     sys.exit(returnCode)
   }
 

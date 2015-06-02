@@ -18,15 +18,6 @@
 package org.apache.spark.deploy
 
 import java.io.{File, PrintStream}
-<<<<<<< HEAD
-import java.lang.reflect.{Modifier, InvocationTargetException}
-import java.net.URL
-
-import scala.collection.mutable.{ArrayBuffer, HashMap, Map}
-
-import org.apache.spark.executor.ExecutorURLClassLoader
-import org.apache.spark.util.Utils
-=======
 import java.lang.reflect.{InvocationTargetException, Modifier, UndeclaredThrowableException}
 import java.net.URL
 import java.security.PrivilegedExceptionAction
@@ -58,14 +49,12 @@ private[spark] object SparkSubmitAction extends Enumeration {
   type SparkSubmitAction = Value
   val SUBMIT, KILL, REQUEST_STATUS = Value
 }
->>>>>>> githubspark/branch-1.3
 
 /**
  * Main gateway of launching a Spark application.
  *
  * This program handles setting up the classpath with relevant Spark dependencies and provides
  * a layer over the different cluster managers and deploy modes that Spark supports.
-<<<<<<< HEAD
  *
  * 启动Spark应用的主要入口。
  *
@@ -79,8 +68,6 @@ private[spark] object SparkSubmitAction extends Enumeration {
  * --executor-memory 20G \
  * --total-executor-cores 100 \
  * /path/to/examples.jar \
-=======
->>>>>>> githubspark/branch-1.3
  */
 object SparkSubmit {
 
@@ -107,25 +94,14 @@ object SparkSubmit {
   private val CLASS_NOT_FOUND_EXIT_STATUS = 101
 
   // Exposed for testing
-<<<<<<< HEAD
-  private[spark] var exitFn: () => Unit = () => System.exit(-1)
-  private[spark] var printStream: PrintStream = System.err
-  private[spark] def printWarning(str: String) = printStream.println("Warning: " + str)
-  private[spark] def printErrorAndExit(str: String) = {
-=======
   private[spark] var exitFn: () => Unit = () => System.exit(1)
   private[spark] var printStream: PrintStream = System.err
   private[spark] def printWarning(str: String): Unit = printStream.println("Warning: " + str)
   private[spark] def printErrorAndExit(str: String): Unit = {
->>>>>>> githubspark/branch-1.3
     printStream.println("Error: " + str)
     printStream.println("Run with --help for usage help or --verbose for debug output")
     exitFn()
   }
-<<<<<<< HEAD
-
-  def main(args: Array[String]) {
-=======
   private[spark] def printVersionAndExit(): Unit = {
     printStream.println("""Welcome to
       ____              __
@@ -139,28 +115,10 @@ object SparkSubmit {
   }
 
   def main(args: Array[String]): Unit = {
->>>>>>> githubspark/branch-1.3
     val appArgs = new SparkSubmitArguments(args)
     if (appArgs.verbose) {
       printStream.println(appArgs)
     }
-<<<<<<< HEAD
-    val (childArgs, classpath, sysProps, mainClass) = createLaunchEnv(appArgs)
-    launch(childArgs, classpath, sysProps, mainClass, appArgs.verbose)
-  }
-
-  /**
-   * @return a tuple containing
-   *           (1) the arguments for the child process,
-   *           (2) a list of classpath entries for the child,
-   *           (3) a list of system properties and env vars, and
-   *           (4) the main class for the child
-   */
-  private[spark] def createLaunchEnv(args: SparkSubmitArguments)
-      : (ArrayBuffer[String], ArrayBuffer[String], Map[String, String], String) = {
-
-    // Values to return
-=======
     appArgs.action match {
       case SparkSubmitAction.SUBMIT => submit(appArgs)
       case SparkSubmitAction.KILL => kill(appArgs)
@@ -257,7 +215,6 @@ object SparkSubmit {
   private[spark] def prepareSubmitEnvironment(args: SparkSubmitArguments)
       : (Seq[String], Seq[String], Map[String, String], String) = {
     // Return values
->>>>>>> githubspark/branch-1.3
     val childArgs = new ArrayBuffer[String]()
     val childClasspath = new ArrayBuffer[String]()
     val sysProps = new HashMap[String, String]()
@@ -306,8 +263,6 @@ object SparkSubmit {
       }
     }
 
-<<<<<<< HEAD
-=======
     val isYarnCluster = clusterManager == YARN && deployMode == CLUSTER
 
     // Resolve maven dependencies if there are any and add classpath to jars. Add them to py-files
@@ -342,17 +297,10 @@ object SparkSubmit {
       }
     }
 
->>>>>>> githubspark/branch-1.3
     // The following modes are not supported or applicable
     (clusterManager, deployMode) match {
       case (MESOS, CLUSTER) =>
         printErrorAndExit("Cluster deploy mode is currently not supported for Mesos clusters.")
-<<<<<<< HEAD
-      case (_, CLUSTER) if args.isPython =>
-        printErrorAndExit("Cluster deploy mode is currently not supported for python applications.")
-      case (_, CLUSTER) if isShell(args.primaryResource) =>
-        printErrorAndExit("Cluster deploy mode is not applicable to Spark shells.")
-=======
       case (STANDALONE, CLUSTER) if args.isPython =>
         printErrorAndExit("Cluster deploy mode is currently not supported for python " +
           "applications on standalone clusters.")
@@ -362,21 +310,13 @@ object SparkSubmit {
         printErrorAndExit("Cluster deploy mode is not applicable to Spark SQL shell.")
       case (_, CLUSTER) if isThriftServer(args.mainClass) =>
         printErrorAndExit("Cluster deploy mode is not applicable to Spark Thrift server.")
->>>>>>> githubspark/branch-1.3
       case _ =>
     }
 
     // If we're running a python app, set the main class to our specific python runner
-<<<<<<< HEAD
-    if (args.isPython) {
-      if (args.primaryResource == PYSPARK_SHELL) {
-        args.mainClass = "py4j.GatewayServer"
-        args.childArgs = ArrayBuffer("--die-on-broken-pipe", "0")
-=======
     if (args.isPython && deployMode == CLIENT) {
       if (args.primaryResource == PYSPARK_SHELL) {
         args.mainClass = "org.apache.spark.api.python.PythonGatewayServer"
->>>>>>> githubspark/branch-1.3
       } else {
         // If a python file is provided, add it to the child arguments and list of files to deploy.
         // Usage: PythonAppRunner <main python file> <extra python files> [app arguments]
@@ -390,8 +330,6 @@ object SparkSubmit {
       }
     }
 
-<<<<<<< HEAD
-=======
     // In yarn-cluster mode for a python app, add primary resource and pyFiles to files
     // that can be distributed with the job
     if (args.isPython && isYarnCluster) {
@@ -399,7 +337,6 @@ object SparkSubmit {
       args.files = mergeFileLists(args.files, args.pyFiles)
     }
 
->>>>>>> githubspark/branch-1.3
     // Special flag to avoid deprecation warnings at the client
     sysProps("SPARK_SUBMIT") = "true"
 
@@ -411,10 +348,7 @@ object SparkSubmit {
       OptionAssigner(args.master, ALL_CLUSTER_MGRS, ALL_DEPLOY_MODES, sysProp = "spark.master"),
       OptionAssigner(args.name, ALL_CLUSTER_MGRS, ALL_DEPLOY_MODES, sysProp = "spark.app.name"),
       OptionAssigner(args.jars, ALL_CLUSTER_MGRS, CLIENT, sysProp = "spark.jars"),
-<<<<<<< HEAD
-=======
       OptionAssigner(args.ivyRepoPath, ALL_CLUSTER_MGRS, CLIENT, sysProp = "spark.jars.ivy"),
->>>>>>> githubspark/branch-1.3
       OptionAssigner(args.driverMemory, ALL_CLUSTER_MGRS, CLIENT,
         sysProp = "spark.driver.memory"),
       OptionAssigner(args.driverExtraClassPath, ALL_CLUSTER_MGRS, ALL_DEPLOY_MODES,
@@ -425,11 +359,6 @@ object SparkSubmit {
         sysProp = "spark.driver.extraLibraryPath"),
 
       // Standalone cluster only
-<<<<<<< HEAD
-      OptionAssigner(args.jars, STANDALONE, CLUSTER, sysProp = "spark.jars"),
-      OptionAssigner(args.driverMemory, STANDALONE, CLUSTER, clOption = "--memory"),
-      OptionAssigner(args.driverCores, STANDALONE, CLUSTER, clOption = "--cores"),
-=======
       // Do not set CL arguments here because there are multiple possibilities for the main class
       OptionAssigner(args.jars, STANDALONE, CLUSTER, sysProp = "spark.jars"),
       OptionAssigner(args.ivyRepoPath, STANDALONE, CLUSTER, sysProp = "spark.jars.ivy"),
@@ -437,7 +366,6 @@ object SparkSubmit {
       OptionAssigner(args.driverCores, STANDALONE, CLUSTER, sysProp = "spark.driver.cores"),
       OptionAssigner(args.supervise.toString, STANDALONE, CLUSTER,
         sysProp = "spark.driver.supervise"),
->>>>>>> githubspark/branch-1.3
 
       // Yarn client only
       OptionAssigner(args.queue, YARN, CLIENT, sysProp = "spark.yarn.queue"),
@@ -449,10 +377,7 @@ object SparkSubmit {
       // Yarn cluster only
       OptionAssigner(args.name, YARN, CLUSTER, clOption = "--name"),
       OptionAssigner(args.driverMemory, YARN, CLUSTER, clOption = "--driver-memory"),
-<<<<<<< HEAD
-=======
       OptionAssigner(args.driverCores, YARN, CLUSTER, clOption = "--driver-cores"),
->>>>>>> githubspark/branch-1.3
       OptionAssigner(args.queue, YARN, CLUSTER, clOption = "--queue"),
       OptionAssigner(args.numExecutors, YARN, CLUSTER, clOption = "--num-executors"),
       OptionAssigner(args.executorMemory, YARN, CLUSTER, clOption = "--executor-memory"),
@@ -481,10 +406,6 @@ object SparkSubmit {
       if (args.childArgs != null) { childArgs ++= args.childArgs }
     }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> githubspark/branch-1.3
     // Map all arguments to command-line options or system properties for our chosen mode
     for (opt <- options) {
       if (opt.value != null &&
@@ -498,10 +419,6 @@ object SparkSubmit {
     // Add the application jar automatically so the user doesn't have to call sc.addJar
     // For YARN cluster mode, the jar is already distributed on each node as "app.jar"
     // For python files, the primary resource is already distributed as a regular file
-<<<<<<< HEAD
-    val isYarnCluster = clusterManager == YARN && deployMode == CLUSTER
-=======
->>>>>>> githubspark/branch-1.3
     if (!isYarnCluster && !args.isPython) {
       var jars = sysProps.get("spark.jars").map(x => x.split(",").toSeq).getOrElse(Seq.empty)
       if (isUserJar(args.primaryResource)) {
@@ -510,18 +427,8 @@ object SparkSubmit {
       sysProps.put("spark.jars", jars.mkString(","))
     }
 
-<<<<<<< HEAD
-    // In standalone-cluster mode, use Client as a wrapper around the user class
-    // standalone-cluster 模式的部署类是 org.apache.spark.deploy.Client
-    if (clusterManager == STANDALONE && deployMode == CLUSTER) {
-      childMainClass = "org.apache.spark.deploy.Client"
-      if (args.supervise) {
-        childArgs += "--supervise"
-      }
-      childArgs += "launch"
-      childArgs += (args.master, args.primaryResource, args.mainClass)
-=======
     // In standalone cluster mode, use the REST client to submit the application (Spark 1.3+).
+    // standalone-cluster 模式的部署类是 org.apache.spark.deploy.Client
     // All Spark parameters are expected to be passed to the client through system properties.
     if (args.isStandaloneCluster) {
       if (args.useRest) {
@@ -536,7 +443,6 @@ object SparkSubmit {
         childArgs += "launch"
         childArgs += (args.master, args.primaryResource, args.mainClass)
       }
->>>>>>> githubspark/branch-1.3
       if (args.childArgs != null) {
         childArgs ++= args.childArgs
       }
@@ -545,12 +451,6 @@ object SparkSubmit {
     // In yarn-cluster mode, use yarn.Client as a wrapper around the user class
     if (isYarnCluster) {
       childMainClass = "org.apache.spark.deploy.yarn.Client"
-<<<<<<< HEAD
-      if (args.primaryResource != SPARK_INTERNAL) {
-        childArgs += ("--jar", args.primaryResource)
-      }
-      childArgs += ("--class", args.mainClass)
-=======
       if (args.isPython) {
         val mainPyFile = new Path(args.primaryResource).getName
         childArgs += ("--primary-py-file", mainPyFile)
@@ -567,7 +467,6 @@ object SparkSubmit {
         }
         childArgs += ("--class", args.mainClass)
       }
->>>>>>> githubspark/branch-1.3
       if (args.childArgs != null) {
         args.childArgs.foreach { arg => childArgs += ("--arg", arg) }
       }
@@ -580,11 +479,7 @@ object SparkSubmit {
 
     // Ignore invalid spark.driver.host in cluster modes.
     if (deployMode == CLUSTER) {
-<<<<<<< HEAD
-      sysProps -= ("spark.driver.host")
-=======
       sysProps -= "spark.driver.host"
->>>>>>> githubspark/branch-1.3
     }
 
     // Resolve paths in certain spark properties
@@ -613,14 +508,6 @@ object SparkSubmit {
     (childArgs, childClasspath, sysProps, childMainClass)
   }
 
-<<<<<<< HEAD
-  private def launch(
-      childArgs: ArrayBuffer[String],
-      childClasspath: ArrayBuffer[String],
-      sysProps: Map[String, String],
-      childMainClass: String,
-      verbose: Boolean = false) {
-=======
   /**
    * Run the main method of the child class using the provided launch environment.
    *
@@ -633,7 +520,6 @@ object SparkSubmit {
       sysProps: Map[String, String],
       childMainClass: String,
       verbose: Boolean): Unit = {
->>>>>>> githubspark/branch-1.3
     if (verbose) {
       printStream.println(s"Main class:\n$childMainClass")
       printStream.println(s"Arguments:\n${childArgs.mkString("\n")}")
@@ -642,10 +528,6 @@ object SparkSubmit {
       printStream.println("\n")
     }
 
-<<<<<<< HEAD
-    val loader = new ExecutorURLClassLoader(new Array[URL](0),
-      Thread.currentThread.getContextClassLoader)
-=======
     val loader =
       if (sysProps.getOrElse("spark.driver.userClassPathFirst", "false").toBoolean) {
         new ChildFirstURLClassLoader(new Array[URL](0),
@@ -654,7 +536,6 @@ object SparkSubmit {
         new MutableURLClassLoader(new Array[URL](0),
           Thread.currentThread.getContextClassLoader)
       }
->>>>>>> githubspark/branch-1.3
     Thread.currentThread.setContextClassLoader(loader)
 
     for (jar <- childClasspath) {
@@ -673,42 +554,21 @@ object SparkSubmit {
       case e: ClassNotFoundException =>
         e.printStackTrace(printStream)
         if (childMainClass.contains("thriftserver")) {
-<<<<<<< HEAD
-          println(s"Failed to load main class $childMainClass.")
-          println("You need to build Spark with -Phive and -Phive-thriftserver.")
-=======
           printStream.println(s"Failed to load main class $childMainClass.")
           printStream.println("You need to build Spark with -Phive and -Phive-thriftserver.")
->>>>>>> githubspark/branch-1.3
         }
         System.exit(CLASS_NOT_FOUND_EXIT_STATUS)
     }
 
-<<<<<<< HEAD
-=======
     // SPARK-4170
     if (classOf[scala.App].isAssignableFrom(mainClass)) {
       printWarning("Subclasses of scala.App may not work correctly. Use a main() method instead.")
     }
 
->>>>>>> githubspark/branch-1.3
     val mainMethod = mainClass.getMethod("main", new Array[String](0).getClass)
     if (!Modifier.isStatic(mainMethod.getModifiers)) {
       throw new IllegalStateException("The main method in the given main class must be static")
     }
-<<<<<<< HEAD
-    try {
-      mainMethod.invoke(null, childArgs.toArray)
-    } catch {
-      case e: InvocationTargetException => e.getCause match {
-        case cause: Throwable => throw cause
-        case null => throw e
-      }
-    }
-  }
-
-  private def addJarToClasspath(localJar: String, loader: ExecutorURLClassLoader) {
-=======
 
     def findCause(t: Throwable): Throwable = t match {
       case e: UndeclaredThrowableException =>
@@ -728,7 +588,6 @@ object SparkSubmit {
   }
 
   private def addJarToClasspath(localJar: String, loader: MutableURLClassLoader) {
->>>>>>> githubspark/branch-1.3
     val uri = Utils.resolveURI(localJar)
     uri.getScheme match {
       case "file" | "local" =>
@@ -758,8 +617,6 @@ object SparkSubmit {
   }
 
   /**
-<<<<<<< HEAD
-=======
    * Return whether the given main class represents a sql shell.
    */
   private[spark] def isSqlShell(mainClass: String): Boolean = {
@@ -774,7 +631,6 @@ object SparkSubmit {
   }
 
   /**
->>>>>>> githubspark/branch-1.3
    * Return whether the given primary resource requires running python.
    */
   private[spark] def isPython(primaryResource: String): Boolean = {
@@ -797,8 +653,6 @@ object SparkSubmit {
   }
 }
 
-<<<<<<< HEAD
-=======
 /** Provides utility functions to be used inside SparkSubmit. */
 private[spark] object SparkSubmitUtils {
 
@@ -1022,16 +876,11 @@ private[spark] object SparkSubmitUtils {
   }
 }
 
->>>>>>> githubspark/branch-1.3
 /**
  * Provides an indirection layer for passing arguments as system properties or flags to
  * the user's driver program or to downstream launcher tools.
  */
-<<<<<<< HEAD
-private[spark] case class OptionAssigner(
-=======
 private case class OptionAssigner(
->>>>>>> githubspark/branch-1.3
     value: String,
     clusterManager: Int,
     deployMode: Int,
