@@ -403,6 +403,10 @@ class RowMatrix(
    * @param B a local matrix whose number of rows must match the number of columns of this matrix
    * @return a [[org.apache.spark.mllib.linalg.distributed.RowMatrix]] representing the product,
    *         which preserves partitioning
+   *
+   * 矩阵乘积，以本地矩阵作为右边矩阵。
+   * 说明：将传入的矩阵参数转化为密集矩阵，并进行广播。
+   *       因此，在使用时，应该考虑将较小的矩阵作为该乘积方法的参数传入。
    */
   def multiply(B: Matrix): RowMatrix = {
     val n = numCols().toInt
