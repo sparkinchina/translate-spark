@@ -19,10 +19,7 @@ package org.apache.spark.executor
 
 import java.io.File
 import java.lang.management.ManagementFactory
-<<<<<<< HEAD
-=======
 import java.net.URL
->>>>>>> githubspark/branch-1.3
 import java.nio.ByteBuffer
 import java.util.concurrent._
 
@@ -120,7 +117,7 @@ private[spark] class Executor(
   // Maintains the list of running tasks.
   private val runningTasks = new ConcurrentHashMap[Long, TaskRunner]
 
-//  向Driver发送心跳更新Block信息
+  //  向Driver发送心跳更新Block信息
   startDriverHeartbeater()
 
   def launchTask(
