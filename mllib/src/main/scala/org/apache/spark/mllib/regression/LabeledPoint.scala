@@ -59,7 +59,7 @@ object LabeledPoint {
         case other =>
           throw new SparkException(s"Cannot parse $other.")
       }
-    } else { // dense format used before v1.0
+    } else { // dense format used before v1.0  在 v1.0 版本之前使用的密集型格式
       val parts = s.split(',')
       val label = java.lang.Double.parseDouble(parts(0))
       val features = Vectors.dense(parts(1).trim().split(' ').map(java.lang.Double.parseDouble))
