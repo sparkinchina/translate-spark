@@ -28,6 +28,10 @@ import org.apache.spark.SparkException
  *
  * @param label Label for this data point.
  * @param features List of features for this data point.
+ *
+ * 表示一个数据点的特性和标签的类。
+ * label ： 该数据点的标签
+ * features ：该数据点的特征列表
  */
 @BeanInfo
 case class LabeledPoint(label: Double, features: Vector) {
@@ -38,6 +42,9 @@ case class LabeledPoint(label: Double, features: Vector) {
 
 /**
  * Parser for [[org.apache.spark.mllib.regression.LabeledPoint]].
+ *
+ * LabeledPoint 的解析器，可以从对应字符串转换得到该类。
+ * 说明：可以通过 unapply 自动解析
  */
 object LabeledPoint {
   /**
