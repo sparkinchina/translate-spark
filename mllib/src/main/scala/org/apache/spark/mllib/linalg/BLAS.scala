@@ -40,6 +40,8 @@ private[spark] object BLAS extends Serializable with Logging {
 
   /**
    * y += a * x
+   *
+   * 说明： 仅支持 y 的类型为 DenseVector 的情况。
    */
   def axpy(a: Double, x: Vector, y: Vector): Unit = {
     require(x.size == y.size)
@@ -94,6 +96,8 @@ private[spark] object BLAS extends Serializable with Logging {
 
   /**
    * dot(x, y)
+   *
+   * 说明： 仅支持 y 的类型为 DenseVector 的情况。
    */
   def dot(x: Vector, y: Vector): Double = {
     require(x.size == y.size,
@@ -170,6 +174,8 @@ private[spark] object BLAS extends Serializable with Logging {
 
   /**
    * y = x
+   *
+   * 说明： 仅支持 y 的类型为 DenseVector 的情况。
    */
   def copy(x: Vector, y: Vector): Unit = {
     val n = y.size

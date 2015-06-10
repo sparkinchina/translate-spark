@@ -35,9 +35,13 @@ sealed trait Matrix extends Serializable {
   def numCols: Int
 
   /** Flag that keeps track whether the matrix is transposed or not. False by default. */
+  /** 用于跟踪矩阵是否转置的标识信息。 默认为 False。 */
   val isTransposed: Boolean = false
 
   /** Converts to a dense array in column major. */
+  /**  以列主序方式将矩阵转换为一个密集数组
+  说明：矩阵存储方式有两种，一种是“行主序（row-major order）/行优先”，
+        另一种就是“列主序（column-major order）/列优先” */
   def toArray: Array[Double] = {
     val newArray = new Array[Double](numRows * numCols)
     foreachActive { (i, j, v) =>
@@ -62,9 +66,11 @@ sealed trait Matrix extends Serializable {
   def copy: Matrix
 
   /** Transpose the Matrix. Returns a new `Matrix` instance sharing the same underlying data. */
+  /** 转置矩阵。 返回一个新的 `Matrix` 实例，该实例共享相同的底层数据。 */
   def transpose: Matrix
 
   /** Convenience method for `Matrix`-`DenseMatrix` multiplication. */
+  /** `Matrix`-`DenseMatrix` 的乘积的便捷方法。 */
   def multiply(y: DenseMatrix): DenseMatrix = {
     val C: DenseMatrix = DenseMatrix.zeros(numRows, y.numCols)
     BLAS.gemm(1.0, this, y, 0.0, C)
@@ -83,12 +89,18 @@ sealed trait Matrix extends Serializable {
 
   /** Map the values of this matrix using a function. Generates a new matrix. Performs the
     * function on only the backing array. For example, an operation such as addition or
-    * subtraction will only be performed on the non-zero values in a `SparseMatrix`. */
+    * subtraction will only be performed on the non-zero values in a `SparseMatrix`.
+    *
+    * 使用一个 function 来映射矩阵的values。 生成一个新的矩阵。 function 仅作用在底层数组上。
+    * 比如，在一个稀疏矩阵中，一个加法或减法的 function 将仅仅作用在非零的 values 上。*/
   private[mllib] def map(f: Double => Double): Matrix
 
   /** Update all the values of this matrix using the function f. Performed in-place on the
     * backing array. For example, an operation such as addition or subtraction will only be
-    * performed on the non-zero values in a `SparseMatrix`. */
+    * performed on the non-zero values in a `SparseMatrix`.
+    *
+    * 使用一个 function 来更新矩阵的 values。function function 仅作用在底层数组上，
+    * 同时会就地直接修改该数组，比如，在一个稀疏矩阵中，一个加法或减法的 function 将仅仅作用在非零的 values 上。*/
   private[mllib] def update(f: Double => Double): Matrix
 
   /**
@@ -118,6 +130,10 @@ sealed trait Matrix extends Serializable {
  * @param values matrix entries in column major if not transposed or in row major otherwise
  * @param isTransposed whether the matrix is transposed. If true, `values` stores the matrix in
  *                     row major.
+ *
+ * 列主序密集型矩阵。
+ * values  列主序时矩阵的值，如果既不是在转置状态也不是行主序矩阵的话。
+ * isTransposed 是否是转置矩阵。如果是的话， 矩阵的 "values" 将以行主序方式进行存储。
  */
 class DenseMatrix(
     val numRows: Int,
@@ -446,6 +462,7 @@ class SparseMatrix(
     this
   }
 
+  // 底层使用相同的数据 values， 同时修改行列信息和转置标识。
   override def transpose: SparseMatrix =
     new SparseMatrix(numCols, numRows, colPtrs, rowIndices, values, !isTransposed)
 

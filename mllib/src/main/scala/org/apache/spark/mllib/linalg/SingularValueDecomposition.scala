@@ -22,6 +22,8 @@ import org.apache.spark.annotation.Experimental
 /**
  * :: Experimental ::
  * Represents singular value decomposition (SVD) factors.
+ *
+ * 表示奇异值分解 的因子。
  */
 @Experimental
 case class SingularValueDecomposition[UType, VType](U: UType, s: Vector, V: VType)

@@ -190,6 +190,8 @@ private[spark] class VectorUDT extends UserDefinedType[Vector] {
  * Factory methods for [[org.apache.spark.mllib.linalg.Vector]].
  * We don't use the name `Vector` because Scala imports
  * [[scala.collection.immutable.Vector]] by default.
+ *
+ * 定义了 [[org.apache.spark.mllib.linalg.Vector]] 的工厂方法。
  */
 object Vectors {
 

@@ -50,6 +50,9 @@ import org.apache.spark.util.random.StratifiedSamplingUtils
 
 /**
  * Extra functions available on RDDs of (key, value) pairs through an implicit conversion.
+ * 通过隐式转换，在元素类型为 (key, value) 对的 RDDs 上提供的其他方法。
+ *
+ * 说明：常见的方法可以在官网的编程指南上得到中文翻译。
  */
 class PairRDDFunctions[K, V](self: RDD[(K, V)])
     (implicit kt: ClassTag[K], vt: ClassTag[V], ord: Ordering[K] = null)

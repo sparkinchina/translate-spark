@@ -29,6 +29,9 @@ import org.apache.spark.SparkException
  *  - number: a double in Java's floating number format
  *  - array: an array of numbers stored as `[v0,v1,...,vn]`
  *  - tuple: a list of numbers, arrays, or tuples stored as `(...)`
+ *
+ *  由三种类型组成的一个数字结构的简单解析器，三种类型为：
+ *
  */
 private[mllib] object NumericParser {
 

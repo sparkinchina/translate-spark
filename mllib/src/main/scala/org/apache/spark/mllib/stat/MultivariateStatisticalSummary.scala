@@ -21,16 +21,19 @@ import org.apache.spark.mllib.linalg.Vector
 
 /**
  * Trait for multivariate statistical summary of a data matrix.
+ * 提供一个数据矩阵的多元变量的统计汇总的特质
  */
 trait MultivariateStatisticalSummary {
 
   /**
    * Sample mean vector.
+   * 样本的均值向量
    */
   def mean: Vector
 
   /**
    * Sample variance vector. Should return a zero vector if the sample size is 1.
+   * 样本的方差向量。如果样本大小为1，应该返回一个零向量。
    */
   def variance: Vector
 
@@ -56,11 +59,13 @@ trait MultivariateStatisticalSummary {
 
   /**
    * Euclidean magnitude of each column
+   * L2 norm就是欧几里德距离
    */
   def normL2: Vector
 
   /**
    * L1 norm of each column
+   * L1 norm 就是绝对值相加,又称曼哈顿距离
    */
   def normL1: Vector
 }
