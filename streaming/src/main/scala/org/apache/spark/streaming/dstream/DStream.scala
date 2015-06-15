@@ -223,12 +223,14 @@ abstract class DStream[T: ClassTag] (
         " Please use DStream.checkpoint() to set the interval."
     )
 
+    // 指定 Checkpoint 的时间跨度时， 对应的 Checkpoint 目录必须已经定义
     assert(
      checkpointDuration == null || context.sparkContext.checkpointDir.isDefined,
       "The checkpoint directory has not been set. Please use StreamingContext.checkpoint()" +
       " or SparkContext.checkpoint() to set the checkpoint directory."
     )
 
+    // 指定 Checkpoint 的时间跨度时， 该时间跨度必须大于等于批数据时间间隔
     assert(
       checkpointDuration == null || checkpointDuration >= slideDuration,
       "The checkpoint interval for " + this.getClass.getSimpleName + " has been set to " +
@@ -236,6 +238,7 @@ abstract class DStream[T: ClassTag] (
         "Please set it to at least " + slideDuration + "."
     )
 
+    // 指定 Checkpoint 的时间跨度时， 该时间跨度必须是批数据时间间隔的倍数
     assert(
       checkpointDuration == null || checkpointDuration.isMultipleOf(slideDuration),
       "The checkpoint interval for " + this.getClass.getSimpleName + " has been set to " +
@@ -243,6 +246,7 @@ abstract class DStream[T: ClassTag] (
         "Please set it to a multiple " + slideDuration + "."
     )
 
+    // 指定 Checkpoint 的时间跨度时， 必须设置缓存级别
     assert(
       checkpointDuration == null || storageLevel != StorageLevel.NONE,
       "" + this.getClass.getSimpleName + " has been marked for checkpointing but the storage " +
@@ -250,6 +254,7 @@ abstract class DStream[T: ClassTag] (
         "storage level to use memory for better checkpointing performance."
     )
 
+    // 指定 Checkpoint 的时间跨度时， remember 的时间跨度必须大于该时间跨度
     assert(
       checkpointDuration == null || rememberDuration > checkpointDuration,
       "The remember duration for " + this.getClass.getSimpleName + " has been set to " +
@@ -322,6 +327,8 @@ abstract class DStream[T: ClassTag] (
   /**
    * Get the RDD corresponding to the given time; either retrieve it from cache
    * or compute-and-cache it.
+   *
+   * 获取指定时间对应的 RDD； 从缓存中获取 RDD 或者计算 RDD 并缓存起来。
    */
   private[streaming] def getOrCompute(time: Time): Option[RDD[T]] = {
     // If RDD was already generated, then retrieve it from HashMap,
@@ -370,6 +377,9 @@ abstract class DStream[T: ClassTag] (
    * should not be called directly. This default implementation creates a job
    * that materializes the corresponding RDD. Subclasses of DStream may override this
    * to generate their own jobs.
+   *
+   * 根据给定时间生成一个 SparkStreaming job。 这是内部调用的方法，不应该直接使用。
+   * 说明：内部使用 SparkContext 来提交 job。
    */
   private[streaming] def generateJob(time: Time): Option[Job] = {
     getOrCompute(time) match {
@@ -389,6 +399,9 @@ abstract class DStream[T: ClassTag] (
    * This is an internal method that should not be called directly. This default
    * implementation clears the old generated RDDs. Subclasses of DStream may override
    * this to clear their own metadata along with the generated RDDs.
+   *
+   * 清理超出 DStream 的 `rememberDuration` 时间跨度的元数据。
+   *
    */
   private[streaming] def clearMetadata(time: Time) {
     val unpersistData = ssc.conf.getBoolean("spark.streaming.unpersist", true)
