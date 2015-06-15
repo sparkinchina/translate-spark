@@ -44,6 +44,7 @@ case class MatrixEntry(i: Long, j: Long, value: Double)
  *              columns will be determined by the max column index plus one.
  *
  * 以坐标格式表示的一个矩阵。
+ * 矩阵的实体为 RDD[MatrixEntry]，其中 MatrixEntry 对应了矩阵元素的下标 i,j，和元素的值。
  *
  * 当给定的行列数为非正值时，意味着该值未知，行列数将由最大的行列下标（index）值加 1 确定。
  */
