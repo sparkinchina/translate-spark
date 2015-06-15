@@ -44,6 +44,8 @@ import org.apache.spark.storage.StorageLevel
  *              be determined by the number of records in the RDD `rows`.
  * @param nCols number of columns. A non-positive value means unknown, and then the number of
  *              columns will be determined by the size of the first row.
+ *
+ *
  */
 @Experimental
 class RowMatrix(

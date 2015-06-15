@@ -42,6 +42,10 @@ case class MatrixEntry(i: Long, j: Long, value: Double)
  *              be determined by the max row index plus one.
  * @param nCols number of columns. A non-positive value means unknown, and then the number of
  *              columns will be determined by the max column index plus one.
+ *
+ * 以坐标格式表示的一个矩阵。
+ *
+ * 当给定的行列数为非正值时，意味着该值未知，行列数将由最大的行列下标（index）值加 1 确定。
  */
 @Experimental
 class CoordinateMatrix(
@@ -50,6 +54,7 @@ class CoordinateMatrix(
     private var nCols: Long) extends DistributedMatrix {
 
   /** Alternative constructor leaving matrix dimensions to be determined automatically. */
+  /** 自动确定矩阵维度的构造器 */
   def this(entries: RDD[MatrixEntry]) = this(entries, 0L, 0L)
 
   /** Gets or computes the number of columns. */
@@ -138,12 +143,18 @@ class CoordinateMatrix(
   }
 
   /** Determines the size by computing the max row/column index. */
+  /** 通过计算行/列下标的最大值确定矩阵大小 */
   private def computeSize() {
     // Reduce will throw an exception if `entries` is empty.
+    // 如果 `entries` 为空的话，Reduce 操作将会抛出异常
+    // 说明：先 map 后 reduce 操作内部对应分区记录的两次迭代操作，会增加计算开销，因此可以合并为一个操作
+    // entries.reduce { case (entry1, entry2) =>  (math.max(entry1.i, entry2.i), math.max(entry1.j, entry2.j)) }
     val (m1, n1) = entries.map(entry => (entry.i, entry.j)).reduce { case ((i1, j1), (i2, j2)) =>
       (math.max(i1, i2), math.max(j1, j2))
     }
+
     // There may be empty columns at the very right and empty rows at the very bottom.
+    // 由于根据计算最大 行/列 下标，并 + 1 作为行列维度时，矩阵最右边和最下边有可能出现空的列和行。
     nRows = math.max(nRows, m1 + 1L)
     nCols = math.max(nCols, n1 + 1L)
   }

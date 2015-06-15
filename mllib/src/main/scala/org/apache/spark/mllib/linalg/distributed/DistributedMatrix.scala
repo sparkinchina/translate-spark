@@ -21,6 +21,8 @@ import breeze.linalg.{DenseMatrix => BDM}
 
 /**
  * Represents a distributively stored matrix backed by one or more RDDs.
+ *
+ * 表示一个基于一个或多个 RDDs 进行分布式存储的矩阵。
  */
 trait DistributedMatrix extends Serializable {
 
@@ -31,5 +33,6 @@ trait DistributedMatrix extends Serializable {
   def numCols(): Long
 
   /** Collects data and assembles a local dense breeze matrix (for test only). */
+  /** 收集数据并聚集到一个本地密集 breeze 矩阵（仅用于测试）。*/
   private[mllib] def toBreeze(): BDM[Double]
 }
