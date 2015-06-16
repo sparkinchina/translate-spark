@@ -36,6 +36,9 @@ import org.apache.spark.sql.types._
  * Represents a numeric vector, whose index type is Int and value type is Double.
  *
  * Note: Users should not implement this interface.
+ *
+ * 表示一个数值型向量， 其下标对应为 Int， 其值对应为 Double。
+ *
  */
 @SQLUserDefinedType(udt = classOf[VectorUDT])
 sealed trait Vector extends Serializable {
@@ -106,6 +109,10 @@ sealed trait Vector extends Serializable {
    * @param f the function takes two parameters where the first parameter is the index of
    *          the vector with type `Int`, and the second parameter is the corresponding value
    *          with type `Double`.
+   *
+   * 将指定的 `f` 函数应用到稀疏和密集向量中的所有元素。
+   *
+   * `f` 函数 ：带有两个参数，第一个是类型为 `Int` 的向量下标，第二个参数为元素对应的值，类型为 `Double`。
    */
   private[spark] def foreachActive(f: (Int, Double) => Unit)
 }
@@ -117,6 +124,10 @@ sealed trait Vector extends Serializable {
  * via [[org.apache.spark.sql.DataFrame]].
  *
  * NOTE: This is currently private[spark] but will be made public later once it is stabilized.
+ *
+ * 为  [[Vector]] 提供的用户定义类型，可以更方便地通过 [[org.apache.spark.sql.DataFrame]] 和
+ * SQL 进行交互。
+ *
  */
 @DeveloperApi
 private[spark] class VectorUDT extends UserDefinedType[Vector] {
@@ -192,6 +203,7 @@ private[spark] class VectorUDT extends UserDefinedType[Vector] {
  * [[scala.collection.immutable.Vector]] by default.
  *
  * 定义了 [[org.apache.spark.mllib.linalg.Vector]] 的工厂方法。
+ * 由于 Scala 默认会导入 [[scala.collection.immutable.Vector]] ，因此我们不使用 `Vector` 名。
  */
 object Vectors {
 
@@ -214,6 +226,10 @@ object Vectors {
    * @param size vector size.
    * @param indices index array, must be strictly increasing.
    * @param values value array, must have the same length as indices.
+   *
+   * 通过提供下标（索引）数组和值数组，构建一个稀疏矩阵。
+   * 下标数组，必须是严格递增的。
+   * 值数组， 其长度必须和下标数组的长度相同。
    */
   def sparse(size: Int, indices: Array[Int], values: Array[Double]): Vector =
     new SparseVector(size, indices, values)
@@ -223,6 +239,9 @@ object Vectors {
    *
    * @param size vector size.
    * @param elements vector elements in (index, value) pairs.
+   *
+   * 使用未排序的 (index, value) 对构建一个稀疏 vector。
+   * elements 中的每个 (index, value) 对应了向量中的列坐标及其对应的值。
    */
   def sparse(size: Int, elements: Seq[(Int, Double)]): Vector = {
     require(size > 0)
@@ -262,6 +281,10 @@ object Vectors {
 
   /**
    * Parses a string resulted from [[Vector.toString]] into a [[Vector]].
+   *
+   * 向量的字符串显示，针对稀疏和密集矩阵对应有两种：
+   * -  `[v0,v1,...,vn]`
+   * - `(size, [indice0,indice1,...,indicen], [v0,v1,...,vn])`
    */
   def parse(s: String): Vector = {
     parseNumeric(NumericParser.parse(s))
@@ -305,6 +328,11 @@ object Vectors {
    * @param vector input vector.
    * @param p norm.
    * @return norm in L^p^ space.
+   *
+   * 返回向量的 p-范数。
+   *
+   * 扩展：
+   *    p-范数：即向量元素绝对值的p次方之和的1/p次幂，matlab调用函数norm(x, p)。
    */
   def norm(vector: Vector, p: Double): Double = {
     require(p >= 1.0)

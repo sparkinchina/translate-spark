@@ -31,11 +31,14 @@ import org.apache.spark.SparkException
  *  - tuple: a list of numbers, arrays, or tuples stored as `(...)`
  *
  *  由三种类型组成的一个数字结构的简单解析器，三种类型为：
- *
+ *  - 数值 ： double 类型的解析
+ *  - 数组 ： 存储形式为`[v0,v1,...,vn]` 的一个数值的数组
+ *  - 元组 ： 存储形式为`(...)`的一个由 数值、数组、或元组构成的列表
  */
 private[mllib] object NumericParser {
 
   /** Parses a string into a Double, an Array[Double], or a Seq[Any]. */
+  /** 将一个字符串解析为一个 double ， 一个 Array[Double] 或一个 Seq[Any] */
   def parse(s: String): Any = {
     val tokenizer = new StringTokenizer(s, "()[],", true)
     if (tokenizer.hasMoreTokens()) {

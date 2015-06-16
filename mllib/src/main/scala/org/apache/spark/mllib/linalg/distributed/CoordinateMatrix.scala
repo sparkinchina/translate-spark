@@ -29,6 +29,9 @@ import org.apache.spark.mllib.linalg.{Matrix, SparseMatrix, Vectors}
  * @param i row index
  * @param j column index
  * @param value value of the entry
+ *
+ * 表示分布式矩阵中的一个实体。
+ * 由行 / 列坐标和对应的值组成。
  */
 @Experimental
 case class MatrixEntry(i: Long, j: Long, value: Double)
@@ -44,7 +47,7 @@ case class MatrixEntry(i: Long, j: Long, value: Double)
  *              columns will be determined by the max column index plus one.
  *
  * 以坐标格式表示的一个矩阵。
- * 矩阵的实体为 RDD[MatrixEntry]，其中 MatrixEntry 对应了矩阵元素的下标 i,j，和元素的值。
+ * 矩阵的实体为 RDD[MatrixEntry]，其中 MatrixEntry 对应了矩阵元素的h行/列下标 i,j，和元素的值。
  *
  * 当给定的行列数为非正值时，意味着该值未知，行列数将由最大的行列下标（index）值加 1 确定。
  */
@@ -144,7 +147,7 @@ class CoordinateMatrix(
   }
 
   /** Determines the size by computing the max row/column index. */
-  /** 通过计算行/列下标的最大值确定矩阵大小 */
+  /** 通过计算 行/列 下标的最大值确定矩阵大小 */
   private def computeSize() {
     // Reduce will throw an exception if `entries` is empty.
     // 如果 `entries` 为空的话，Reduce 操作将会抛出异常
