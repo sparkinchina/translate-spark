@@ -135,10 +135,7 @@ abstract class RDD[T: ClassTag](
   /**
    * Implemented by subclasses to return how this RDD depends on parent RDDs. This method will only
    * be called once, so it is safe to implement a time-consuming computation in it.
-<<<<<<< HEAD
    * 只能被调用一次，计算RDD对父RDD的依赖
-=======
->>>>>>> githubspark/branch-1.3
    */
   protected def getDependencies: Seq[Dependency[_]] = deps
 
@@ -148,11 +145,8 @@ abstract class RDD[T: ClassTag](
   protected def getPreferredLocations(split: Partition): Seq[String] = Nil
 
   /** Optionally overridden by subclasses to specify how they are partitioned.
-    * 可选的，分区的方法，类似于mapreduce当中的Paritioner接口，控制key分到哪个reduce */
-   */
-  protected def getPreferredLocations(split: Partition): Seq[String] = Nil
-
-  /** Optionally overridden by subclasses to specify how they are partitioned. */
+    * 可选的，分区的方法，类似于mapreduce当中的Paritioner接口，控制key分到哪个reduce
+    */
   @transient val partitioner: Option[Partitioner] = None
 
   // =======================================================================
