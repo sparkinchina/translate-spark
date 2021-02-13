@@ -55,14 +55,14 @@ class UsageError(Exception):
 def parse_args():
     parser = OptionParser(
         usage="spark-ec2 [options] <action> <cluster_name>"
-        + "\n\n<action> can be: launch, destroy, login, stop, start, get-master, reboot-slaves",
+        + "\n\n<action> can be: launch, destroy, login, stop, start, get-main, reboot-subordinates",
         add_help_option=False)
     parser.add_option(
         "-h", "--help", action="help",
         help="Show this help message and exit")
     parser.add_option(
-        "-s", "--slaves", type="int", default=1,
-        help="Number of slaves to launch (default: %default)")
+        "-s", "--subordinates", type="int", default=1,
+        help="Number of subordinates to launch (default: %default)")
     parser.add_option(
         "-w", "--wait", type="int",
         help="DEPRECATED (no longer necessary) - Seconds to wait for nodes to start")
@@ -77,15 +77,15 @@ def parse_args():
         help="Type of instance to launch (default: %default). " +
              "WARNING: must be 64-bit; small instances won't work")
     parser.add_option(
-        "-m", "--master-instance-type", default="",
-        help="Master instance type (leave empty for same as instance-type)")
+        "-m", "--main-instance-type", default="",
+        help="Main instance type (leave empty for same as instance-type)")
     parser.add_option(
         "-r", "--region", default="us-east-1",
         help="EC2 region zone to launch instances in")
     parser.add_option(
         "-z", "--zone", default="",
         help="Availability zone to launch instances in, or 'all' to spread " +
-             "slaves across multiple (an additional $0.01/Gb for bandwidth" +
+             "subordinates across multiple (an additional $0.01/Gb for bandwidth" +
              "between zones applies)")
     parser.add_option("-a", "--ami", help="Amazon Machine Image ID to use")
     parser.add_option(
@@ -124,7 +124,7 @@ def parse_args():
         help="Swap space to set up per node, in MB (default: %default)")
     parser.add_option(
         "--spot-price", metavar="PRICE", type="float",
-        help="If specified, launch slaves as spot instances with the given " +
+        help="If specified, launch subordinates as spot instances with the given " +
              "maximum price (in dollars)")
     parser.add_option(
         "--ganglia", action="store_true", default=True,
@@ -140,14 +140,14 @@ def parse_args():
         "--delete-groups", action="store_true", default=False,
         help="When destroying a cluster, delete the security groups that were created")
     parser.add_option(
-        "--use-existing-master", action="store_true", default=False,
-        help="Launch fresh slaves, but use an existing stopped master if possible")
+        "--use-existing-main", action="store_true", default=False,
+        help="Launch fresh subordinates, but use an existing stopped main if possible")
     parser.add_option(
         "--worker-instances", type="int", default=1,
         help="Number of instances per worker: variable SPARK_WORKER_INSTANCES (default: %default)")
     parser.add_option(
-        "--master-opts", type="string", default="",
-        help="Extra options to give to master through SPARK_MASTER_OPTS variable " +
+        "--main-opts", type="string", default="",
+        help="Extra options to give to main through SPARK_MASTER_OPTS variable " +
              "(e.g -Dspark.worker.timeout=180)")
     parser.add_option(
         "--user-data", type="string", default="",
@@ -290,7 +290,7 @@ def get_spark_ami(opts):
 
 # Launch a cluster of the given name, by setting up its security groups,
 # and then starting new instances in them.
-# Returns a tuple of EC2 reservation objects for the master and slaves
+# Returns a tuple of EC2 reservation objects for the main and subordinates
 # Fails if there already instances running in the cluster's groups.
 def launch_cluster(conn, opts, cluster_name):
     if opts.identity_file is None:
@@ -306,38 +306,38 @@ def launch_cluster(conn, opts, cluster_name):
             user_data_content = user_data_file.read()
 
     print "Setting up security groups..."
-    master_group = get_or_make_group(conn, cluster_name + "-master")
-    slave_group = get_or_make_group(conn, cluster_name + "-slaves")
+    main_group = get_or_make_group(conn, cluster_name + "-main")
+    subordinate_group = get_or_make_group(conn, cluster_name + "-subordinates")
     authorized_address = opts.authorized_address
-    if master_group.rules == []:  # Group was just now created
-        master_group.authorize(src_group=master_group)
-        master_group.authorize(src_group=slave_group)
-        master_group.authorize('tcp', 22, 22, authorized_address)
-        master_group.authorize('tcp', 8080, 8081, authorized_address)
-        master_group.authorize('tcp', 18080, 18080, authorized_address)
-        master_group.authorize('tcp', 19999, 19999, authorized_address)
-        master_group.authorize('tcp', 50030, 50030, authorized_address)
-        master_group.authorize('tcp', 50070, 50070, authorized_address)
-        master_group.authorize('tcp', 60070, 60070, authorized_address)
-        master_group.authorize('tcp', 4040, 4045, authorized_address)
+    if main_group.rules == []:  # Group was just now created
+        main_group.authorize(src_group=main_group)
+        main_group.authorize(src_group=subordinate_group)
+        main_group.authorize('tcp', 22, 22, authorized_address)
+        main_group.authorize('tcp', 8080, 8081, authorized_address)
+        main_group.authorize('tcp', 18080, 18080, authorized_address)
+        main_group.authorize('tcp', 19999, 19999, authorized_address)
+        main_group.authorize('tcp', 50030, 50030, authorized_address)
+        main_group.authorize('tcp', 50070, 50070, authorized_address)
+        main_group.authorize('tcp', 60070, 60070, authorized_address)
+        main_group.authorize('tcp', 4040, 4045, authorized_address)
         if opts.ganglia:
-            master_group.authorize('tcp', 5080, 5080, authorized_address)
-    if slave_group.rules == []:  # Group was just now created
-        slave_group.authorize(src_group=master_group)
-        slave_group.authorize(src_group=slave_group)
-        slave_group.authorize('tcp', 22, 22, authorized_address)
-        slave_group.authorize('tcp', 8080, 8081, authorized_address)
-        slave_group.authorize('tcp', 50060, 50060, authorized_address)
-        slave_group.authorize('tcp', 50075, 50075, authorized_address)
-        slave_group.authorize('tcp', 60060, 60060, authorized_address)
-        slave_group.authorize('tcp', 60075, 60075, authorized_address)
+            main_group.authorize('tcp', 5080, 5080, authorized_address)
+    if subordinate_group.rules == []:  # Group was just now created
+        subordinate_group.authorize(src_group=main_group)
+        subordinate_group.authorize(src_group=subordinate_group)
+        subordinate_group.authorize('tcp', 22, 22, authorized_address)
+        subordinate_group.authorize('tcp', 8080, 8081, authorized_address)
+        subordinate_group.authorize('tcp', 50060, 50060, authorized_address)
+        subordinate_group.authorize('tcp', 50075, 50075, authorized_address)
+        subordinate_group.authorize('tcp', 60060, 60060, authorized_address)
+        subordinate_group.authorize('tcp', 60075, 60075, authorized_address)
 
     # Check if instances are already running in our groups
-    existing_masters, existing_slaves = get_existing_cluster(conn, opts, cluster_name,
+    existing_mains, existing_subordinates = get_existing_cluster(conn, opts, cluster_name,
                                                              die_on_error=False)
-    if existing_slaves or (existing_masters and not opts.use_existing_master):
+    if existing_subordinates or (existing_mains and not opts.use_existing_main):
         print >> stderr, ("ERROR: There are already instances running in " +
-                          "group %s or %s" % (master_group.name, slave_group.name))
+                          "group %s or %s" % (main_group.name, subordinate_group.name))
         sys.exit(1)
 
     # Figure out Spark AMI
@@ -377,29 +377,29 @@ def launch_cluster(conn, opts, cluster_name):
             name = '/dev/sd' + string.letters[i + 1]
             block_map[name] = dev
 
-    # Launch slaves
+    # Launch subordinates
     if opts.spot_price is not None:
         # Launch spot instances with the requested price
-        print ("Requesting %d slaves as spot instances with price $%.3f" %
-               (opts.slaves, opts.spot_price))
+        print ("Requesting %d subordinates as spot instances with price $%.3f" %
+               (opts.subordinates, opts.spot_price))
         zones = get_zones(conn, opts)
         num_zones = len(zones)
         i = 0
         my_req_ids = []
         for zone in zones:
-            num_slaves_this_zone = get_partition(opts.slaves, num_zones, i)
-            slave_reqs = conn.request_spot_instances(
+            num_subordinates_this_zone = get_partition(opts.subordinates, num_zones, i)
+            subordinate_reqs = conn.request_spot_instances(
                 price=opts.spot_price,
                 image_id=opts.ami,
                 launch_group="launch-group-%s" % cluster_name,
                 placement=zone,
-                count=num_slaves_this_zone,
+                count=num_subordinates_this_zone,
                 key_name=opts.key_pair,
-                security_groups=[slave_group] + additional_groups,
+                security_groups=[subordinate_group] + additional_groups,
                 instance_type=opts.instance_type,
                 block_device_map=block_map,
                 user_data=user_data_content)
-            my_req_ids += [req.id for req in slave_reqs]
+            my_req_ids += [req.id for req in subordinate_reqs]
             i += 1
 
         print "Waiting for spot instances to be granted..."
@@ -414,23 +414,23 @@ def launch_cluster(conn, opts, cluster_name):
                 for i in my_req_ids:
                     if i in id_to_req and id_to_req[i].state == "active":
                         active_instance_ids.append(id_to_req[i].instance_id)
-                if len(active_instance_ids) == opts.slaves:
-                    print "All %d slaves granted" % opts.slaves
+                if len(active_instance_ids) == opts.subordinates:
+                    print "All %d subordinates granted" % opts.subordinates
                     reservations = conn.get_all_instances(active_instance_ids)
-                    slave_nodes = []
+                    subordinate_nodes = []
                     for r in reservations:
-                        slave_nodes += r.instances
+                        subordinate_nodes += r.instances
                     break
                 else:
-                    print "%d of %d slaves granted, waiting longer" % (
-                        len(active_instance_ids), opts.slaves)
+                    print "%d of %d subordinates granted, waiting longer" % (
+                        len(active_instance_ids), opts.subordinates)
         except:
             print "Canceling spot instance requests"
             conn.cancel_spot_instance_requests(my_req_ids)
             # Log a warning if any of these requests actually launched instances:
-            (master_nodes, slave_nodes) = get_existing_cluster(
+            (main_nodes, subordinate_nodes) = get_existing_cluster(
                 conn, opts, cluster_name, die_on_error=False)
-            running = len(master_nodes) + len(slave_nodes)
+            running = len(main_nodes) + len(subordinate_nodes)
             if running:
                 print >> stderr, ("WARNING: %d instances are still running" % running)
             sys.exit(0)
@@ -439,85 +439,85 @@ def launch_cluster(conn, opts, cluster_name):
         zones = get_zones(conn, opts)
         num_zones = len(zones)
         i = 0
-        slave_nodes = []
+        subordinate_nodes = []
         for zone in zones:
-            num_slaves_this_zone = get_partition(opts.slaves, num_zones, i)
-            if num_slaves_this_zone > 0:
-                slave_res = image.run(key_name=opts.key_pair,
-                                      security_groups=[slave_group] + additional_groups,
+            num_subordinates_this_zone = get_partition(opts.subordinates, num_zones, i)
+            if num_subordinates_this_zone > 0:
+                subordinate_res = image.run(key_name=opts.key_pair,
+                                      security_groups=[subordinate_group] + additional_groups,
                                       instance_type=opts.instance_type,
                                       placement=zone,
-                                      min_count=num_slaves_this_zone,
-                                      max_count=num_slaves_this_zone,
+                                      min_count=num_subordinates_this_zone,
+                                      max_count=num_subordinates_this_zone,
                                       block_device_map=block_map,
                                       user_data=user_data_content)
-                slave_nodes += slave_res.instances
-                print "Launched %d slaves in %s, regid = %s" % (num_slaves_this_zone,
-                                                                zone, slave_res.id)
+                subordinate_nodes += subordinate_res.instances
+                print "Launched %d subordinates in %s, regid = %s" % (num_subordinates_this_zone,
+                                                                zone, subordinate_res.id)
             i += 1
 
-    # Launch or resume masters
-    if existing_masters:
-        print "Starting master..."
-        for inst in existing_masters:
+    # Launch or resume mains
+    if existing_mains:
+        print "Starting main..."
+        for inst in existing_mains:
             if inst.state not in ["shutting-down", "terminated"]:
                 inst.start()
-        master_nodes = existing_masters
+        main_nodes = existing_mains
     else:
-        master_type = opts.master_instance_type
-        if master_type == "":
-            master_type = opts.instance_type
+        main_type = opts.main_instance_type
+        if main_type == "":
+            main_type = opts.instance_type
         if opts.zone == 'all':
             opts.zone = random.choice(conn.get_all_zones()).name
-        master_res = image.run(key_name=opts.key_pair,
-                               security_groups=[master_group] + additional_groups,
-                               instance_type=master_type,
+        main_res = image.run(key_name=opts.key_pair,
+                               security_groups=[main_group] + additional_groups,
+                               instance_type=main_type,
                                placement=opts.zone,
                                min_count=1,
                                max_count=1,
                                block_device_map=block_map,
                                user_data=user_data_content)
-        master_nodes = master_res.instances
-        print "Launched master in %s, regid = %s" % (zone, master_res.id)
+        main_nodes = main_res.instances
+        print "Launched main in %s, regid = %s" % (zone, main_res.id)
 
     # Give the instances descriptive names
-    for master in master_nodes:
-        master.add_tag(
+    for main in main_nodes:
+        main.add_tag(
             key='Name',
-            value='{cn}-master-{iid}'.format(cn=cluster_name, iid=master.id))
-    for slave in slave_nodes:
-        slave.add_tag(
+            value='{cn}-main-{iid}'.format(cn=cluster_name, iid=main.id))
+    for subordinate in subordinate_nodes:
+        subordinate.add_tag(
             key='Name',
-            value='{cn}-slave-{iid}'.format(cn=cluster_name, iid=slave.id))
+            value='{cn}-subordinate-{iid}'.format(cn=cluster_name, iid=subordinate.id))
 
     # Return all the instances
-    return (master_nodes, slave_nodes)
+    return (main_nodes, subordinate_nodes)
 
 
 # Get the EC2 instances in an existing cluster if available.
-# Returns a tuple of lists of EC2 instance objects for the masters and slaves
+# Returns a tuple of lists of EC2 instance objects for the mains and subordinates
 
 
 def get_existing_cluster(conn, opts, cluster_name, die_on_error=True):
     print "Searching for existing cluster " + cluster_name + "..."
     reservations = conn.get_all_instances()
-    master_nodes = []
-    slave_nodes = []
+    main_nodes = []
+    subordinate_nodes = []
     for res in reservations:
         active = [i for i in res.instances if is_active(i)]
         for inst in active:
             group_names = [g.name for g in inst.groups]
-            if (cluster_name + "-master") in group_names:
-                master_nodes.append(inst)
-            elif (cluster_name + "-slaves") in group_names:
-                slave_nodes.append(inst)
-    if any((master_nodes, slave_nodes)):
-        print "Found %d master(s), %d slaves" % (len(master_nodes), len(slave_nodes))
-    if master_nodes != [] or not die_on_error:
-        return (master_nodes, slave_nodes)
+            if (cluster_name + "-main") in group_names:
+                main_nodes.append(inst)
+            elif (cluster_name + "-subordinates") in group_names:
+                subordinate_nodes.append(inst)
+    if any((main_nodes, subordinate_nodes)):
+        print "Found %d main(s), %d subordinates" % (len(main_nodes), len(subordinate_nodes))
+    if main_nodes != [] or not die_on_error:
+        return (main_nodes, subordinate_nodes)
     else:
-        if master_nodes == [] and slave_nodes != []:
-            print >> sys.stderr, "ERROR: Could not find master in group " + cluster_name + "-master"
+        if main_nodes == [] and subordinate_nodes != []:
+            print >> sys.stderr, "ERROR: Could not find main in group " + cluster_name + "-main"
         else:
             print >> sys.stderr, "ERROR: Could not find any existing cluster"
         sys.exit(1)
@@ -527,21 +527,21 @@ def get_existing_cluster(conn, opts, cluster_name, die_on_error=True):
 # or started EC2 cluster.
 
 
-def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
-    master = master_nodes[0].public_dns_name
+def setup_cluster(conn, main_nodes, subordinate_nodes, opts, deploy_ssh_key):
+    main = main_nodes[0].public_dns_name
     if deploy_ssh_key:
-        print "Generating cluster's SSH key on master..."
+        print "Generating cluster's SSH key on main..."
         key_setup = """
           [ -f ~/.ssh/id_rsa ] ||
             (ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa &&
              cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys)
         """
-        ssh(master, opts, key_setup)
-        dot_ssh_tar = ssh_read(master, opts, ['tar', 'c', '.ssh'])
-        print "Transferring cluster's SSH key to slaves..."
-        for slave in slave_nodes:
-            print slave.public_dns_name
-            ssh_write(slave.public_dns_name, opts, ['tar', 'x'], dot_ssh_tar)
+        ssh(main, opts, key_setup)
+        dot_ssh_tar = ssh_read(main, opts, ['tar', 'c', '.ssh'])
+        print "Transferring cluster's SSH key to subordinates..."
+        for subordinate in subordinate_nodes:
+            print subordinate.public_dns_name
+            ssh_write(subordinate.public_dns_name, opts, ['tar', 'x'], dot_ssh_tar)
 
     modules = ['spark', 'shark', 'ephemeral-hdfs', 'persistent-hdfs',
                'mapreduce', 'spark-standalone', 'tachyon']
@@ -555,41 +555,41 @@ def setup_cluster(conn, master_nodes, slave_nodes, opts, deploy_ssh_key):
     # NOTE: We should clone the repository before running deploy_files to
     # prevent ec2-variables.sh from being overwritten
     ssh(
-        host=master,
+        host=main,
         opts=opts,
         command="rm -rf spark-ec2"
         + " && "
         + "git clone https://github.com/mesos/spark-ec2.git -b {b}".format(b=MESOS_SPARK_EC2_BRANCH)
     )
 
-    print "Deploying files to master..."
+    print "Deploying files to main..."
     deploy_files(
         conn=conn,
         root_dir=SPARK_EC2_DIR + "/" + "deploy.generic",
         opts=opts,
-        master_nodes=master_nodes,
-        slave_nodes=slave_nodes,
+        main_nodes=main_nodes,
+        subordinate_nodes=subordinate_nodes,
         modules=modules
     )
 
-    print "Running setup on master..."
-    setup_spark_cluster(master, opts)
+    print "Running setup on main..."
+    setup_spark_cluster(main, opts)
     print "Done!"
 
 
-def setup_standalone_cluster(master, slave_nodes, opts):
-    slave_ips = '\n'.join([i.public_dns_name for i in slave_nodes])
-    ssh(master, opts, "echo \"%s\" > spark/conf/slaves" % (slave_ips))
-    ssh(master, opts, "/root/spark/sbin/start-all.sh")
+def setup_standalone_cluster(main, subordinate_nodes, opts):
+    subordinate_ips = '\n'.join([i.public_dns_name for i in subordinate_nodes])
+    ssh(main, opts, "echo \"%s\" > spark/conf/subordinates" % (subordinate_ips))
+    ssh(main, opts, "/root/spark/sbin/start-all.sh")
 
 
-def setup_spark_cluster(master, opts):
-    ssh(master, opts, "chmod u+x spark-ec2/setup.sh")
-    ssh(master, opts, "spark-ec2/setup.sh")
-    print "Spark standalone cluster started at http://%s:8080" % master
+def setup_spark_cluster(main, opts):
+    ssh(main, opts, "chmod u+x spark-ec2/setup.sh")
+    ssh(main, opts, "spark-ec2/setup.sh")
+    print "Spark standalone cluster started at http://%s:8080" % main
 
     if opts.ganglia:
-        print "Ganglia started at http://%s:5080/ganglia" % master
+        print "Ganglia started at http://%s:5080/ganglia" % main
 
 
 def is_ssh_available(host, opts):
@@ -704,13 +704,13 @@ def get_num_disks(instance_type):
 
 # Deploy the configuration file templates in a given local directory to
 # a cluster, filling in any template parameters with information about the
-# cluster (e.g. lists of masters and slaves). Files are only deployed to
-# the first master instance in the cluster, and we expect the setup
+# cluster (e.g. lists of mains and subordinates). Files are only deployed to
+# the first main instance in the cluster, and we expect the setup
 # script to be run on that instance to copy them to other nodes.
 #
 # root_dir should be an absolute path to the directory with the files we want to deploy.
-def deploy_files(conn, root_dir, opts, master_nodes, slave_nodes, modules):
-    active_master = master_nodes[0].public_dns_name
+def deploy_files(conn, root_dir, opts, main_nodes, subordinate_nodes, modules):
+    active_main = main_nodes[0].public_dns_name
 
     num_disks = get_num_disks(opts.instance_type)
     hdfs_data_dirs = "/mnt/ephemeral-hdfs/data"
@@ -722,7 +722,7 @@ def deploy_files(conn, root_dir, opts, master_nodes, slave_nodes, modules):
             mapred_local_dirs += ",/mnt%d/hadoop/mrlocal" % i
             spark_local_dirs += ",/mnt%d/spark" % i
 
-    cluster_url = "%s:7077" % active_master
+    cluster_url = "%s:7077" % active_main
 
     if "." in opts.spark_version:
         # Pre-built spark & shark deploy
@@ -734,9 +734,9 @@ def deploy_files(conn, root_dir, opts, master_nodes, slave_nodes, modules):
         modules = filter(lambda x: x != "shark", modules)
 
     template_vars = {
-        "master_list": '\n'.join([i.public_dns_name for i in master_nodes]),
-        "active_master": active_master,
-        "slave_list": '\n'.join([i.public_dns_name for i in slave_nodes]),
+        "main_list": '\n'.join([i.public_dns_name for i in main_nodes]),
+        "active_main": active_main,
+        "subordinate_list": '\n'.join([i.public_dns_name for i in subordinate_nodes]),
         "cluster_url": cluster_url,
         "hdfs_data_dirs": hdfs_data_dirs,
         "mapred_local_dirs": mapred_local_dirs,
@@ -747,7 +747,7 @@ def deploy_files(conn, root_dir, opts, master_nodes, slave_nodes, modules):
         "shark_version": shark_v,
         "hadoop_major_version": opts.hadoop_major_version,
         "spark_worker_instances": "%d" % opts.worker_instances,
-        "spark_master_opts": opts.master_opts
+        "spark_main_opts": opts.main_opts
     }
 
     if opts.copy_aws_credentials:
@@ -777,12 +777,12 @@ def deploy_files(conn, root_dir, opts, master_nodes, slave_nodes, modules):
                                 text = text.replace("{{" + key + "}}", template_vars[key])
                             dest.write(text)
                             dest.close()
-    # rsync the whole directory over to the master machine
+    # rsync the whole directory over to the main machine
     command = [
         'rsync', '-rv',
         '-e', stringify_command(ssh_command(opts)),
         "%s/" % tmp_dir,
-        "%s@%s:/" % (opts.user, active_master)
+        "%s@%s:/" % (opts.user, active_main)
     ]
     subprocess.check_call(command)
     # Remove the temp directory we created above
@@ -883,10 +883,10 @@ def get_zones(conn, opts):
 
 # Gets the number of items in a partition
 def get_partition(total, num_partitions, current_partitions):
-    num_slaves_this_zone = total / num_partitions
+    num_subordinates_this_zone = total / num_partitions
     if (total % num_partitions) - current_partitions > 0:
-        num_slaves_this_zone += 1
-    return num_slaves_this_zone
+        num_subordinates_this_zone += 1
+    return num_subordinates_this_zone
 
 
 def real_main():
@@ -918,44 +918,44 @@ def real_main():
         opts.zone = random.choice(conn.get_all_zones()).name
 
     if action == "launch":
-        if opts.slaves <= 0:
-            print >> sys.stderr, "ERROR: You have to start at least 1 slave"
+        if opts.subordinates <= 0:
+            print >> sys.stderr, "ERROR: You have to start at least 1 subordinate"
             sys.exit(1)
         if opts.resume:
-            (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
+            (main_nodes, subordinate_nodes) = get_existing_cluster(conn, opts, cluster_name)
         else:
-            (master_nodes, slave_nodes) = launch_cluster(conn, opts, cluster_name)
+            (main_nodes, subordinate_nodes) = launch_cluster(conn, opts, cluster_name)
         wait_for_cluster_state(
-            cluster_instances=(master_nodes + slave_nodes),
+            cluster_instances=(main_nodes + subordinate_nodes),
             cluster_state='ssh-ready',
             opts=opts
         )
-        setup_cluster(conn, master_nodes, slave_nodes, opts, True)
+        setup_cluster(conn, main_nodes, subordinate_nodes, opts, True)
 
     elif action == "destroy":
         print "Are you sure you want to destroy the cluster %s?" % cluster_name
         print "The following instances will be terminated:"
-        (master_nodes, slave_nodes) = get_existing_cluster(
+        (main_nodes, subordinate_nodes) = get_existing_cluster(
             conn, opts, cluster_name, die_on_error=False)
-        for inst in master_nodes + slave_nodes:
+        for inst in main_nodes + subordinate_nodes:
             print "> %s" % inst.public_dns_name
 
         msg = "ALL DATA ON ALL NODES WILL BE LOST!!\nDestroy cluster %s (y/N): " % cluster_name
         response = raw_input(msg)
         if response == "y":
-            print "Terminating master..."
-            for inst in master_nodes:
+            print "Terminating main..."
+            for inst in main_nodes:
                 inst.terminate()
-            print "Terminating slaves..."
-            for inst in slave_nodes:
+            print "Terminating subordinates..."
+            for inst in subordinate_nodes:
                 inst.terminate()
 
             # Delete security groups as well
             if opts.delete_groups:
                 print "Deleting security groups (this will take some time)..."
-                group_names = [cluster_name + "-master", cluster_name + "-slaves"]
+                group_names = [cluster_name + "-main", cluster_name + "-subordinates"]
                 wait_for_cluster_state(
-                    cluster_instances=(master_nodes + slave_nodes),
+                    cluster_instances=(main_nodes + subordinate_nodes),
                     cluster_state='terminated',
                     opts=opts
                 )
@@ -998,32 +998,32 @@ def real_main():
                     print "Try re-running in a few minutes."
 
     elif action == "login":
-        (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
-        master = master_nodes[0].public_dns_name
-        print "Logging into master " + master + "..."
+        (main_nodes, subordinate_nodes) = get_existing_cluster(conn, opts, cluster_name)
+        main = main_nodes[0].public_dns_name
+        print "Logging into main " + main + "..."
         proxy_opt = []
         if opts.proxy_port is not None:
             proxy_opt = ['-D', opts.proxy_port]
         subprocess.check_call(
-            ssh_command(opts) + proxy_opt + ['-t', '-t', "%s@%s" % (opts.user, master)])
+            ssh_command(opts) + proxy_opt + ['-t', '-t', "%s@%s" % (opts.user, main)])
 
-    elif action == "reboot-slaves":
+    elif action == "reboot-subordinates":
         response = raw_input(
             "Are you sure you want to reboot the cluster " +
-            cluster_name + " slaves?\n" +
-            "Reboot cluster slaves " + cluster_name + " (y/N): ")
+            cluster_name + " subordinates?\n" +
+            "Reboot cluster subordinates " + cluster_name + " (y/N): ")
         if response == "y":
-            (master_nodes, slave_nodes) = get_existing_cluster(
+            (main_nodes, subordinate_nodes) = get_existing_cluster(
                 conn, opts, cluster_name, die_on_error=False)
-            print "Rebooting slaves..."
-            for inst in slave_nodes:
+            print "Rebooting subordinates..."
+            for inst in subordinate_nodes:
                 if inst.state not in ["shutting-down", "terminated"]:
                     print "Rebooting " + inst.id
                     inst.reboot()
 
-    elif action == "get-master":
-        (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
-        print master_nodes[0].public_dns_name
+    elif action == "get-main":
+        (main_nodes, subordinate_nodes) = get_existing_cluster(conn, opts, cluster_name)
+        print main_nodes[0].public_dns_name
 
     elif action == "stop":
         response = raw_input(
@@ -1031,17 +1031,17 @@ def real_main():
             cluster_name + "?\nDATA ON EPHEMERAL DISKS WILL BE LOST, " +
             "BUT THE CLUSTER WILL KEEP USING SPACE ON\n" +
             "AMAZON EBS IF IT IS EBS-BACKED!!\n" +
-            "All data on spot-instance slaves will be lost.\n" +
+            "All data on spot-instance subordinates will be lost.\n" +
             "Stop cluster " + cluster_name + " (y/N): ")
         if response == "y":
-            (master_nodes, slave_nodes) = get_existing_cluster(
+            (main_nodes, subordinate_nodes) = get_existing_cluster(
                 conn, opts, cluster_name, die_on_error=False)
-            print "Stopping master..."
-            for inst in master_nodes:
+            print "Stopping main..."
+            for inst in main_nodes:
                 if inst.state not in ["shutting-down", "terminated"]:
                     inst.stop()
-            print "Stopping slaves..."
-            for inst in slave_nodes:
+            print "Stopping subordinates..."
+            for inst in subordinate_nodes:
                 if inst.state not in ["shutting-down", "terminated"]:
                     if inst.spot_instance_request_id:
                         inst.terminate()
@@ -1049,21 +1049,21 @@ def real_main():
                         inst.stop()
 
     elif action == "start":
-        (master_nodes, slave_nodes) = get_existing_cluster(conn, opts, cluster_name)
-        print "Starting slaves..."
-        for inst in slave_nodes:
+        (main_nodes, subordinate_nodes) = get_existing_cluster(conn, opts, cluster_name)
+        print "Starting subordinates..."
+        for inst in subordinate_nodes:
             if inst.state not in ["shutting-down", "terminated"]:
                 inst.start()
-        print "Starting master..."
-        for inst in master_nodes:
+        print "Starting main..."
+        for inst in main_nodes:
             if inst.state not in ["shutting-down", "terminated"]:
                 inst.start()
         wait_for_cluster_state(
-            cluster_instances=(master_nodes + slave_nodes),
+            cluster_instances=(main_nodes + subordinate_nodes),
             cluster_state='ssh-ready',
             opts=opts
         )
-        setup_cluster(conn, master_nodes, slave_nodes, opts, False)
+        setup_cluster(conn, main_nodes, subordinate_nodes, opts, False)
 
     else:
         print >> stderr, "Invalid action: %s" % action
